@@ -4,7 +4,7 @@ SDK 把 HTTP 请求、类型解析、控制权和退出清理放进一个小型 
 
 当前为 **0.1.0 开发预览**，提供同步 HTTP 客户端与受控生命周期。它不依赖后端内部模块、前端、PlatformIO、NumPy 或训练框架。
 
-## 安装
+## 安装 {#installation}
 
 在仓库根目录、你的算法虚拟环境中执行：
 
@@ -30,7 +30,7 @@ python -m pip install 'acfield @ git+https://github.com/yaoqih/acfield.git@main#
 
 复现实验时将 `main` 替换为实际验证过的完整提交 SHA。包目前没有发布到 PyPI，请使用上述本地或 Git 安装方式。
 
-## 只读状态
+## 只读状态 {#read-only-state}
 
 ```python
 from acfield import Client
@@ -47,7 +47,7 @@ with Client("http://127.0.0.1:8000") as client:
 
 `health()` 遇到服务端返回的 503 仍返回 `status="degraded"` 的健康对象，便于查看故障。连接失败和无效响应仍抛异常。`ready` 表示全部配置车辆的前提，而控制会话只检查所选车辆。
 
-## 一个双车控制循环
+## 一个双车控制循环 {#a-two-robot-control-loop}
 
 先运行[演示服务](./quickstart)，再执行：
 
@@ -75,7 +75,7 @@ with Client() as client:
 
 示例中的状态是全局快照；受限观测和通信规则仍需实验层实现。不要直接把全局快照提供给声称只使用局部信息的策略。
 
-## 控制会话做了什么
+## 控制会话做了什么 {#what-a-control-session-does}
 
 进入 `with client.control(...)` 时，SDK 检查服务健康、运行模式、所选车绑定/在线/定位与故障状态，拒绝已有控制源的车辆，逐车请求解锁，并轮询等待 `armed=true` 与控制 ID 一致。进入代码块时，解锁已得到服务端所记录的确认。
 
@@ -89,7 +89,7 @@ with Client() as client:
 
 清理请求被服务端接受不等于物理停止已测得，仍要结合设备 ACK、轮速和视觉反馈。强制杀进程、断网或服务端不可达时，退出请求无法保证送达，停车依赖服务端和设备看门狗。
 
-## 实车需要显式选择
+## 实车需要显式选择 {#explicit-hardware-selection}
 
 ```python
 with Client("http://127.0.0.1:8000") as client:
@@ -100,7 +100,7 @@ with Client("http://127.0.0.1:8000") as client:
 
 默认会话拒绝硬件模式，也不自动释放全局停止。`allow_hardware=True` 是调用者明确选择真实模式，不代替[首车验收](../hardware/bringup)。低层 `arm()` 和显式停车接口直接对应服务器语义，不做模式拦截。
 
-## 接口速查
+## 接口速查 {#api-overview}
 
 | 方法 | 返回 / 语义 |
 | --- | --- |
@@ -118,7 +118,7 @@ with Client("http://127.0.0.1:8000") as client:
 
 回执表示服务端接受的指令包，不表示设备已 ACK，也不表示车体已按该速度运动。`seq/ack_seq/command_status` 和测量字段是不同证据，详见[接口参考](../reference/api)。
 
-## 错误、超时与续发
+## 错误、超时与续发 {#errors-timeouts-and-renewal}
 
 | 异常 | 含义 |
 | --- | --- |
@@ -137,7 +137,7 @@ SDK 不自动重试动作或解锁，也没有后台线程为旧动作续期。�
 
 当前 SDK 与同仓服务端配套；条件释放依赖新增的 `/release` 接口，旧服务器会明确报错，不退回存在竞态的锁车方式。WebSocket 订阅、异步客户端和训练环境适配留待实际需求推进。
 
-## 设计与验证
+## 设计与验证 {#design-and-validation}
 
 独立的包让算法环境只依赖 HTTPX 和 Pydantic；同仓维护让服务器协议变化与客户端适配在一个提交中评审。高层会话管理公共控制流程，低层方法保留准确的 HTTP 语义。这里没有引入策略基类、训练框架或隐藏的后台调度。
 

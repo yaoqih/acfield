@@ -2,7 +2,7 @@
 
 先把一个完整控制闭环测清楚，再复制其他车辆。当前固件默认 `motorsEnabled=false`，左右编码器每圈计数为 0，设备不能直接落地运行。
 
-## 配置与构建
+## 配置与构建 {#configure-and-build}
 
 安装 PlatformIO，在仓库根目录执行：
 
@@ -20,7 +20,7 @@ pio run -d esp32_software/firmware -e car-02 -t upload
 pio device monitor -d esp32_software/firmware -e car-02
 ```
 
-## 分阶段验收
+## 分阶段验收 {#staged-acceptance}
 
 | 阶段 | 操作与证据 | 进入下一阶段前确认 |
 | --- | --- | --- |
@@ -34,12 +34,12 @@ pio device monitor -d esp32_software/firmware -e car-02
 
 实际电机每圈计数必须按固件使用的单相上升沿计数方法测量，不能套用商家四倍频数值。左右轮分开标定。
 
-## 关键硬件边界
+## 关键硬件边界 {#important-hardware-boundaries}
 
 当前参考引脚、电压阈值和诊断细节见 [固件 README](https://github.com/yaoqih/acfield/blob/main/esp32_software/firmware/README.md)。电机/编码器接线应按针号与实测确认，不能只按线色。
 
 3S 欠压保护初值是总压低于 10.5 V 持续 1 s 锁存停车；总压不能替代逐节监测。实体断电开关和电源保护属于装配方案的一部分。首车还应核对满充供电、温升与电池固定。
 
-## 留下最小测量记录
+## 留下最小测量记录 {#keep-a-minimal-measurement-record}
 
 为每车保存物料修订、轮径/轮距、每圈计数、方向、PI 与限制、定位偏移、停止测试条件及结果。对保护阈值的每次调整记录依据。硬件修订和参数文件应能关联到运行日志。

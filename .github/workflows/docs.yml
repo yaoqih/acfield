@@ -21,6 +21,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run docs:build
+      - run: npx playwright install --with-deps chromium
+      - name: Language routing and navigation regression checks
+        run: npm run docs:test
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replaced the one-way English link with VitePress locale routing, complete
+  English documentation, translated menus and same-topic language switching.
+
 - Print console/API addresses and detected host IPv4 at server startup, including
   the LAN SDK URL when bound to all IPv4 interfaces.
 

@@ -2,7 +2,7 @@
 
 定位服务由根目录 `apriltag_live.py` 和 `web/` 提供，独立于小车控制服务。它支持真实相机、视频回放与合成演示；只有符合来源与标定条件的相机数据能进入硬件控制链路。
 
-## 先运行视觉演示
+## 先运行视觉演示 {#start-the-vision-demo}
 
 在仓库根目录：
 
@@ -14,7 +14,7 @@ python3 -m venv .venv
 
 打开终端显示的地址，默认 **http://127.0.0.1:5050**。合成场景用于检查检测、标定和导出流程。它包含自己定义的 120 mm 标签与 120 mm 高度，不表示参考硬件尺寸，也不能驱动真实车辆。
 
-## 物理标签
+## 物理标签 {#physical-tags}
 
 使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。仓库提供地面黑框 150 mm、车顶黑框 90 mm 的 [A4 打印文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot90_A4.pdf)。
 
@@ -22,7 +22,7 @@ python3 -m venv .venv
 
 重新生成需要另外安装 `Pillow` 与 `reportlab`，然后运行 `generate_apriltags.py`。不要把屏幕截图或 PNG 显示尺寸当作物理打印尺寸。
 
-## 标定顺序
+## 标定顺序 {#calibration-order}
 
 1. 在固定焦距、焦点和分辨率下，使用外部相机标定工具获得内参与畸变参数，填入 `apriltag_live.json` 的 `camera`。
 2. 测量地面标签在统一坐标系中的位置、黑框尺寸和朝向，填写配置并设置 `world.configured=true`。
@@ -33,7 +33,7 @@ python3 -m venv .venv
 
 公开配置默认 `camera=null`、场地未配置；它不是某个实验室的已标定文件。`--source 0` 通常打开第一台相机；其他选项以 `--help` 为准。
 
-## 接入主控的条件
+## 接入主控的条件 {#hardware-integration-requirements}
 
 硬件模式要求数据声明 `source_kind=camera`、`world_calibrated=true`、`tag36h11` 与 `demo=false`。适配器不把像素坐标当米，也不把重复帧当新定位。
 

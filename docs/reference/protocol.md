@@ -2,13 +2,13 @@
 
 当前设备使用 UDP JSON 协议 `version=1` 的显式解锁修订。服务端与本仓固件应一起使用；历史 v1 报文不一定具备当前必需字段，不能只依据数字 1 判断兼容。
 
-## 身份与会话
+## 身份与会话 {#identity-and-sessions}
 
 `robot_id` 是持久车号，`boot_id` 每次设备启动改变，遥测与命令各有递增序号。主控用 `session` 标识控制会话，设备只接受符合当前启动、会话及序号规则的指令。
 
 设备约以 20 Hz 向主控 UDP 9999 发送遥测，主控回发来源端点。默认四车身份为 `car-01` 到 `car-04`，不能把四块板全部烧成同一个身份。
 
-## 状态转换
+## 状态转换 {#state-transitions}
 
 ```text
 启动 / 断联
@@ -26,7 +26,7 @@ unbound ── 新鲜遥测回显 + stop ──► disarmed
 
 故障锁存后需排除原因并重启设备。重连只恢复通信条件，不恢复运动。
 
-## 命令示例
+## 命令示例 {#example-command}
 
 ```json
 {
@@ -51,13 +51,13 @@ unbound ── 新鲜遥测回显 + stop ──► disarmed
 
 绑定新会话须回显 200 ms 内且晚于上次绑定界限的遥测；旧会话历史报文不能重新绑定。重复命令不会刷新运动 TTL。
 
-## 遥测
+## 遥测 {#telemetry}
 
 包含身份、启动 ID、序号、`device_state`、固件版本、`ack_session/ack_seq`、电压、编码计数、左右轮速、速度限制、故障与停车原因。未得到可信测量的值填 `null` 或省略。
 
 协议解析与状态机源文件位于 `esp32_software/firmware/include/command_wire.h` 和 `protocol.h`。跨端测试会编译实际解析器，让服务端生成的报文进入真实固件逻辑。
 
-## 当前时序配置
+## 当前时序配置 {#current-timing-configuration}
 
 | 环节 | 配置值 | 含义 |
 | --- | --- | --- |

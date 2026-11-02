@@ -2,7 +2,7 @@
 
 先运行无硬件演示，确认控制台与接口。默认模式不会打开设备 UDP 通信。
 
-## 环境
+## 环境 {#requirements}
 
 需要 Git、Python 3.11+（推荐 3.12）、Node.js 20.19+ 或 22.12+。推荐用 [uv](https://docs.astral.sh/uv/) 管理 Python 环境。
 
@@ -30,7 +30,7 @@ npm --prefix frontend run build
 
 以上脚本面向 macOS/Linux。Windows 可在 WSL2 中运行；原生 Windows 可在建立对应虚拟环境并构建前端后运行 `python -m backend.app`，硬件网络配置需另行验证。
 
-## 第一次操作
+## 第一次操作 {#first-interaction}
 
 1. 点击场地中的小车，检查右侧状态。
 2. 点击解锁，再按住方向按钮。松开后页面请求停车。
@@ -39,7 +39,7 @@ npm --prefix frontend run build
 
 页面失焦或隐藏会停止续发并请求停车；服务端仍依靠自己的指令期限检查。默认按钮每 90 ms 续发，有效期 300 ms。
 
-## 查看接口
+## 查看接口 {#inspect-the-api}
 
 另开终端：
 
@@ -60,7 +60,7 @@ robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 
 没有 uv 时，用当前 Python 环境执行 `python -m pip install -e ./sdk/python`，然后用同一环境运行示例。独立算法环境的安装与完整接口见 [Python SDK](./python-sdk)。
 
-## 接下来
+## 接下来 {#next-steps}
 
 - 理解系统为什么如此组织：[设计理念](../design/philosophy)。
 - 替换示例中的策略：[接入控制算法](./control)。
