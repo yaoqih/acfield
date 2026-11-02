@@ -70,7 +70,7 @@ class Detector:
         self.native = None
         if backend != 'opencv':
             try:
-                from pupil_apriltags import Detector as NativeDetector
+                from native_apriltag import Detector as NativeDetector
                 if family not in NATIVE_FAMILIES:
                     raise ValueError(f'Unsupported native family: {family}')
                 self.native = NativeDetector(families=family, nthreads=2,

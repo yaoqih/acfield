@@ -1,5 +1,7 @@
 import json
 import math
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -10,6 +12,24 @@ import pytest
 from apriltag_live import (ROOT, DemoSource, Detector, LiveEngine, Tracker,
                            calibrate_world, camera_at_size, create_app,
                            estimate_pose, load_settings, ray_to_plane, square_points)
+
+
+def test_native_detector_survives_repeated_detection_and_cleanup():
+    pytest.importorskip("pupil_apriltags")
+    # A native use-after-free must fail this test without killing the test runner.
+    program = """
+import cv2
+from apriltag_live import Detector, ROOT
+image = cv2.imread(str(ROOT / "output/apriltags/tag36h11_id010_robot.png"), 0)
+image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_NEAREST)
+for _ in range(20):
+    detector = Detector(backend="native")
+    assert [tag["id"] for tag in detector.detect(image)] == [10]
+    del detector
+"""
+    result = subprocess.run([sys.executable, "-c", program], cwd=ROOT,
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.fixture(scope='module')

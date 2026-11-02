@@ -32,6 +32,10 @@ pio pkg install -d esp32_software/firmware -e general-driver
 
 控制默认 HTTP 8000、设备 UDP 9999、视觉 HTTP 5050。检查旧进程是否仍在运行；不要为解决占用直接增加控制服务 worker。可以修改端口，但服务、固件与示例的地址必须一致。
 
+## Linux 原生检测器退出崩溃
+
+pupil-apriltags 1.0.4.post11 的上游清理顺序可能在 Linux 释放检测器时触发崩溃，参见 [上游修复讨论](https://github.com/pupil-labs/apriltags/pull/76)。本仓通过 `native_apriltag.py` 在释放标签族前先释放检测器，依赖版本暂时固定，并用独立子进程反复检测与销毁进行回归检查。更新原生依赖时应一起复核该兼容层。
+
 ## 提交有效的问题报告
 
 附平台提交、运行模式、操作系统、固件与硬件版本、最小复现步骤、相关事件与停车原因。说明哪些是实测、哪些是推测。移除凭据和私有数据后，使用 [Bug Report](https://github.com/yaoqih/acfield/issues/new/choose) 模板提交。
