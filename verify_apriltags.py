@@ -5,6 +5,7 @@ Install requirements-apriltag.txt, requirements-print.txt and Poppler first.
 This checks digital artwork, not printed labels under the arena camera.
 """
 import argparse
+import faulthandler
 import hashlib
 import json
 import subprocess
@@ -59,6 +60,7 @@ def check_pdf_geometry(pdf, tags, directory):
 
 
 def main():
+    faulthandler.enable()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write-reports', action='store_true')
     args = parser.parse_args()
@@ -102,6 +104,7 @@ def main():
 
         for tag in tags:
             tag_id = tag['id']
+            print(f'Checking {backend}: preview ID {tag_id}', flush=True)
             source_path = directory / 'source' / f'tag36_11_{tag_id:05d}.png'
             assert hashlib.sha256(source_path.read_bytes()).hexdigest() == tag['source_sha256']
             original = cv2.imread(str(directory / tag['png_file']), 0)
@@ -134,6 +137,7 @@ def main():
                     expected = cv2.perspectiveTransform(expected.reshape(1,4,2), matrix)[0]
                     decode(warped, tag_id, expected)
         for image, tag in rendered:
+            print(f'Checking {backend}: PDF ID {tag["id"]}, shape={image.shape}', flush=True)
             outer = tag['outer_edge_with_white_margin_mm']
             left, bottom = (210-outer)/2, (297-outer)/2+7
             inset, size = tag['white_margin_each_side_mm'], tag['black_edge_mm']
