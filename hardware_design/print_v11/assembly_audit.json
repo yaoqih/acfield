@@ -1,0 +1,1133 @@
+{
+  "status": "PASS",
+  "release_status": "DRAWING_BASED_FIRST_ARTICLE_REQUIRED",
+  "scope": "nominal user drawings plus user-confirmed nut thickness2.5mm; hardware tolerances and real assembly not tested",
+  "checks": [
+    {
+      "check": "caster_nut_14_ENVELOPE / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_screw_shank_14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_screw_head_14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_nut_-14_ENVELOPE / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_screw_shank_-14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_screw_head_-14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_flange_envelope / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_lower_cap_envelope / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster_upper_envelope / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "support_ball / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top_nylon_60.5_60.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top_nylon_60.5_-60.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top_nylon_-60.5_60.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top_nylon_-60.5_-60.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_nylon_53.0_24.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_nylon_53.0_-24.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_nylon_-5.0_24.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board_nylon_-5.0_-24.5 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_envelope / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "original_bracket_1_ASSUMED / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "wheel_1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shaft_1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "motor_1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "original_bracket_-1_ASSUMED / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "wheel_-1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "shaft_-1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "motor_-1 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / support_ball",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "controller_envelope / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "battery / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,-24.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower bolt passage -5.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower washer -5.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "PCB upper bolt passage -5.0,-24.5",
+      "intersection_mm3": 0.008597114536475678,
+      "pass": true
+    },
+    {
+      "check": "no printed PCB column -5.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon foot bearing volume over 0.2mm -5.0,-24.5",
+      "value": 4.4224538344841,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon -5.0,24.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower bolt passage -5.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower washer -5.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "PCB upper bolt passage -5.0,24.5",
+      "intersection_mm3": 0.008597114536475678,
+      "pass": true
+    },
+    {
+      "check": "no printed PCB column -5.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon foot bearing volume over 0.2mm -5.0,24.5",
+      "value": 4.4224538344841,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,-24.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower bolt passage 53.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower washer 53.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "PCB upper bolt passage 53.0,-24.5",
+      "intersection_mm3": 0.008594728866550364,
+      "pass": true
+    },
+    {
+      "check": "no printed PCB column 53.0,-24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon foot bearing volume over 0.2mm 53.0,-24.5",
+      "value": 4.422452621921328,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon 53.0,24.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower bolt passage 53.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board lower washer 53.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "PCB upper bolt passage 53.0,24.5",
+      "intersection_mm3": 0.008594728866550364,
+      "pass": true
+    },
+    {
+      "check": "no printed PCB column 53.0,24.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "board nylon foot bearing volume over 0.2mm 53.0,24.5",
+      "value": 4.422452836847825,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,-60.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower bolt passage -60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower washer -60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top M3 passage -60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon foot bearing volume over 0.2mm -60.5,-60.5",
+      "value": 4.42245258499176,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon -60.5,60.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower bolt passage -60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower washer -60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top M3 passage -60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon foot bearing volume over 0.2mm -60.5,60.5",
+      "value": 4.422452915690997,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,-60.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower bolt passage 60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower washer 60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top M3 passage 60.5,-60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon foot bearing volume over 0.2mm 60.5,-60.5",
+      "value": 4.422453629336123,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / controller_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / top_board",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / motor_-1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / motor_1",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / original_bracket_-1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / original_bracket_1_ASSUMED",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon 60.5,60.5 / caster_flange_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower bolt passage 60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top lower washer 60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top M3 passage 60.5,60.5",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "top nylon foot bearing volume over 0.2mm 60.5,60.5",
+      "value": 4.422454217424047,
+      "minimum": 3.8,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster screw -14",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster head -14 / housing",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster head -14 / flange",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / ball",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 / flange",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster screw head -14 bearing volume over0.2mm",
+      "value": 2.870851750029838,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut -14 ground clearance mm",
+      "value": 2.5,
+      "minimum": 2.5,
+      "pass": true
+    },
+    {
+      "check": "caster screw tip -14 ground clearance mm",
+      "value": 2.0,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / chassis",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / battery",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / caster_upper_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / caster_lower_cap_envelope",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster screw 14",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster head 14 / housing",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster head 14 / flange",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / ball",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 / flange",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "caster screw head 14 bearing volume over0.2mm",
+      "value": 2.870851750029838,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "caster nut 14 ground clearance mm",
+      "value": 2.5,
+      "minimum": 2.5,
+      "pass": true
+    },
+    {
+      "check": "caster screw tip 14 ground clearance mm",
+      "value": 2.0,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "M2x10 passage -1,-9.25",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "M2x10 passage -1,9.25",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "M2x10 passage 1,-9.25",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "M2x10 passage 1,9.25",
+      "intersection_mm3": 0.0,
+      "pass": true
+    },
+    {
+      "check": "V11 M2 bearing land -25.25,-36.0",
+      "value": 8.353077070156274,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 M2 bearing land -6.75,-36.0",
+      "value": 8.353076995642716,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 M2 bearing land -25.25,36.0",
+      "value": 8.353077070156274,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 M2 bearing land -6.75,36.0",
+      "value": 8.353076995642716,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 top bearing land -60.5,-60.5",
+      "value": 8.211171859200476,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 top bearing land -60.5,60.5",
+      "value": 8.211171859200467,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 top bearing land 60.5,-60.5",
+      "value": 8.211171859200467,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "V11 top bearing land 60.5,60.5",
+      "value": 8.211171859200467,
+      "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "battery supported floor fraction excluding strap slots",
+      "value": 0.9999990463256836,
+      "minimum": 0.98,
+      "pass": true
+    },
+    {
+      "check": "battery to PCB underside gap mm",
+      "value": 3.5,
+      "minimum": 3,
+      "pass": true
+    },
+    {
+      "check": "PCB top to tag ribs gap mm",
+      "value": 5.0,
+      "minimum": 4,
+      "pass": true
+    },
+    {
+      "check": "minimum printed ground clearance mm",
+      "value": 6.0,
+      "minimum": 5.99999,
+      "pass": true
+    },
+    {
+      "check": "no printed tall board columns; chassis highest Z mm",
+      "value": 15.0,
+      "maximum": 15.001,
+      "pass": true
+    },
+    {
+      "check": "lower post M3x8 thread engagement mm",
+      "value": 4.7,
+      "minimum": 4,
+      "pass": true
+    },
+    {
+      "check": "PCB upper M3x8 thread engagement mm",
+      "value": 6.4,
+      "maximum": 7,
+      "pass": true
+    },
+    {
+      "check": "upper tag M3x8 thread engagement mm",
+      "value": 5.4,
+      "minimum": 4,
+      "pass": true
+    },
+    {
+      "check": "caster M3x8 protrusion mm no washers",
+      "value": 0.5,
+      "minimum": 0.5,
+      "pass": true
+    },
+    {
+      "check": "motor M2x10 protrusion mm assumed ear2.5",
+      "value": 2.9,
+      "minimum": 0.5,
+      "pass": true
+    },
+    {
+      "check": "caster screw head to housing radial gap mm",
+      "value": 0.1999999999999993,
+      "minimum": 0.19,
+      "pass": true
+    },
+    {
+      "check": "caster nut flat to maximum22mm housing bound gap mm",
+      "value": 0.25,
+      "minimum": 0.24,
+      "pass": true
+    },
+    {
+      "check": "caster ball-down working height mm",
+      "value": 8.0,
+      "minimum": 8,
+      "pass": true
+    },
+    {
+      "check": "caster ball-down working height mm",
+      "value": 8.0,
+      "maximum": 8,
+      "pass": true
+    },
+    {
+      "check": "caster center bore radial housing clearance mm",
+      "value": 0.3000000000000007,
+      "minimum": 0.29,
+      "pass": true
+    },
+    {
+      "check": "caster flange supported underside bearing -14",
+      "value": 2.8651992936577906,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "caster flange supported underside bearing 14",
+      "value": 2.8651992936577906,
+      "minimum": 2.0,
+      "pass": true
+    },
+    {
+      "check": "battery to caster flange forward gap mm",
+      "value": 2.1999999999999957,
+      "minimum": 2,
+      "pass": true
+    },
+    {
+      "check": "wheel outer edge to body outer edge mm",
+      "value": 0.75,
+      "minimum": 0.5,
+      "pass": true
+    },
+    {
+      "check": "modeled footprint X mm",
+      "value": 130.0,
+      "maximum": 130.01,
+      "pass": true
+    },
+    {
+      "check": "modeled footprint Y mm",
+      "value": 130.0,
+      "maximum": 130.01,
+      "pass": true
+    }
+  ],
+  "meshes": [
+    {
+      "file": "chassis_130mm_rear_axle.stl",
+      "watertight": true,
+      "positive_volume": true,
+      "bodies": 1
+    },
+    {
+      "file": "tag_plate_130mm.stl",
+      "watertight": true,
+      "positive_volume": true,
+      "bodies": 1
+    }
+  ],
+  "physical_inspection_required": [
+    "selected G-tech battery size/mass and lead exits",
+    "actual motor bracket height, ear thickness and M2 hardware",
+    "wheel hub insertion and retention",
+    "caster dimensions against supplied drawing, ball-down operation/drag and nominal28mm pitch",
+    "board backside components, real connector/antenna envelopes",
+    "nylon nut AF5.5mm assumed and thickness2.5mm user-confirmed; screw/nut actual tolerances, post AF/thread depths; entire tool access",
+    "slicer support, print strength, joint stiffness and road tests"
+  ]
+}

@@ -1,0 +1,4 @@
+numpy>=1.24,<3
+opencv-contrib-python>=4.8,<5
+Flask>=3.0,<4
+pupil-apriltags>=1.0.4.post11,<2

@@ -1,0 +1,662 @@
+{
+  "status": "ESTIMATED_NOT_PHYSICALLY_VALIDATED",
+  "mass_g": 398.0555865704787,
+  "center_of_mass_mm": [
+    -0.6627780444443164,
+    -0.002986316191634403,
+    24.20691364601452
+  ],
+  "yaw_inertia_estimate_kg_m2": 0.0006253443485533809,
+  "solid_print_mass_g": 83.73429821424148,
+  "mass_inputs": [
+    [
+      "chassis",
+      58.07232568179392,
+      0.16543491037300043,
+      -0.02046964417887399,
+      9.930543810141105,
+      154980.06450298394
+    ],
+    [
+      "top_board",
+      25.661972532447564,
+      0.0,
+      1.4403360705540623e-15,
+      62.715046751700264,
+      74394.64972446463
+    ],
+    [
+      "top_nylon_60.5_60.5_ESTIMATE",
+      1.3868812848857488,
+      60.499999999999964,
+      60.500000000000014,
+      37.0,
+      8.507578238351643
+    ],
+    [
+      "top_nylon_60.5_-60.5_ESTIMATE",
+      1.3868812848857488,
+      60.499999999999964,
+      -60.5,
+      37.0,
+      8.507578238353785
+    ],
+    [
+      "top_nylon_-60.5_60.5_ESTIMATE",
+      1.3868812848857488,
+      -60.5000000000001,
+      60.500000000000014,
+      37.0,
+      8.507578238330222
+    ],
+    [
+      "top_nylon_-60.5_-60.5_ESTIMATE",
+      1.3868812848857488,
+      -60.5000000000001,
+      -60.5,
+      37.0,
+      8.507578238332364
+    ],
+    [
+      "board_nylon_53.0_24.5_ESTIMATE",
+      0.6934407146058402,
+      52.99999999999996,
+      24.5,
+      24.5,
+      4.25378928128368
+    ],
+    [
+      "board_nylon_53.0_-24.5_ESTIMATE",
+      0.6934407146058402,
+      52.99999999999996,
+      -24.5,
+      24.5,
+      4.25378928128368
+    ],
+    [
+      "board_nylon_-5.0_24.5_ESTIMATE",
+      0.6934408937412866,
+      -5.000000037812996,
+      24.499999999999996,
+      24.500000000000004,
+      4.253790879504734
+    ],
+    [
+      "board_nylon_-5.0_-24.5_ESTIMATE",
+      0.6934408937412866,
+      -5.000000037812996,
+      -24.499999999999996,
+      24.500000000000004,
+      4.253790879504668
+    ],
+    [
+      "battery_ASSUMED",
+      138,
+      -14,
+      0,
+      21.5,
+      72335.0
+    ],
+    [
+      "controller_ESTIMATE",
+      40,
+      24,
+      0,
+      46,
+      28166.666666666668
+    ],
+    [
+      "motorL_ESTIMATE",
+      13,
+      -16.0,
+      36.0,
+      17,
+      1202.3266666666666
+    ],
+    [
+      "motorR_ESTIMATE",
+      13,
+      -16.0,
+      -36.0,
+      17,
+      1202.3266666666666
+    ],
+    [
+      "wheelL_ESTIMATE",
+      8,
+      -16.0,
+      61,
+      17,
+      798.8333333333334
+    ],
+    [
+      "wheelR_ESTIMATE",
+      8,
+      -16.0,
+      -61,
+      17,
+      798.8333333333334
+    ],
+    [
+      "caster",
+      20,
+      44.8,
+      0,
+      8,
+      4040.1000000000004
+    ],
+    [
+      "paper_label_ESTIMATE",
+      2,
+      0,
+      0,
+      64.7,
+      4218.75
+    ],
+    [
+      "clips_ESTIMATE",
+      12,
+      -16.0,
+      0,
+      18,
+      5809.0
+    ],
+    [
+      "wire_fuse_ESTIMATE",
+      30,
+      20,
+      0,
+      20,
+      4062.5
+    ],
+    [
+      "fasteners_strap_pad_ESTIMATE",
+      22,
+      0,
+      0,
+      25,
+      17966.666666666668
+    ]
+  ],
+  "drive_axle_to_caster_mm": 60.8,
+  "static_normal_load_fractions": {
+    "caster": 0.25225694005848165,
+    "left": 0.3738470519691884,
+    "right": 0.37389600797232997
+  },
+  "minimum_quasistatic_support_margin_mm": 13.856676778429414,
+  "scenarios": [
+    {
+      "ax_m_s2": -0.6,
+      "ay_m_s2": -0.6,
+      "effective_xy_mm": [
+        0.8177671326819537,
+        1.4775588609346357
+      ],
+      "support_margin_mm": 16.817767132681954,
+      "normal_load_fractions": {
+        "caster": 0.27660801205069,
+        "left": 0.37380713217903727,
+        "right": 0.34958485577027276
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.6,
+      "ay_m_s2": -0.3,
+      "effective_xy_mm": [
+        0.8177671326819537,
+        0.7372862723715007
+      ],
+      "support_margin_mm": 16.817767132681954,
+      "normal_load_fractions": {
+        "caster": 0.27660801205069,
+        "left": 0.36773932407606075,
+        "right": 0.3556526638732493
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.6,
+      "ay_m_s2": 0,
+      "effective_xy_mm": [
+        0.8177671326819537,
+        -0.002986316191634403
+      ],
+      "support_margin_mm": 16.817767132681954,
+      "normal_load_fractions": {
+        "caster": 0.27660801205069,
+        "left": 0.3616715159730842,
+        "right": 0.3617204719762258
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.6,
+      "ay_m_s2": 0.3,
+      "effective_xy_mm": [
+        0.8177671326819537,
+        -0.7432589047547694
+      ],
+      "support_margin_mm": 16.817767132681954,
+      "normal_load_fractions": {
+        "caster": 0.27660801205069,
+        "left": 0.3556037078701077,
+        "right": 0.36778828007920233
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.6,
+      "ay_m_s2": 0.6,
+      "effective_xy_mm": [
+        0.8177671326819537,
+        -1.4835314933179045
+      ],
+      "support_margin_mm": 16.817767132681954,
+      "normal_load_fractions": {
+        "caster": 0.27660801205069,
+        "left": 0.34953589976713123,
+        "right": 0.3738560881821788
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.3,
+      "ay_m_s2": -0.6,
+      "effective_xy_mm": [
+        0.07749454411881862,
+        1.4775588609346357
+      ],
+      "support_margin_mm": 16.077494544118817,
+      "normal_load_fractions": {
+        "caster": 0.2644324760545858,
+        "left": 0.3798949001770894,
+        "right": 0.35567262376832487
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.3,
+      "ay_m_s2": -0.3,
+      "effective_xy_mm": [
+        0.07749454411881862,
+        0.7372862723715007
+      ],
+      "support_margin_mm": 16.077494544118817,
+      "normal_load_fractions": {
+        "caster": 0.2644324760545858,
+        "left": 0.37382709207411285,
+        "right": 0.3617404318713014
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.3,
+      "ay_m_s2": 0,
+      "effective_xy_mm": [
+        0.07749454411881862,
+        -0.002986316191634403
+      ],
+      "support_margin_mm": 16.077494544118817,
+      "normal_load_fractions": {
+        "caster": 0.2644324760545858,
+        "left": 0.36775928397113633,
+        "right": 0.3678082399742779
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.3,
+      "ay_m_s2": 0.3,
+      "effective_xy_mm": [
+        0.07749454411881862,
+        -0.7432589047547694
+      ],
+      "support_margin_mm": 16.077494544118817,
+      "normal_load_fractions": {
+        "caster": 0.2644324760545858,
+        "left": 0.3616914758681598,
+        "right": 0.37387604807725444
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": -0.3,
+      "ay_m_s2": 0.6,
+      "effective_xy_mm": [
+        0.07749454411881862,
+        -1.4835314933179045
+      ],
+      "support_margin_mm": 16.077494544118817,
+      "normal_load_fractions": {
+        "caster": 0.2644324760545858,
+        "left": 0.35562366776518334,
+        "right": 0.3799438561802309
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0,
+      "ay_m_s2": -0.6,
+      "effective_xy_mm": [
+        -0.6627780444443164,
+        1.4775588609346357
+      ],
+      "support_margin_mm": 15.337221955555684,
+      "normal_load_fractions": {
+        "caster": 0.25225694005848165,
+        "left": 0.38598266817514143,
+        "right": 0.3617603917663769
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0,
+      "ay_m_s2": -0.3,
+      "effective_xy_mm": [
+        -0.6627780444443164,
+        0.7372862723715007
+      ],
+      "support_margin_mm": 15.337221955555684,
+      "normal_load_fractions": {
+        "caster": 0.25225694005848165,
+        "left": 0.3799148600721649,
+        "right": 0.36782819986935344
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0,
+      "ay_m_s2": 0,
+      "effective_xy_mm": [
+        -0.6627780444443164,
+        -0.002986316191634403
+      ],
+      "support_margin_mm": 15.337221955555684,
+      "normal_load_fractions": {
+        "caster": 0.25225694005848165,
+        "left": 0.3738470519691884,
+        "right": 0.37389600797232997
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0,
+      "ay_m_s2": 0.3,
+      "effective_xy_mm": [
+        -0.6627780444443164,
+        -0.7432589047547694
+      ],
+      "support_margin_mm": 15.337221955555684,
+      "normal_load_fractions": {
+        "caster": 0.25225694005848165,
+        "left": 0.36777924386621186,
+        "right": 0.3799638160753065
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0,
+      "ay_m_s2": 0.6,
+      "effective_xy_mm": [
+        -0.6627780444443164,
+        -1.4835314933179045
+      ],
+      "support_margin_mm": 15.337221955555684,
+      "normal_load_fractions": {
+        "caster": 0.25225694005848165,
+        "left": 0.3617114357632354,
+        "right": 0.38603162417828296
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.3,
+      "ay_m_s2": -0.6,
+      "effective_xy_mm": [
+        -1.4030506330074515,
+        1.4775588609346357
+      ],
+      "support_margin_mm": 14.596949366992549,
+      "normal_load_fractions": {
+        "caster": 0.24008140406237746,
+        "left": 0.39207043617319354,
+        "right": 0.36784815976442903
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.3,
+      "ay_m_s2": -0.3,
+      "effective_xy_mm": [
+        -1.4030506330074515,
+        0.7372862723715007
+      ],
+      "support_margin_mm": 14.596949366992549,
+      "normal_load_fractions": {
+        "caster": 0.24008140406237746,
+        "left": 0.386002628070217,
+        "right": 0.37391596786740555
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.3,
+      "ay_m_s2": 0,
+      "effective_xy_mm": [
+        -1.4030506330074515,
+        -0.002986316191634403
+      ],
+      "support_margin_mm": 14.596949366992549,
+      "normal_load_fractions": {
+        "caster": 0.24008140406237746,
+        "left": 0.3799348199672405,
+        "right": 0.3799837759703821
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.3,
+      "ay_m_s2": 0.3,
+      "effective_xy_mm": [
+        -1.4030506330074515,
+        -0.7432589047547694
+      ],
+      "support_margin_mm": 14.596949366992549,
+      "normal_load_fractions": {
+        "caster": 0.24008140406237746,
+        "left": 0.37386701186426397,
+        "right": 0.3860515840733586
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.3,
+      "ay_m_s2": 0.6,
+      "effective_xy_mm": [
+        -1.4030506330074515,
+        -1.4835314933179045
+      ],
+      "support_margin_mm": 14.596949366992549,
+      "normal_load_fractions": {
+        "caster": 0.24008140406237746,
+        "left": 0.3677992037612875,
+        "right": 0.39211939217633507
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.6,
+      "ay_m_s2": -0.6,
+      "effective_xy_mm": [
+        -2.1433232215705864,
+        1.4775588609346357
+      ],
+      "support_margin_mm": 13.856676778429414,
+      "normal_load_fractions": {
+        "caster": 0.22790586806627325,
+        "left": 0.39815820417124564,
+        "right": 0.37393592776248114
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.6,
+      "ay_m_s2": -0.3,
+      "effective_xy_mm": [
+        -2.1433232215705864,
+        0.7372862723715007
+      ],
+      "support_margin_mm": 13.856676778429414,
+      "normal_load_fractions": {
+        "caster": 0.22790586806627325,
+        "left": 0.3920903960682691,
+        "right": 0.38000373586545766
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.6,
+      "ay_m_s2": 0,
+      "effective_xy_mm": [
+        -2.1433232215705864,
+        -0.002986316191634403
+      ],
+      "support_margin_mm": 13.856676778429414,
+      "normal_load_fractions": {
+        "caster": 0.22790586806627325,
+        "left": 0.3860225879652926,
+        "right": 0.3860715439684342
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.6,
+      "ay_m_s2": 0.3,
+      "effective_xy_mm": [
+        -2.1433232215705864,
+        -0.7432589047547694
+      ],
+      "support_margin_mm": 13.856676778429414,
+      "normal_load_fractions": {
+        "caster": 0.22790586806627325,
+        "left": 0.37995477986231607,
+        "right": 0.3921393520714107
+      },
+      "inside_support_triangle": true
+    },
+    {
+      "ax_m_s2": 0.6,
+      "ay_m_s2": 0.6,
+      "effective_xy_mm": [
+        -2.1433232215705864,
+        -1.4835314933179045
+      ],
+      "support_margin_mm": 13.856676778429414,
+      "normal_load_fractions": {
+        "caster": 0.22790586806627325,
+        "left": 0.3738869717593396,
+        "right": 0.3982071601743872
+      },
+      "inside_support_triangle": true
+    }
+  ],
+  "ideal_forward_acceleration_to_lift_caster_m_s2": 6.215503123785177,
+  "ideal_pure_lateral_acceleration_limit_m_s2": 18.484674710824788,
+  "axle_position_study_fixed_other_parts": [
+    {
+      "axle_x_mm": -4,
+      "estimated_cg_x_mm": 0.9651352969635093,
+      "caster_static_load_fraction": 0.10174457575744895,
+      "support_margin_mm_at_ax_ay_0_6": 3.484590119837239,
+      "geometry_validated": false
+    },
+    {
+      "axle_x_mm": -8,
+      "estimated_cg_x_mm": 0.42249751649423406,
+      "caster_static_load_fraction": 0.1595169984184514,
+      "support_margin_mm_at_ax_ay_0_6": 6.941952339367964,
+      "geometry_validated": false
+    },
+    {
+      "axle_x_mm": -12,
+      "estimated_cg_x_mm": -0.12014026397504118,
+      "caster_static_load_fraction": 0.2091524601412845,
+      "support_margin_mm_at_ax_ay_0_6": 10.399314558898688,
+      "geometry_validated": false
+    },
+    {
+      "axle_x_mm": -16,
+      "estimated_cg_x_mm": -0.6627780444443164,
+      "caster_static_load_fraction": 0.25225694005848165,
+      "support_margin_mm_at_ax_ay_0_6": 13.856676778429414,
+      "geometry_validated": true
+    },
+    {
+      "axle_x_mm": -20,
+      "estimated_cg_x_mm": -1.2054158249135916,
+      "caster_static_load_fraction": 0.29003987924516067,
+      "support_margin_mm_at_ax_ay_0_6": 17.31403899796014,
+      "geometry_validated": false
+    },
+    {
+      "axle_x_mm": -24,
+      "estimated_cg_x_mm": -1.748053605382867,
+      "caster_static_load_fraction": 0.32342945341013274,
+      "support_margin_mm_at_ax_ay_0_6": 20.77140121749086,
+      "geometry_validated": false
+    }
+  ],
+  "sensitivity": {
+    "battery_mass_g": [
+      123,
+      138,
+      153
+    ],
+    "controller_mass_g": [
+      30,
+      40,
+      50
+    ],
+    "battery_x_variation_mm": [
+      -3,
+      0,
+      3
+    ],
+    "component_height_extra_mm": [
+      0,
+      3
+    ],
+    "ax_ay_m_s2": [
+      -0.6,
+      0.6
+    ],
+    "cases": 216,
+    "all_inside_support": true,
+    "minimum_support_margin_mm": 11.565549672443186,
+    "meaning": "chosen ranges only, not universal tolerance or probability"
+  },
+  "comparison_V9": {
+    "mass_g": 395.6926012595046,
+    "center_of_mass_mm": [
+      -0.9335641386129734,
+      -0.003004150232113523,
+      24.383621361920305
+    ],
+    "solid_print_mass_g": 81.37131290326738,
+    "drive_axle_to_caster_mm": 60.8,
+    "minimum_quasistatic_support_margin_mm": 13.575082872890372,
+    "caster_static_load_fraction": 0.2478032214043919,
+    "ideal_forward_acceleration_to_lift_caster_m_s2": 6.0615170161322895,
+    "CG_height_reduction_mm": 0.17670771590578482
+  },
+  "limitations": [
+    "solid CAD PETG and assumed purchased masses; not weighed or sliced",
+    "quasi-static rigid-body calculation; no impact, tilt, compliance or friction model",
+    "tip acceleration is not a recommended driving limit; grip/sliding may limit first",
+    "regeneration, wheel PID and braking behavior not tested",
+    "caster friction and rocking must be checked at actual load",
+    "height sensitivity does not establish those components physically fit"
+  ]
+}

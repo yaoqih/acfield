@@ -1,0 +1,11 @@
+# Third-party notices
+
+Original ACField code, documentation and reference design files are distributed under Apache-2.0. Third-party material retains its original license.
+
+## AprilTag marker images
+
+Canonical tag36h11 images in `output/apriltags/source/` and `output/apriltags_90mm/source/` originate from [AprilRobotics/apriltag-imgs](https://github.com/AprilRobotics/apriltag-imgs). Printed PNG/PDF markers are derived from these images. The upstream BSD-2-Clause license is reproduced in [`third_party/apriltag-imgs-LICENSE`](third_party/apriltag-imgs-LICENSE). Generation manifests record source URLs and SHA-256 hashes.
+
+## Dependencies and board references
+
+Python, JavaScript, PlatformIO and CAD dependencies are installed separately and retain their respective licenses. Consult the dependency manifests and lockfiles. Waveshare General Driver for Robots is the reference controller board; vendor firmware, schematics and documentation are not redistributed here. The board name identifies compatibility. Mechanical models use simplified purchased-part envelopes. Supplier dimensions must be checked against actual components.

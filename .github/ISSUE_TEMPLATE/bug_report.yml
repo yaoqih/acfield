@@ -1,0 +1,19 @@
+name: Bug report
+description: Report a reproducible platform or firmware problem.
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Expected behavior and a minimal reproduction.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment and versions
+      description: Commit, OS, demo or hardware mode, firmware and hardware revision.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs and evidence
+      description: Relevant stop reasons. Remove credentials and private network details.

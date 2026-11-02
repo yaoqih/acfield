@@ -1,0 +1,110 @@
+{
+  "pdf": "output/pdf/apriltag36h11_8tags_A4.pdf",
+  "png_note": "PNG previews have no guaranteed physical print size; use the vector PDF at 100%.",
+  "tags": [
+    {
+      "family": "tag36h11",
+      "id": 0,
+      "role": "fixed",
+      "pdf_page": 1,
+      "black_edge_mm": 150,
+      "tagsize_m": 0.15,
+      "white_margin_each_side_mm": 18.75,
+      "outer_edge_with_white_margin_mm": 187.5,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00000.png",
+      "source_sha256": "48d811f770fc3595aaf5650a5fd8007843e7fece1f8fdcb94e0f113b4c9ed0c6",
+      "png_file": "tag36h11_id000_fixed.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 1,
+      "role": "fixed",
+      "pdf_page": 2,
+      "black_edge_mm": 150,
+      "tagsize_m": 0.15,
+      "white_margin_each_side_mm": 18.75,
+      "outer_edge_with_white_margin_mm": 187.5,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00001.png",
+      "source_sha256": "2b30c316b3f8f32d80ba4e83feee8471c41a04aeba75bf1a23f1cf9c990394ce",
+      "png_file": "tag36h11_id001_fixed.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 2,
+      "role": "fixed",
+      "pdf_page": 3,
+      "black_edge_mm": 150,
+      "tagsize_m": 0.15,
+      "white_margin_each_side_mm": 18.75,
+      "outer_edge_with_white_margin_mm": 187.5,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00002.png",
+      "source_sha256": "56c1561f55d075bc256cc5dddd44ca067d979095d9147f423b6672a4cf144957",
+      "png_file": "tag36h11_id002_fixed.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 3,
+      "role": "fixed",
+      "pdf_page": 4,
+      "black_edge_mm": 150,
+      "tagsize_m": 0.15,
+      "white_margin_each_side_mm": 18.75,
+      "outer_edge_with_white_margin_mm": 187.5,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00003.png",
+      "source_sha256": "1faf4f5388680a6f9f54f2c67d47570dd043aad67f206ca2f429d3a21d77ff94",
+      "png_file": "tag36h11_id003_fixed.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 10,
+      "role": "robot",
+      "pdf_page": 5,
+      "black_edge_mm": 120,
+      "tagsize_m": 0.12,
+      "white_margin_each_side_mm": 15.0,
+      "outer_edge_with_white_margin_mm": 150.0,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00010.png",
+      "source_sha256": "9eba490a1fc064b82c7d042d37d59b566da578180513ce6e091085a38575bb4f",
+      "png_file": "tag36h11_id010_robot.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 11,
+      "role": "robot",
+      "pdf_page": 6,
+      "black_edge_mm": 120,
+      "tagsize_m": 0.12,
+      "white_margin_each_side_mm": 15.0,
+      "outer_edge_with_white_margin_mm": 150.0,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00011.png",
+      "source_sha256": "07a87d5d4de3ed09a3485d71811742c0868d485e9b0be3bf858a978e30bbfbaf",
+      "png_file": "tag36h11_id011_robot.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 12,
+      "role": "robot",
+      "pdf_page": 7,
+      "black_edge_mm": 120,
+      "tagsize_m": 0.12,
+      "white_margin_each_side_mm": 15.0,
+      "outer_edge_with_white_margin_mm": 150.0,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00012.png",
+      "source_sha256": "72cabcd3f32c2e463e60cb350ca856a20eee28abbdd79906067c442c8fc25a34",
+      "png_file": "tag36h11_id012_robot.png"
+    },
+    {
+      "family": "tag36h11",
+      "id": 13,
+      "role": "robot",
+      "pdf_page": 8,
+      "black_edge_mm": 120,
+      "tagsize_m": 0.12,
+      "white_margin_each_side_mm": 15.0,
+      "outer_edge_with_white_margin_mm": 150.0,
+      "source_url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00013.png",
+      "source_sha256": "b65049e7805607f144e5ca50751712fcf276ea73351037c0d1a91d564a3cd12b",
+      "png_file": "tag36h11_id013_robot.png"
+    }
+  ]
+}

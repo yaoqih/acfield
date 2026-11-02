@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If ACField supports your research, please cite this repository and the commit or release used."
+type: software
+title: "ACField: An Open Multi-Robot Testbed for Multi-Agent Control"
+authors:
+  - name: "AClab — Algorithms and Collaboration Lab"
+repository-code: "https://github.com/yaoqih/acfield"
+url: "https://yaoqih.github.io/acfield/"
+license: Apache-2.0
+keywords:
+  - multi-robot systems
+  - multi-agent control
+  - cooperative robotics
+  - experimental testbed

@@ -1,0 +1,13 @@
+name: Research or feature proposal
+description: Describe a research workflow ACField could support.
+body:
+  - type: textarea
+    attributes:
+      label: Research workflow or problem
+      description: What experiment are you trying to run?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed behavior and tradeoffs
+      description: Timing, observations, actions and compatibility.

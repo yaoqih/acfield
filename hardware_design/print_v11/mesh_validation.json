@@ -1,0 +1,28 @@
+{
+  "chassis_130mm_rear_axle": {
+    "size_mm": [
+      130.0,
+      130.0,
+      9.0
+    ],
+    "volume_cm3": 45.72624069432592,
+    "solid_petg_mass_g": 58.07232568179392,
+    "watertight": true,
+    "positive_volume": true,
+    "connected_bodies": 1,
+    "triangles": 10332
+  },
+  "tag_plate_130mm": {
+    "size_mm": [
+      130.0,
+      130.0,
+      2.5999999046325684
+    ],
+    "volume_cm3": 20.206278811791304,
+    "solid_petg_mass_g": 25.661974090974958,
+    "watertight": true,
+    "positive_volume": true,
+    "connected_bodies": 1,
+    "triangles": 2524
+  }
+}
