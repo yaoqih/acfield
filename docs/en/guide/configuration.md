@@ -39,7 +39,7 @@ Running control and vision on the same computer simplifies initial integration. 
 
 Use the console or `GET/PUT /api/config`. Settings include arena size, identities, tag IDs, body outlines, control-point/tag offsets and velocity limits. All robots must be disarmed before saving. A save stops robots and replaces the control session.
 
-The server's `tag_size` is recorded metadata and does not update vision configuration. Set real tag sizes, mounting heights and heading corrections in `apriltag_live.json` and check that the modules agree. The reference hardware uses 90 mm black-border tags; synthetic-demo dimensions are not physical defaults.
+The server's `tag_size` is recorded metadata and does not update vision configuration. Set real tag sizes, mounting heights and heading corrections in `apriltag_live.json` and check that the modules agree. The reference uses a 104 mm black square and a 130 mm full-cover label including the white margin. Use size_m=0.104 in vision and record tag_size=0.104 in the server. Nominal height_m=0.0646 must be updated from the installed measurement. Historical or synthetic-demo dimensions are not physical defaults.
 
 The default body envelope is approximately 200 × 160 mm, a conservative initial value rather than a measured V11 outline. Include wheels, the tag and mounting offsets when measuring the full envelope.
 

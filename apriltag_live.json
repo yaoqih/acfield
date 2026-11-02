@@ -10,9 +10,9 @@
     "1": {"name": "场地 X 角", "role": "fixed", "size_m": 0.15, "height_m": 0, "world_xyz_m": [3, 0, 0]},
     "2": {"name": "场地对角", "role": "fixed", "size_m": 0.15, "height_m": 0, "world_xyz_m": [3, 3, 0]},
     "3": {"name": "场地 Y 角", "role": "fixed", "size_m": 0.15, "height_m": 0, "world_xyz_m": [0, 3, 0]},
-    "10": {"name": "追捕车 A", "role": "pursuer", "size_m": 0.12, "height_m": 0.12, "heading_offset_deg": 0},
-    "11": {"name": "追捕车 B", "role": "pursuer", "size_m": 0.12, "height_m": 0.12, "heading_offset_deg": 0},
-    "12": {"name": "追捕车 C", "role": "pursuer", "size_m": 0.12, "height_m": 0.12, "heading_offset_deg": 0},
-    "13": {"name": "逃逸车", "role": "evader", "size_m": 0.12, "height_m": 0.12, "heading_offset_deg": 0}
+    "10": {"name": "追捕车 A", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "11": {"name": "追捕车 B", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "12": {"name": "追捕车 C", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "13": {"name": "逃逸车", "role": "evader", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0}
   }
 }

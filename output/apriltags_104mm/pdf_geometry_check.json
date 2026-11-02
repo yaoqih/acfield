@@ -1,0 +1,122 @@
+[
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 1,
+    "id": 0,
+    "black_edge_mm": [
+      150.00001749999998,
+      150.00001749999998
+    ],
+    "outer_edge_mm": 187.5
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 2,
+    "id": 1,
+    "black_edge_mm": [
+      150.00001749999998,
+      150.00001749999998
+    ],
+    "outer_edge_mm": 187.5
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 3,
+    "id": 2,
+    "black_edge_mm": [
+      150.00001749999998,
+      150.00001749999998
+    ],
+    "outer_edge_mm": 187.5
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 4,
+    "id": 3,
+    "black_edge_mm": [
+      150.00001749999998,
+      150.00001749999998
+    ],
+    "outer_edge_mm": 187.5
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 5,
+    "id": 10,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 6,
+    "id": 11,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 7,
+    "id": 12,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_ground150_robot104_A4.pdf",
+    "page": 8,
+    "id": 13,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_robot104_4tags_A4.pdf",
+    "page": 1,
+    "id": 10,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_robot104_4tags_A4.pdf",
+    "page": 2,
+    "id": 11,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_robot104_4tags_A4.pdf",
+    "page": 3,
+    "id": 12,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  },
+  {
+    "pdf": "output/pdf/apriltag36h11_robot104_4tags_A4.pdf",
+    "page": 4,
+    "id": 13,
+    "black_edge_mm": [
+      103.99998249999997,
+      103.99998249999996
+    ],
+    "outer_edge_mm": 130.0
+  }
+]

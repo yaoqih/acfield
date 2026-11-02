@@ -12,7 +12,7 @@ class RobotConfig(Model):
     name: str = Field(min_length=1, max_length=40)
     tag_id: int = Field(ge=0, le=65535)
     color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
-    tag_size: float = Field(default=.12, gt=0, le=1)
+    tag_size: float = Field(default=.104, gt=0, le=1)
     length: float = Field(default=.20, gt=0, le=1)
     width: float = Field(default=.16, gt=0, le=1)
     body_offset_x: float = Field(default=0, ge=-1, le=1)

@@ -18,11 +18,30 @@ Open the printed URL, normally **http://127.0.0.1:5050**. Synthetic images check
 
 See [arena and camera setup](../hardware/arena) for equipment layout and camera coverage.
 
-Use `tag36h11`: ground IDs 0–3 and robot IDs 10–13. The [A4 print file](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot90_A4.pdf) contains 150 mm ground black borders and 90 mm robot black borders.
+Use `tag36h11`: ground IDs 0–3 and robot IDs 10–13. Download the [complete eight-page A4 print file](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot104_A4.pdf), or the [four-page robot-only file for IDs 10–13](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_robot104_4tags_A4.pdf). Ground black squares remain 150 mm; robot black squares are now 104 mm.
 
-Detection size means the outer black border, excluding the white margin. A 90 mm black border has an overall 112.5 mm size including white margin. Print at 100% actual size without fit-to-page, measure the PDF's 100 mm ruler and preserve the white margin.
+Detection size means the outer black border, excluding the white margin. Each robot label has a **104 × 104 mm** black square and a **13 mm** white margin on each side, giving a **130 × 130 mm** cut size. Print at 100% actual size without fit-to-page, check the 100 mm ruler and trim at the crop marks outside the white margin.
 
-Regeneration requires `Pillow` and `reportlab`, then `generate_apriltags.py`. Screenshots and displayed PNG dimensions do not establish physical print size.
+### Full-cover layout {#full-cover-layout}
+
+[![Full-cover ID 10 label: clean white margin, subtle ID and forward arrow inside the black ring](/images/robot-tag.png)](/images/robot-tag.png)
+
+The label fills the 130 mm cover without screw cutouts or screw avoidance. The ID uses approximately 5.7 pt type; the forward arrow and FRONT sit inside the opposite black border. Both use dark gray `#303030` close to the black background. Code cells, black-square edges and the white quiet zone remain intact. The arrow points to the canonical top edge. Align it with the robot's forward direction (+X); vision uses the same edge, so this installation uses `heading_offset_deg=0`.
+
+Public vision settings now use `size_m=0.104` and nominal `height_m=0.0646` for IDs 10–13. Measure the installed label height; existing local settings are not migrated automatically. Record the server's `tag_size` as `0.104` too.
+
+The digital artwork passes 408 checks across two detection backends, covering multiple scales, four rotations, perspective with light blur and rasterized print PDFs. Checks also verify black-square dimensions and the complete quiet zone. Test the installed label under the arena camera, including paper deformation and reflections around screws.
+
+Regenerate from the repository root:
+
+```bash
+python -m pip install -r requirements-print.txt
+python generate_apriltags.py --robot-pdf output/pdf/apriltag36h11_robot104_4tags_A4.pdf
+# Detection also needs requirements-apriltag.txt and Poppler's pdftoppm
+python verify_apriltags.py --write-reports
+```
+
+PNGs are previews; print from the vector PDFs. Historical 90 mm files remain available, while the synthetic demo keeps its own 120 mm artwork and dimensions.
 
 ## Calibration order {#calibration-order}
 

@@ -53,7 +53,7 @@ CFG = {
     'top_post_length_mm': 50., 'top_posts': '4 bought M3 female-female nylon',
     'post_AF_ASSUMED_mm': 6., 'post_threads': 'through M3 or usable depth >=7mm each end',
     'post_pitch_mm': 121., 'top_plate_thickness_mm': 2.6, 'tag_z_mm': 64.6,
-    'tag_black_border_mm': 90., 'tag_outer_white_mm': 112.5,
+    'tag_black_border_mm': 104., 'tag_outer_white_mm': 130.,
     'main_screws': '18 M3x8 nylon Phillips pan-head per robot; user confirmed nut thickness2.5mm',
     'M3_screw_head_d_drawing_mm': 5.6, 'M3_screw_head_h_drawing_mm': 2.5,
     'lower_post_washer_nominal_mm': [3., 6., .3],

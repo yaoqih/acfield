@@ -206,7 +206,7 @@ entries += [
     ['wheelL_ESTIMATE', 8, AX, 61, 17, box_izz(8, 34, 6.5)],
     ['wheelR_ESTIMATE', 8, AX, -61, 17, box_izz(8, 34, 6.5)],
     ['caster', 20, CY, 0, 8, 20*20.1**2/2],
-    ['paper_label_ESTIMATE', 2, 0, 0, 64.7, box_izz(2, 112.5, 112.5)],
+    ['paper_label_ESTIMATE', 2, 0, 0, 64.7, box_izz(2, C['tag_outer_white_mm'], C['tag_outer_white_mm'])],
     ['clips_ESTIMATE', 12, AX, 0, 18, box_izz(12, 25, 72)],
     ['wire_fuse_ESTIMATE', 30, 20, 0, 20, box_izz(30, 35, 20)],
     ['fasteners_strap_pad_ESTIMATE', 22, 0, 0, 25, box_izz(22, 70, 70)]

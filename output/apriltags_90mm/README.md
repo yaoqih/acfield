@@ -1,4 +1,6 @@
-# 当前紧凑车身的标签打印
+# 历史 90 mm 车顶标签打印
+
+当前整面方案已改为 [104 mm 黑框 / 130 mm 外尺寸](../apriltags_104mm/README.md)，本目录保留为历史备选。以下配置说明仅适用于旧尺寸。
 
 - 完整8页：`../pdf/apriltag36h11_ground150_robot90_A4.pdf`
 - 只补打4个车顶：`../pdf/apriltag36h11_robot90_4tags_A4.pdf`
@@ -10,11 +12,10 @@
 
 `manifest.json`记录编码来源和尺寸，`pdf_geometry_check.json`验证8页黑框的矢量几何。PDF已渲染检查；这不替代打印后尺量和相机远端识别测试。
 
-从项目根目录重新生成（默认采用当前150/90mm组合）：
+从项目根目录重新生成旧尺寸（会采用当前的小字标注样式）：
 
 ```sh
-python3 generate_apriltags.py
-python3 generate_apriltags.py --fixed-ids --output-dir output/apriltags_robot90 --pdf output/pdf/apriltag36h11_robot90_4tags_A4.pdf
+python3 generate_apriltags.py --robot-size-mm 90 --output-dir output/apriltags_90mm --pdf output/pdf/apriltag36h11_ground150_robot90_A4.pdf --robot-pdf output/pdf/apriltag36h11_robot90_4tags_A4.pdf
 ```
 
-旧 120 mm 图案仅作为合成检测测试素材保留在 output/apriltags/；本仓物理打印入口统一使用本页的 150/90 mm PDF。
+旧 120 mm 图案仅作为合成检测测试素材保留在 output/apriltags/；当前物理打印入口为新的 150/104 mm PDF。

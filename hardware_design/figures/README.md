@@ -27,4 +27,4 @@ python hardware_design/print_v11/audit.py
 python hardware_design/print_v11/render.py
 ```
 
-Tag textures come from the repository’s canonical tag36h11 images; see `THIRD_PARTY_NOTICES.md`. No vendor product photographs are used. Review original-size figures and desktop/mobile docs after edits.
+Tag textures use the full-cover labels in `output/apriltags_104mm/`, derived from official tag36h11 images with subtle ID/FRONT marks inside the black ring. The texture fills the 130 mm cover and FRONT points toward chassis +X. See `THIRD_PARTY_NOTICES.md`. No vendor product photographs are used. Review original-size figures and desktop/mobile docs after edits.

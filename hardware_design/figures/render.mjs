@@ -10,6 +10,7 @@ const out = join(root, 'docs/public/images')
 const cache = join(root, 'hardware_design/figures/.cache')
 await import('./arena.mjs')
 await mkdir(cache, { recursive: true })
+await writeFile(join(out, 'robot-tag.png'), await readFile(join(root, 'output/apriltags_104mm/tag36h11_id010_robot.png')))
 const types = { '.html': 'text/html', '.mjs': 'text/javascript', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.glb': 'model/gltf-binary' }
 const server = createServer(async (req, res) => {
   try {

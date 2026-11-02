@@ -22,7 +22,7 @@ Click a figure for its original size. Download the [exploded PNG](/images/explod
 | Wheel diameter / track | 34 / 122 mm | Measure effective values before control |
 | Drive axle | 16 mm behind geometric centre | Control point is the axle midpoint |
 | Robot-tag surface height | Approximately 64.6 mm | Measure after assembly |
-| Black border / including white margin | 90 / 112.5 mm | Preserve the margin |
+| Black border / including white margin | 104 / 130 mm | Full cover, no screw cutouts; preserve the margin |
 | Printed components | Chassis + tag board, two parts | Historical modifiers/packages excluded |
 
 STLs, parameters and build/audit sources are in [hardware_design/print_v11](https://github.com/yaoqih/acfield/tree/main/hardware_design/print_v11). Both parts default to PETG, 0.4 mm nozzle, 0.2 mm layers, four walls, five top/bottom layers and 40% Gyroid/Cubic infill. Actual material use, supports and strength depend on slicing and first-article checks.
@@ -36,7 +36,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 | Ground contact | 34 mm wheels, CY12B ball caster | 2 + 1 |
 | Power | 3S battery, fused harness, power switch | Per wiring plan |
 | Structure | Two prints, 25/50 mm M3 standoffs and fasteners | See manufacturing list |
-| Tag | tag36h11, 90 mm black border | 1 |
+| Tag | tag36h11, 104 mm black border | 1 |
 | Shared equipment | Camera/lens/mount, router, computer, charging equipment | Per arena |
 
 CSV files retain design-time material and price references. They are not complete current quotations and omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.

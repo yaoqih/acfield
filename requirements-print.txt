@@ -1,0 +1,4 @@
+# Printable vector labels, shared-font PNG previews and PDF geometry checks.
+Pillow>=10
+reportlab>=4
+pypdf>=5

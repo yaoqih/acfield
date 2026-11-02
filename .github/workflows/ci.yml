@@ -58,9 +58,16 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-apriltag.txt
-      - run: python -m pip install -r requirements-apriltag.txt pytest
+          cache-dependency-path: |
+            requirements-apriltag.txt
+            requirements-print.txt
+      - run: python -m pip install -r requirements-apriltag.txt -r requirements-print.txt pytest
       - run: python -m pytest -q tests/test_apriltag_live.py
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Regenerate the physical label artwork
+        run: python generate_apriltags.py --robot-pdf output/pdf/apriltag36h11_robot104_4tags_A4.pdf
+      - name: Physical label dimensions and both detection backends
+        run: python verify_apriltags.py
   frontend:
     name: Console typecheck and build
     runs-on: ubuntu-latest

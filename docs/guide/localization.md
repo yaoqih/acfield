@@ -18,11 +18,30 @@ python3 -m venv .venv
 
 公共设备布局与相机覆盖关系见[场地与相机布置](../hardware/arena)。
 
-使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。仓库提供地面黑框 150 mm、车顶黑框 90 mm 的 [A4 打印文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot90_A4.pdf)。
+使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。下载[完整 8 页 A4 打印文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot104_A4.pdf)，或[仅车顶 ID 10–13 的 4 页文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_robot104_4tags_A4.pdf)。地面黑框仍为 150 mm，车顶黑框改为 104 mm。
 
-检测尺寸指黑色外框，不包含白边。90 mm 黑框加白边的外尺寸为 112.5 mm。100% 实际大小打印，禁用适应纸张，尺量 PDF 中的 100 mm 标尺，并保留完整白边。
+检测尺寸指黑色外框，不包含白边。车顶黑框 **104 × 104 mm**，四周各保留 **13 mm** 白边，完整裁切尺寸正好是 **130 × 130 mm**。100% 实际大小打印，禁用适应纸张，尺量 PDF 中的 100 mm 标尺；沿白边外侧的裁切标记裁切。
 
-重新生成需要另外安装 `Pillow` 与 `reportlab`，然后运行 `generate_apriltags.py`。不要把屏幕截图或 PNG 显示尺寸当作物理打印尺寸。
+### 车顶整面布局 {#full-cover-layout}
+
+[![整面车顶标签 ID 10：白边内无文字，黑框内含低对比度 ID 和前向箭头](/images/robot-tag.png)](/images/robot-tag.png)
+
+标签覆盖 130 mm 顶盖整面，不为螺丝缩小或开缺口。ID 使用约 5.7 pt 小字，前向箭头及 FRONT 放在另一侧黑框内部，颜色为接近黑底的深灰 `#303030`。编码单元、黑框边缘和白色静区保持完整。箭头朝图案的标准上边，安装时对准车体前方（+X）；视觉朝向采用同一边，正常安装的 `heading_offset_deg=0`。
+
+当前公开视觉配置中，车辆 ID 10–13 的 `size_m=0.104`，名义 `height_m=0.0646`。实际贴纸高度仍需装车后测量；已有本地配置不会自动迁移。服务器的 `tag_size` 也应记录为 `0.104`。
+
+数字图稿通过两种检测后端共 408 次检查，覆盖多尺度、四个旋转方向、透视与轻微模糊，以及 PDF 实际栅格化结果；同时核对了黑框尺寸与完整白边。这不代替贴装后在全场相机下的实测，尤其是螺丝处纸面起伏和反光。
+
+从仓库根目录重新生成：
+
+```bash
+python -m pip install -r requirements-print.txt
+python generate_apriltags.py --robot-pdf output/pdf/apriltag36h11_robot104_4tags_A4.pdf
+# 检测还需 requirements-apriltag.txt 与 Poppler 的 pdftoppm
+python verify_apriltags.py --write-reports
+```
+
+PNG 用于预览，打印请使用矢量 PDF。旧 90 mm 文件保留为历史备选，合成演示仍使用自己的 120 mm 素材与尺寸。
 
 ## 标定顺序 {#calibration-order}
 
