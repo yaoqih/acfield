@@ -5,6 +5,7 @@ Questions and issues are welcome in Chinese or English. For substantial features
 ## Development
 
 - Backend: `cd robot_server && uv sync --extra test && uv run pytest -q`.
+- Python SDK: from the root, install `python -m pip install -e './robot_server[test]' -e './sdk/python[test]'`, then run `python -m pytest sdk/python/tests -q`. Keep API and SDK protocol changes in one pull request.
 - Console: `npm --prefix robot_server/frontend ci` then `npm --prefix robot_server/frontend run build`.
 - Vision: install `requirements-apriltag.txt`; run `python -m pytest -q tests/test_apriltag_live.py` from the root.
 - Firmware: install PlatformIO and build the four environments.

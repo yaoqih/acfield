@@ -16,6 +16,12 @@ npm --prefix frontend run build
 
 Open http://127.0.0.1:8000. Reuse `./run.sh` after the frontend is built. Configuration is created in `data/config.sqlite3` and runs are recorded in `data/runs/` by default; neither belongs in version control.
 
+`./run.sh` and `python -m backend.app` print console/API addresses and the detected
+host IPv4. To connect from another computer's Python SDK, start with
+`ROBOT_HOST=0.0.0.0 ./run.sh` and use the printed LAN URL. The default listener is
+local only. Addresses come from hostname resolution and the routing table; choose
+the address reachable on your experiment network, especially when using a VPN.
+
 ## Hardware mode
 
 Complete firmware and camera calibration before using hardware mode:

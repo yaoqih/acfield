@@ -15,6 +15,16 @@
 | `ROBOT_DB` | `robot_server/data/config.sqlite3` | 持久配置 |
 | `ROBOT_LOG_DIR` | 数据库旁的 `runs/` | 运行日志目录 |
 
+## 启动地址与局域网访问
+
+通过 `./run.sh` 或 `python -m backend.app` 启动时，终端会显示控制台地址、API 文档地址和检测到的主机 IPv4。默认只监听本机；另一台电脑需要连接 SDK 时，在 `robot_server/` 运行：
+
+```bash
+ROBOT_HOST=0.0.0.0 ./run.sh
+```
+
+然后把输出的 `LAN / SDK` 地址传给 `Client("http://主机IP:8000")`。IPv4 来自主机名解析和路由表检测，可能包含 VPN 地址；选择客户端实际可达的实验网络地址。打印检测 IP 不会自动修改监听地址。
+
 ## 真实模式示例
 
 完成硬件与相机标定后，在 `robot_server/` 运行：

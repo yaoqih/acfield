@@ -2,11 +2,14 @@
 
 当前最短接入路径是：读取状态 → 逐车解锁并确认 → 提交联合速度 → 持续检查状态 → 结束时停车锁定。还没有需要学习的策略插件框架。
 
+Python 算法推荐通过 [Python SDK](./python-sdk) 接入：`Client` 负责 HTTP 与类型解析，`client.control(...)` 负责等待解锁、检查控制权和退出释放。SDK 可独立安装到算法环境，不需要导入服务端模块。
+
 ## 一个有边界的例子
 
 先按[快速开始](./quickstart)运行演示服务，再在仓库根目录运行：
 
 ```bash
+uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
 robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 
 # 两车以同一批请求提交动作

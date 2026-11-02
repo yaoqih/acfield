@@ -22,6 +22,7 @@ Open **http://127.0.0.1:8000**. The default demo does not open the device UDP tr
 From the repository root, run a bounded example while the server remains running:
 
 ```bash
+uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
 robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
@@ -37,7 +38,7 @@ We distinguish requested actions, platform-modified actions, acknowledgments and
 
 This is a **development preview**. Software, protocol and firmware checks are automated. The V11 reference design includes editable sources and nominal geometry reports; physical assembly, calibration, timing and stopping performance still require measurement.
 
-The demo is a lightweight interface test, not a validated training simulator or benchmark. A stable SDK, episode management, observation isolation and standardized tasks are future work. See the [status page](../guide/status) and [roadmap](../community/roadmap).
+The demo is a lightweight interface test, not a validated training simulator or benchmark. The first [Python SDK](../guide/python-sdk) provides typed snapshots, explicit joint velocities and scoped control sessions. SDK stability across external experiments, episode management, observation isolation and standardized tasks remain future work. See the [status page](../guide/status) and [roadmap](../community/roadmap).
 
 ## Explore
 

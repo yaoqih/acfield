@@ -166,6 +166,11 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         r = robot(ident)
         return {"armed": r.armed, "pending": bool(r.pending and r.pending["action"] == "arm")}
 
+    @app.post("/api/robots/{ident}/release")
+    async def release(ident: str, x_control_id: str = Header(min_length=1, max_length=64)):
+        # Conditional cleanup must not race a new controller's acquisition.
+        return {"released": app.state.fleet.release(robot(ident), x_control_id)}
+
     @app.post("/api/robots/{ident}/command")
     async def command(ident: str, body: Command, x_control_id: str | None = Header(default=None, min_length=1, max_length=64)):
         if (body.v or body.omega) and not x_control_id:
@@ -248,5 +253,8 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app:app", host=os.getenv("ROBOT_HOST", "127.0.0.1"),
-                port=int(os.getenv("ROBOT_PORT", "8000")), workers=1)
+    from .startup import startup_summary
+    host = os.getenv("ROBOT_HOST", "127.0.0.1")
+    port = int(os.getenv("ROBOT_PORT", "8000"))
+    print(startup_summary(host, port, os.getenv("ROBOT_MODE", "demo")), flush=True)
+    uvicorn.run("backend.app:app", host=host, port=port, workers=1)

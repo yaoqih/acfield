@@ -27,6 +27,7 @@ Open **http://127.0.0.1:8000**. Default demo mode does not open the device UDP t
 With the server still running, execute a bounded example from the repository root:
 
 ```bash
+uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
 robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
@@ -38,7 +39,8 @@ robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 | AprilTag localization | Camera inputs, world calibration, provenance and age reporting | [Localization guide](https://yaoqih.github.io/acfield/guide/localization) |
 | ESP32 firmware | Wheel-speed control, finite command lifetimes, arming and fault handling | [Firmware](esp32_software/firmware/README.md) |
 | Reference hardware | Two-part V11 chassis, editable sources and nominal geometry reports | [Hardware](hardware_design/README.md) |
-| Examples and recording | Bounded HTTP control example and JSONL event recording | [Examples](examples/README.md) |
+| Python SDK | Independently installable typed client, joint actions and scoped ownership | [SDK](sdk/python/README.md) |
+| Examples and recording | Bounded SDK control example and JSONL event recording | [Examples](examples/README.md) |
 | Design documentation | Rationale, tradeoffs, research validity and a staged roadmap | [Design](https://yaoqih.github.io/acfield/design/philosophy) |
 
 <p align="center"><img src="docs/public/images/console.png" width="960" alt="ACField local experiment console" /></p>
@@ -83,13 +85,13 @@ npm run docs:build
 uv run --extra test pytest -q
 ```
 
-CI checks the backend, actual firmware parser contract, localization, frontend types/build and four firmware environments. Contract tests require a host C++ compiler and PlatformIO-installed ArduinoJson; see [CONTRIBUTING.md](CONTRIBUTING.md).
+CI checks the backend, actual firmware parser contract, Python SDK on Python 3.11–3.13, localization, frontend types/build and four firmware environments. Contract tests require a host C++ compiler and PlatformIO-installed ArduinoJson; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Documentation is built and deployed through [GitHub Actions](.github/workflows/docs.yml). Configure Pages to use **GitHub Actions**; subsequent main commits publish automatically. PRs build without deploying. See the [deployment guide](https://yaoqih.github.io/acfield/community/documentation).
 
 ## Roadmap, contribution and citation
 
-Next milestones are measured reference hardware, a small stable SDK and one complete physical example. Fixed-step simulation, tasks and episode/evaluation tooling follow concrete research needs. These are planned capabilities. See the [roadmap](https://yaoqih.github.io/acfield/community/roadmap).
+The first Python SDK is available with typed state, joint actions and managed control sessions; see the [SDK guide](https://yaoqih.github.io/acfield/guide/python-sdk). Next milestones are measured reference hardware, SDK stability across external experiments and one complete physical example. Fixed-step simulation, tasks and episode/evaluation tooling follow concrete research needs. See the [roadmap](https://yaoqih.github.io/acfield/community/roadmap).
 
 Questions, reproducibility reports and contributions are welcome in Chinese or English. Cite this repository and the commit or release used; GitHub provides a citation through [CITATION.cff](CITATION.cff). No paper or DOI is currently claimed.
 

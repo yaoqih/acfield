@@ -24,6 +24,7 @@ npm --prefix frontend run build
 打开 http://127.0.0.1:8000。点击小车、解锁并按住方向按钮。全局停止会锁定所有车，释放后需重新解锁。服务保持运行时，从仓库根目录执行：
 
 ```bash
+uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
 robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
@@ -32,6 +33,7 @@ robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 | 内容 | 入口 |
 | --- | --- |
 | 开始使用、配置、算法接入 | [使用指南](https://yaoqih.github.io/acfield/guide/quickstart) |
+| 独立安装的 Python 客户端、联合动作与控制会话 | [Python SDK](https://yaoqih.github.io/acfield/guide/python-sdk) |
 | 设计理念、架构与选型取舍 | [设计文档](https://yaoqih.github.io/acfield/design/philosophy) |
 | 观测、通信、保护干预与实验有效性 | [研究边界](https://yaoqih.github.io/acfield/design/research) |
 | 固件与首车调试 | [固件说明](esp32_software/firmware/README.md) |

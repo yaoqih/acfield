@@ -52,10 +52,13 @@ curl http://127.0.0.1:8000/api/state
 
 ```bash
 # 在仓库根目录；控制服务保持运行
+uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
 robot_server/.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
 例子默认拒绝硬件模式；实车操作必须显式添加 `--hardware`，并先完成[首车验收](../hardware/bringup)。
+
+没有 uv 时，用当前 Python 环境执行 `python -m pip install -e ./sdk/python`，然后用同一环境运行示例。独立算法环境的安装与完整接口见 [Python SDK](./python-sdk)。
 
 ## 接下来
 

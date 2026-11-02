@@ -11,6 +11,7 @@
 | `GET /api/config` | 当前持久配置 |
 | `PUT /api/config` | 校验并保存；要求全部车辆锁定 |
 | `POST /api/robots/{id}/arm` | `{"enabled":true}` 解锁；`false` 锁定 |
+| `POST /api/robots/{id}/release` | 控制 ID 仍匹配时停车锁定，返回 `released` |
 | `POST /api/robots/{id}/command` | 单车速度命令 |
 | `POST /api/commands` | 统一校验一批多车速度 |
 | `POST /api/stop` | 全局停车并锁定 |
@@ -30,6 +31,8 @@
 上例用于 `/api/commands`。单车端点直接接收内部的速度对象。模式中 `v` 允许 −1 到 1、`omega` 允许 −6 到 6，实际命令还按车辆配置与设备限制取更小值；这些 schema 上限不是推荐实车速度。TTL 允许 100–500 ms。
 
 解锁和非零动作必须带 `X-Control-ID`。保持与解锁时一致的 ID。零速度请求允许停车，但不会自动解除锁定或全局停止。
+
+`release` 也必须带 `X-Control-ID`。服务端原子地检查当前控制源并执行停车锁定；不匹配或已释放返回 `{"released":false}`，不会影响新控制源。它用于客户端退出清理；显式 `arm` 的 `enabled=false` 和全局停止仍可停止其他控制源的车辆。Python 程序优先使用 [SDK](../guide/python-sdk) 的控制会话。
 
 ## 响应与状态
 

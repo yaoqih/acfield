@@ -115,6 +115,13 @@ class Fleet:
             r.reason = "等待车端解锁确认"
         self.event(f"{r.config.name} · 请求解锁")
 
+    def release(self, r, owner):
+        """Check and release in one event-loop operation; never stop a new owner."""
+        if r.owner != owner:
+            return False
+        self.stop(r, "控制源已释放 · 已锁定")
+        return True
+
     def packet(self, r, v, omega, ttl_ms, action="drive"):
         r.seq += 1
         packet = {"version": 1, "type": "command", "session": self.session,

@@ -38,6 +38,7 @@ export default defineConfig({
       ] },
       { text: '使用与开发', items: [
         { text: '运行与配置', link: '/guide/configuration' },
+        { text: 'Python SDK', link: '/guide/python-sdk' },
         { text: '接入控制算法', link: '/guide/control' },
         { text: '视觉定位与标定', link: '/guide/localization' },
         { text: '记录与复现', link: '/guide/recording' },
