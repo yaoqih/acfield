@@ -240,8 +240,9 @@ for x,y in CASTER_HOLES:
     n = diff(n,[cyl(3,5,[x,y,nz])])
     place(f'caster_nut_{y}_ENVELOPE',n)
 top = plate.copy()
-top.apply_transform(tm.transformations.rotation_matrix(math.pi, [1, 0, 0]))
-place('top_board', top, [0, 0, 64.6], 'print')
+# The continuous tag face is the high-Z side of the printable plate. Keep
+# ribs below it; flipping the plate puts the ribs above the tag surface.
+place('top_board', top, [0, 0, CFG['tag_z_mm']-CFG['top_plate_thickness_mm']], 'print')
 scene = tm.Scene()
 for name, m, kind in assembly:
     m.visual.face_colors = [60, 130, 150, 255] if kind == 'print' else [170, 172, 165, 255]

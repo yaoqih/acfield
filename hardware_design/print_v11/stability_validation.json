@@ -3,8 +3,8 @@
   "mass_g": 398.0555865704787,
   "center_of_mass_mm": [
     -0.6627780444443164,
-    -0.002986316191634403,
-    24.20691364601452
+    -0.0029863161916345456,
+    24.282335446981733
   ],
   "yaw_inertia_estimate_kg_m2": 0.0006253443485533809,
   "solid_print_mass_g": 83.73429821424148,
@@ -21,8 +21,8 @@
       "top_board",
       25.661972532447564,
       0.0,
-      1.4403360705540623e-15,
-      62.715046751700264,
+      -1.4403360705540623e-15,
+      63.88495172242085,
       74394.64972446463
     ],
     [
@@ -184,20 +184,20 @@
     "left": 0.3738470519691884,
     "right": 0.37389600797232997
   },
-  "minimum_quasistatic_support_margin_mm": 13.856676778429414,
+  "minimum_quasistatic_support_margin_mm": 13.852063824241817,
   "scenarios": [
     {
       "ax_m_s2": -0.6,
       "ay_m_s2": -0.6,
       "effective_xy_mm": [
-        0.8177671326819537,
-        1.4775588609346357
+        0.8223800868695509,
+        1.4821718151222327
       ],
-      "support_margin_mm": 16.817767132681954,
+      "support_margin_mm": 16.82238008686955,
       "normal_load_fractions": {
-        "caster": 0.27660801205069,
-        "left": 0.37380713217903727,
-        "right": 0.34958485577027276
+        "caster": 0.2766838830077229,
+        "left": 0.37380700780041914,
+        "right": 0.3495091091918579
       },
       "inside_support_triangle": true
     },
@@ -205,14 +205,14 @@
       "ax_m_s2": -0.6,
       "ay_m_s2": -0.3,
       "effective_xy_mm": [
-        0.8177671326819537,
-        0.7372862723715007
+        0.8223800868695509,
+        0.7395927494652991
       ],
-      "support_margin_mm": 16.817767132681954,
+      "support_margin_mm": 16.82238008686955,
       "normal_load_fractions": {
-        "caster": 0.27660801205069,
-        "left": 0.36773932407606075,
-        "right": 0.3556526638732493
+        "caster": 0.2766838830077229,
+        "left": 0.3677202941474934,
+        "right": 0.35559582284478364
       },
       "inside_support_triangle": true
     },
@@ -220,14 +220,14 @@
       "ax_m_s2": -0.6,
       "ay_m_s2": 0,
       "effective_xy_mm": [
-        0.8177671326819537,
-        -0.002986316191634403
+        0.8223800868695509,
+        -0.0029863161916345456
       ],
-      "support_margin_mm": 16.817767132681954,
+      "support_margin_mm": 16.82238008686955,
       "normal_load_fractions": {
-        "caster": 0.27660801205069,
-        "left": 0.3616715159730842,
-        "right": 0.3617204719762258
+        "caster": 0.2766838830077229,
+        "left": 0.36163358049456773,
+        "right": 0.3616825364977093
       },
       "inside_support_triangle": true
     },
@@ -235,14 +235,14 @@
       "ax_m_s2": -0.6,
       "ay_m_s2": 0.3,
       "effective_xy_mm": [
-        0.8177671326819537,
-        -0.7432589047547694
+        0.8223800868695509,
+        -0.7455653818485682
       ],
-      "support_margin_mm": 16.817767132681954,
+      "support_margin_mm": 16.82238008686955,
       "normal_load_fractions": {
-        "caster": 0.27660801205069,
-        "left": 0.3556037078701077,
-        "right": 0.36778828007920233
+        "caster": 0.2766838830077229,
+        "left": 0.35554686684164205,
+        "right": 0.367769250150635
       },
       "inside_support_triangle": true
     },
@@ -250,14 +250,14 @@
       "ax_m_s2": -0.6,
       "ay_m_s2": 0.6,
       "effective_xy_mm": [
-        0.8177671326819537,
-        -1.4835314933179045
+        0.8223800868695509,
+        -1.488144447505502
       ],
-      "support_margin_mm": 16.817767132681954,
+      "support_margin_mm": 16.82238008686955,
       "normal_load_fractions": {
-        "caster": 0.27660801205069,
-        "left": 0.34953589976713123,
-        "right": 0.3738560881821788
+        "caster": 0.2766838830077229,
+        "left": 0.34946015318871637,
+        "right": 0.3738559638035607
       },
       "inside_support_triangle": true
     },
@@ -265,14 +265,14 @@
       "ax_m_s2": -0.3,
       "ay_m_s2": -0.6,
       "effective_xy_mm": [
-        0.07749454411881862,
-        1.4775588609346357
+        0.07980102121261723,
+        1.4821718151222327
       ],
-      "support_margin_mm": 16.077494544118817,
+      "support_margin_mm": 16.079801021212617,
       "normal_load_fractions": {
-        "caster": 0.2644324760545858,
-        "left": 0.3798949001770894,
-        "right": 0.35567262376832487
+        "caster": 0.26447041153310225,
+        "left": 0.3799137435377295,
+        "right": 0.35561584492916826
       },
       "inside_support_triangle": true
     },
@@ -280,14 +280,14 @@
       "ax_m_s2": -0.3,
       "ay_m_s2": -0.3,
       "effective_xy_mm": [
-        0.07749454411881862,
-        0.7372862723715007
+        0.07980102121261723,
+        0.7395927494652991
       ],
-      "support_margin_mm": 16.077494544118817,
+      "support_margin_mm": 16.079801021212617,
       "normal_load_fractions": {
-        "caster": 0.2644324760545858,
-        "left": 0.37382709207411285,
-        "right": 0.3617404318713014
+        "caster": 0.26447041153310225,
+        "left": 0.37382702988480376,
+        "right": 0.361702558582094
       },
       "inside_support_triangle": true
     },
@@ -295,14 +295,14 @@
       "ax_m_s2": -0.3,
       "ay_m_s2": 0,
       "effective_xy_mm": [
-        0.07749454411881862,
-        -0.002986316191634403
+        0.07980102121261723,
+        -0.0029863161916345456
       ],
-      "support_margin_mm": 16.077494544118817,
+      "support_margin_mm": 16.079801021212617,
       "normal_load_fractions": {
-        "caster": 0.2644324760545858,
-        "left": 0.36775928397113633,
-        "right": 0.3678082399742779
+        "caster": 0.26447041153310225,
+        "left": 0.3677403162318781,
+        "right": 0.36778927223501967
       },
       "inside_support_triangle": true
     },
@@ -310,14 +310,14 @@
       "ax_m_s2": -0.3,
       "ay_m_s2": 0.3,
       "effective_xy_mm": [
-        0.07749454411881862,
-        -0.7432589047547694
+        0.07980102121261723,
+        -0.7455653818485682
       ],
-      "support_margin_mm": 16.077494544118817,
+      "support_margin_mm": 16.079801021212617,
       "normal_load_fractions": {
-        "caster": 0.2644324760545858,
-        "left": 0.3616914758681598,
-        "right": 0.37387604807725444
+        "caster": 0.26447041153310225,
+        "left": 0.3616536025789524,
+        "right": 0.37387598588794535
       },
       "inside_support_triangle": true
     },
@@ -325,14 +325,14 @@
       "ax_m_s2": -0.3,
       "ay_m_s2": 0.6,
       "effective_xy_mm": [
-        0.07749454411881862,
-        -1.4835314933179045
+        0.07980102121261723,
+        -1.488144447505502
       ],
-      "support_margin_mm": 16.077494544118817,
+      "support_margin_mm": 16.079801021212617,
       "normal_load_fractions": {
-        "caster": 0.2644324760545858,
-        "left": 0.35562366776518334,
-        "right": 0.3799438561802309
+        "caster": 0.26447041153310225,
+        "left": 0.3555668889260267,
+        "right": 0.37996269954087103
       },
       "inside_support_triangle": true
     },
@@ -341,13 +341,13 @@
       "ay_m_s2": -0.6,
       "effective_xy_mm": [
         -0.6627780444443164,
-        1.4775588609346357
+        1.4821718151222327
       ],
       "support_margin_mm": 15.337221955555684,
       "normal_load_fractions": {
         "caster": 0.25225694005848165,
-        "left": 0.38598266817514143,
-        "right": 0.3617603917663769
+        "left": 0.3860204792750398,
+        "right": 0.36172258066647855
       },
       "inside_support_triangle": true
     },
@@ -356,13 +356,13 @@
       "ay_m_s2": -0.3,
       "effective_xy_mm": [
         -0.6627780444443164,
-        0.7372862723715007
+        0.7395927494652991
       ],
       "support_margin_mm": 15.337221955555684,
       "normal_load_fractions": {
         "caster": 0.25225694005848165,
-        "left": 0.3799148600721649,
-        "right": 0.36782819986935344
+        "left": 0.37993376562211406,
+        "right": 0.3678092943194043
       },
       "inside_support_triangle": true
     },
@@ -371,7 +371,7 @@
       "ay_m_s2": 0,
       "effective_xy_mm": [
         -0.6627780444443164,
-        -0.002986316191634403
+        -0.0029863161916345456
       ],
       "support_margin_mm": 15.337221955555684,
       "normal_load_fractions": {
@@ -386,13 +386,13 @@
       "ay_m_s2": 0.3,
       "effective_xy_mm": [
         -0.6627780444443164,
-        -0.7432589047547694
+        -0.7455653818485682
       ],
       "support_margin_mm": 15.337221955555684,
       "normal_load_fractions": {
         "caster": 0.25225694005848165,
-        "left": 0.36777924386621186,
-        "right": 0.3799638160753065
+        "left": 0.3677603383162627,
+        "right": 0.37998272162525565
       },
       "inside_support_triangle": true
     },
@@ -401,13 +401,13 @@
       "ay_m_s2": 0.6,
       "effective_xy_mm": [
         -0.6627780444443164,
-        -1.4835314933179045
+        -1.488144447505502
       ],
       "support_margin_mm": 15.337221955555684,
       "normal_load_fractions": {
         "caster": 0.25225694005848165,
-        "left": 0.3617114357632354,
-        "right": 0.38603162417828296
+        "left": 0.361673624663337,
+        "right": 0.3860694352781813
       },
       "inside_support_triangle": true
     },
@@ -415,14 +415,14 @@
       "ax_m_s2": 0.3,
       "ay_m_s2": -0.6,
       "effective_xy_mm": [
-        -1.4030506330074515,
-        1.4775588609346357
+        -1.40535711010125,
+        1.4821718151222327
       ],
-      "support_margin_mm": 14.596949366992549,
+      "support_margin_mm": 14.59464288989875,
       "normal_load_fractions": {
-        "caster": 0.24008140406237746,
-        "left": 0.39207043617319354,
-        "right": 0.36784815976442903
+        "caster": 0.24004346858386105,
+        "left": 0.3921272150123501,
+        "right": 0.36782931640378885
       },
       "inside_support_triangle": true
     },
@@ -430,14 +430,14 @@
       "ax_m_s2": 0.3,
       "ay_m_s2": -0.3,
       "effective_xy_mm": [
-        -1.4030506330074515,
-        0.7372862723715007
+        -1.40535711010125,
+        0.7395927494652991
       ],
-      "support_margin_mm": 14.596949366992549,
+      "support_margin_mm": 14.59464288989875,
       "normal_load_fractions": {
-        "caster": 0.24008140406237746,
-        "left": 0.386002628070217,
-        "right": 0.37391596786740555
+        "caster": 0.24004346858386105,
+        "left": 0.38604050135942436,
+        "right": 0.3739160300567146
       },
       "inside_support_triangle": true
     },
@@ -445,14 +445,14 @@
       "ax_m_s2": 0.3,
       "ay_m_s2": 0,
       "effective_xy_mm": [
-        -1.4030506330074515,
-        -0.002986316191634403
+        -1.40535711010125,
+        -0.0029863161916345456
       ],
-      "support_margin_mm": 14.596949366992549,
+      "support_margin_mm": 14.59464288989875,
       "normal_load_fractions": {
-        "caster": 0.24008140406237746,
-        "left": 0.3799348199672405,
-        "right": 0.3799837759703821
+        "caster": 0.24004346858386105,
+        "left": 0.3799537877064987,
+        "right": 0.38000274370964027
       },
       "inside_support_triangle": true
     },
@@ -460,14 +460,14 @@
       "ax_m_s2": 0.3,
       "ay_m_s2": 0.3,
       "effective_xy_mm": [
-        -1.4030506330074515,
-        -0.7432589047547694
+        -1.40535711010125,
+        -0.7455653818485682
       ],
-      "support_margin_mm": 14.596949366992549,
+      "support_margin_mm": 14.59464288989875,
       "normal_load_fractions": {
-        "caster": 0.24008140406237746,
-        "left": 0.37386701186426397,
-        "right": 0.3860515840733586
+        "caster": 0.24004346858386105,
+        "left": 0.373867074053573,
+        "right": 0.38608945736256595
       },
       "inside_support_triangle": true
     },
@@ -475,14 +475,14 @@
       "ax_m_s2": 0.3,
       "ay_m_s2": 0.6,
       "effective_xy_mm": [
-        -1.4030506330074515,
-        -1.4835314933179045
+        -1.40535711010125,
+        -1.488144447505502
       ],
-      "support_margin_mm": 14.596949366992549,
+      "support_margin_mm": 14.59464288989875,
       "normal_load_fractions": {
-        "caster": 0.24008140406237746,
-        "left": 0.3677992037612875,
-        "right": 0.39211939217633507
+        "caster": 0.24004346858386105,
+        "left": 0.3677803604006473,
+        "right": 0.3921761710154916
       },
       "inside_support_triangle": true
     },
@@ -490,14 +490,14 @@
       "ax_m_s2": 0.6,
       "ay_m_s2": -0.6,
       "effective_xy_mm": [
-        -2.1433232215705864,
-        1.4775588609346357
+        -2.1479361757581836,
+        1.4821718151222327
       ],
-      "support_margin_mm": 13.856676778429414,
+      "support_margin_mm": 13.852063824241817,
       "normal_load_fractions": {
-        "caster": 0.22790586806627325,
-        "left": 0.39815820417124564,
-        "right": 0.37393592776248114
+        "caster": 0.22782999710924043,
+        "left": 0.3982339507496604,
+        "right": 0.37393605214109915
       },
       "inside_support_triangle": true
     },
@@ -505,14 +505,14 @@
       "ax_m_s2": 0.6,
       "ay_m_s2": -0.3,
       "effective_xy_mm": [
-        -2.1433232215705864,
-        0.7372862723715007
+        -2.1479361757581836,
+        0.7395927494652991
       ],
-      "support_margin_mm": 13.856676778429414,
+      "support_margin_mm": 13.852063824241817,
       "normal_load_fractions": {
-        "caster": 0.22790586806627325,
-        "left": 0.3920903960682691,
-        "right": 0.38000373586545766
+        "caster": 0.22782999710924043,
+        "left": 0.39214723709673466,
+        "right": 0.3800227657940249
       },
       "inside_support_triangle": true
     },
@@ -520,14 +520,14 @@
       "ax_m_s2": 0.6,
       "ay_m_s2": 0,
       "effective_xy_mm": [
-        -2.1433232215705864,
-        -0.002986316191634403
+        -2.1479361757581836,
+        -0.0029863161916345456
       ],
-      "support_margin_mm": 13.856676778429414,
+      "support_margin_mm": 13.852063824241817,
       "normal_load_fractions": {
-        "caster": 0.22790586806627325,
-        "left": 0.3860225879652926,
-        "right": 0.3860715439684342
+        "caster": 0.22782999710924043,
+        "left": 0.386060523443809,
+        "right": 0.38610947944695057
       },
       "inside_support_triangle": true
     },
@@ -535,14 +535,14 @@
       "ax_m_s2": 0.6,
       "ay_m_s2": 0.3,
       "effective_xy_mm": [
-        -2.1433232215705864,
-        -0.7432589047547694
+        -2.1479361757581836,
+        -0.7455653818485682
       ],
-      "support_margin_mm": 13.856676778429414,
+      "support_margin_mm": 13.852063824241817,
       "normal_load_fractions": {
-        "caster": 0.22790586806627325,
-        "left": 0.37995477986231607,
-        "right": 0.3921393520714107
+        "caster": 0.22782999710924043,
+        "left": 0.3799738097908833,
+        "right": 0.39219619309987624
       },
       "inside_support_triangle": true
     },
@@ -550,61 +550,61 @@
       "ax_m_s2": 0.6,
       "ay_m_s2": 0.6,
       "effective_xy_mm": [
-        -2.1433232215705864,
-        -1.4835314933179045
+        -2.1479361757581836,
+        -1.488144447505502
       ],
-      "support_margin_mm": 13.856676778429414,
+      "support_margin_mm": 13.852063824241817,
       "normal_load_fractions": {
-        "caster": 0.22790586806627325,
-        "left": 0.3738869717593396,
-        "right": 0.3982071601743872
+        "caster": 0.22782999710924043,
+        "left": 0.3738870961379576,
+        "right": 0.3982829067528019
       },
       "inside_support_triangle": true
     }
   ],
-  "ideal_forward_acceleration_to_lift_caster_m_s2": 6.215503123785177,
-  "ideal_pure_lateral_acceleration_limit_m_s2": 18.484674710824788,
+  "ideal_forward_acceleration_to_lift_caster_m_s2": 6.19619754914073,
+  "ideal_pure_lateral_acceleration_limit_m_s2": 18.427260651125813,
   "axle_position_study_fixed_other_parts": [
     {
       "axle_x_mm": -4,
       "estimated_cg_x_mm": 0.9651352969635093,
       "caster_static_load_fraction": 0.10174457575744895,
-      "support_margin_mm_at_ax_ay_0_6": 3.484590119837239,
+      "support_margin_mm_at_ax_ay_0_6": 3.479977165649642,
       "geometry_validated": false
     },
     {
       "axle_x_mm": -8,
       "estimated_cg_x_mm": 0.42249751649423406,
       "caster_static_load_fraction": 0.1595169984184514,
-      "support_margin_mm_at_ax_ay_0_6": 6.941952339367964,
+      "support_margin_mm_at_ax_ay_0_6": 6.937339385180367,
       "geometry_validated": false
     },
     {
       "axle_x_mm": -12,
       "estimated_cg_x_mm": -0.12014026397504118,
       "caster_static_load_fraction": 0.2091524601412845,
-      "support_margin_mm_at_ax_ay_0_6": 10.399314558898688,
+      "support_margin_mm_at_ax_ay_0_6": 10.394701604711091,
       "geometry_validated": false
     },
     {
       "axle_x_mm": -16,
       "estimated_cg_x_mm": -0.6627780444443164,
       "caster_static_load_fraction": 0.25225694005848165,
-      "support_margin_mm_at_ax_ay_0_6": 13.856676778429414,
+      "support_margin_mm_at_ax_ay_0_6": 13.852063824241817,
       "geometry_validated": true
     },
     {
       "axle_x_mm": -20,
       "estimated_cg_x_mm": -1.2054158249135916,
       "caster_static_load_fraction": 0.29003987924516067,
-      "support_margin_mm_at_ax_ay_0_6": 17.31403899796014,
+      "support_margin_mm_at_ax_ay_0_6": 17.30942604377254,
       "geometry_validated": false
     },
     {
       "axle_x_mm": -24,
       "estimated_cg_x_mm": -1.748053605382867,
       "caster_static_load_fraction": 0.32342945341013274,
-      "support_margin_mm_at_ax_ay_0_6": 20.77140121749086,
+      "support_margin_mm_at_ax_ay_0_6": 20.766788263303265,
       "geometry_validated": false
     }
   ],
@@ -634,7 +634,7 @@
     ],
     "cases": 216,
     "all_inside_support": true,
-    "minimum_support_margin_mm": 11.565549672443186,
+    "minimum_support_margin_mm": 11.560993943044693,
     "meaning": "chosen ranges only, not universal tolerance or probability"
   },
   "comparison_V9": {
@@ -649,7 +649,7 @@
     "minimum_quasistatic_support_margin_mm": 13.575082872890372,
     "caster_static_load_fraction": 0.2478032214043919,
     "ideal_forward_acceleration_to_lift_caster_m_s2": 6.0615170161322895,
-    "CG_height_reduction_mm": 0.17670771590578482
+    "CG_height_reduction_mm": 0.10128591493857186
   },
   "limitations": [
     "solid CAD PETG and assumed purchased masses; not weighed or sliced",

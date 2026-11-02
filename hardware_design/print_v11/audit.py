@@ -129,6 +129,12 @@ for x, y in top:
     probe = tm.boolean.difference([outer, void], engine='manifold')
     minimum(f'V11 top bearing land {x},{y}', volume(probe, parts['top_board']), 3.)
 
+# A bounding box alone cannot detect an upside-down ribbed cover. The centre
+# must have continuous material immediately below the nominal tag plane.
+tag_face_probe = box([20, 20, .2], [0, 0, C['tag_z_mm']-.1])
+minimum('continuous upper tag face fraction',
+        volume(tag_face_probe, parts['top_board']) / (20*20*.2), .99)
+
 # The battery footprint, excluding small strap slots, must be backed by floor.
 floor_probe = box([73, 31, .2], [-14, 0, 8.9])
 floor_area = volume(floor_probe, CH)/.2

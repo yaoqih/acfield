@@ -16,6 +16,8 @@ python3 -m venv .venv
 
 ## 物理标签 {#physical-tags}
 
+公共设备布局与相机覆盖关系见[场地与相机布置](../hardware/arena)。
+
 使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。仓库提供地面黑框 150 mm、车顶黑框 90 mm 的 [A4 打印文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot90_A4.pdf)。
 
 检测尺寸指黑色外框，不包含白边。90 mm 黑框加白边的外尺寸为 112.5 mm。100% 实际大小打印，禁用适应纸张，尺量 PDF 中的 100 mm 标尺，并保留完整白边。

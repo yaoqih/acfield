@@ -958,26 +958,32 @@
     },
     {
       "check": "V11 top bearing land -60.5,-60.5",
-      "value": 8.211171859200476,
+      "value": 8.209740131638076,
       "minimum": 3.0,
       "pass": true
     },
     {
       "check": "V11 top bearing land -60.5,60.5",
-      "value": 8.211171859200467,
+      "value": 8.209740131638066,
       "minimum": 3.0,
       "pass": true
     },
     {
       "check": "V11 top bearing land 60.5,-60.5",
-      "value": 8.211171859200467,
+      "value": 8.209740131638076,
       "minimum": 3.0,
       "pass": true
     },
     {
       "check": "V11 top bearing land 60.5,60.5",
-      "value": 8.211171859200467,
+      "value": 8.209740131638057,
       "minimum": 3.0,
+      "pass": true
+    },
+    {
+      "check": "continuous upper tag face fraction",
+      "value": 0.9999847412109375,
+      "minimum": 0.99,
       "pass": true
     },
     {

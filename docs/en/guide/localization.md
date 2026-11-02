@@ -16,6 +16,8 @@ Open the printed URL, normally **http://127.0.0.1:5050**. Synthetic images check
 
 ## Physical tags {#physical-tags}
 
+See [arena and camera setup](../hardware/arena) for equipment layout and camera coverage.
+
 Use `tag36h11`: ground IDs 0–3 and robot IDs 10–13. The [A4 print file](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot90_A4.pdf) contains 150 mm ground black borders and 90 mm robot black borders.
 
 Detection size means the outer black border, excluding the white margin. A 90 mm black border has an overall 112.5 mm size including white margin. Print at 100% actual size without fit-to-page, measure the PDF's 100 mm ruler and preserve the white margin.

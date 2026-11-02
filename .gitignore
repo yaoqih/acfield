@@ -22,4 +22,6 @@ robot_server/data/
 runs/
 output/live/
 site-preview/
+hardware_design/figures/.cache/
+hardware_design/print_v11/preview_meshes.npz
 *.log

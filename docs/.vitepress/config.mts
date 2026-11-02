@@ -28,6 +28,7 @@ const sections: [zh: string, en: string, items: Item[]][] = [
   ]],
   ['参考硬件', 'Reference hardware', [
     ['/hardware/overview', '物料与机械设计', 'Materials and mechanical design'],
+    ['/hardware/arena', '场地与相机布置', 'Arena and camera setup'],
     ['/hardware/bringup', '固件与首车验收', 'Firmware and bring-up']
   ]],
   ['共同维护', 'Community and maintenance', [

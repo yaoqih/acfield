@@ -1,4 +1,4 @@
-"""Static review images from exported triangles; not simulated motion."""
+"""2D geometry reviews plus depth-buffered CAD views; not simulated motion."""
 from pathlib import Path
 import json
 import numpy as np
@@ -6,60 +6,12 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle, Polygon
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import subprocess
 
 P = Path(__file__).parent
 C = json.loads((P/'parameters.json').read_text())
 d = np.load(P/'preview_meshes.npz')
 
-
-def draw(ax, hidden=(), elev=38, azim=-57):
-    for name in d.files:
-        if name in hidden:
-            continue
-        tri = d[name]
-        color = np.array([.20, .47, .54])
-        alpha = 1.
-        if name == 'battery':
-            color = np.array([.88, .58, .23])
-        elif 'controller' in name:
-            color = np.array([.22, .56, .37])
-        elif 'wheel' in name:
-            color = np.array([.15, .16, .18])
-        elif 'nylon' in name or 'bracket' in name:
-            color = np.array([.89, .89, .85])
-        elif any(s in name for s in ['motor', 'shaft', 'caster', 'support_ball']):
-            color = np.array([.63, .67, .69])
-        elif name == 'top_board':
-            color = np.array([.86, .87, .81])
-            alpha = .16
-        n = np.cross(tri[:, 1]-tri[:, 0], tri[:, 2]-tri[:, 0])
-        n /= np.maximum(np.linalg.norm(n, axis=1)[:, None], 1e-9)
-        shade = .5+.5*np.maximum(n@np.array([.3, -.4, .866]), 0)
-        colors = np.column_stack([shade[:, None]*color, np.full(len(tri), alpha)])
-        ax.add_collection3d(Poly3DCollection(tri, facecolors=colors, edgecolors='none'))
-    ax.set(xlim=(-70, 70), ylim=(-70, 70), zlim=(0, 72), xlabel='X forward (mm)', ylabel='Y (mm)', zlabel='Z (mm)')
-    ax.set_box_aspect((140, 140, 72))
-    ax.view_init(elev, azim)
-
-
-fig = plt.figure(figsize=(14, 6), facecolor='white')
-ax = fig.add_subplot(121, projection='3d')
-draw(ax)
-ax.set_title('V11 | caster seating corrected to Z8 mm', pad=15)
-ax = fig.add_subplot(122, projection='3d')
-draw(ax, hidden=('top_board', 'controller_envelope'), elev=52)
-ax.set_title('PCB hidden | low battery and rear drive axle', pad=15)
-fig.tight_layout()
-fig.savefig(P/'assembly_preview.png', dpi=170)
-plt.close(fig)
-fig = plt.figure(figsize=(9, 7))
-ax = fig.add_subplot(111, projection='3d')
-draw(ax, hidden=tuple(n for n in d.files if n != 'chassis'), elev=52)
-ax.set_title('Printed chassis only | zero tall printed columns')
-fig.tight_layout()
-fig.savefig(P/'chassis_preview.png', dpi=150)
-plt.close(fig)
 
 v = json.loads((P/'stability_validation.json').read_text())
 fig, axes = plt.subplots(1, 2, figsize=(13, 6), facecolor='white')
@@ -155,3 +107,6 @@ ax.legend(fontsize=8,loc='upper left',bbox_to_anchor=(1.01,1))
 fig.tight_layout()
 fig.savefig(P/'caster_section.png',dpi=180)
 plt.close(fig)
+
+# CAD views use a real depth buffer, opaque surfaces and computed normals.
+subprocess.run(["node", str(P.parent / "figures" / "render.mjs")], check=True)

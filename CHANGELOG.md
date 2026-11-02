@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Replaced transparent CAD previews with depth-buffered assembly/exploded views,
+  corrected the assembled tag-cover orientation, and added bilingual 3 × 3 m
+  arena/camera/network drawings with reproducible figure sources.
+
 - Replaced the one-way English link with VitePress locale routing, complete
   English documentation, translated menus and same-topic language switching.
 

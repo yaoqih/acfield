@@ -15,9 +15,14 @@ From the repository root, install `hardware_design/requirements.txt` in a separa
 ```bash
 python hardware_design/print_v11/build.py
 python hardware_design/print_v11/audit.py
+# Install the depth-buffered rendering toolchain once
+npm ci
+npx playwright install chromium
 python hardware_design/print_v11/render.py
 ```
 
-Build writes the STL, assembly and preview intermediates; audit writes nominal geometry and quasi-static reports. The bundled report records 212 nominal checks. Estimated mass, load fractions and center of gravity are design estimates, not physical measurements.
+Build writes the STL, assembly and preview intermediates; audit writes nominal geometry and quasi-static reports. The bundled report records 213 nominal checks, including a continuous upper tag face with ribs underneath. Estimated mass, load fractions and center of gravity are design estimates, not physical measurements.
+
+The [figure toolchain](../figures/README.md) generates bilingual full assembly, exploded and arena diagrams. `npm run figures:render` uses the committed GLB without rebuilding CAD. Purchased-part appearance details are illustrative.
 
 The historical shopping CSV is a dated reference, not a complete current quote. Wiring entries explicitly flag unresolved supplier pin-label conflicts; verify actual pin functions before power. See the [public hardware guide](https://yaoqih.github.io/acfield/hardware/overview).
