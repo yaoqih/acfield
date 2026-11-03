@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 MM = 72 / 25.4
 
 
-def check_pdf_geometry(pdf, tags, directory):
+def check_pdf_geometry(pdf, tags, layout):
     reader = PdfReader(pdf)
     assert len(reader.pages) == len(tags), pdf
     report = []
@@ -42,15 +42,18 @@ def check_pdf_geometry(pdf, tags, directory):
 
         text = page.extract_text(visitor_operand_before=rectangle)
         assert f'ID {tag["id"]:02d}' in text and 'FRONT' in text
-        assert abs(float(page.mediabox.width) / MM - 210) < .001
-        assert abs(float(page.mediabox.height) / MM - 297) < .001
+        width, height = (210, 297) if layout == 'a4' else (130, 130)
+        assert abs(float(page.mediabox.width) / MM - width) < .001
+        assert abs(float(page.mediabox.height) / MM - height) < .001
+        if layout == 'tag_only':
+            assert text.split() == ['ID', f'{tag["id"]:02d}', 'FRONT'], text
         points = np.asarray(rects)
-        source = cv2.imread(str(directory / 'source' / f'tag36_11_{tag["id"]:05d}.png'), 0)
+        source = cv2.imread(str(ROOT / 'assets/apriltags' / f'tag36_11_{tag["id"]:05d}.png'), 0)
         assert len(rects) == 2 * int(np.sum(source == 0))
         dimensions = np.ptp(points, axis=0) / MM
         assert np.max(np.abs(dimensions - size)) < .001, dimensions
         outer = size * 1.25
-        left, bottom = (210 - outer) / 2, (297 - outer) / 2 + 7
+        left, bottom = ((210 - outer) / 2, (297 - outer) / 2 + 7) if layout == 'a4' else (0, 0)
         expected_min = np.array([left + size / 8, bottom + size / 8])
         assert np.max(np.abs(points.min(axis=0) / MM - expected_min)) < .001
         report.append({'pdf': str(pdf.relative_to(ROOT)), 'page': len(report)+1,
@@ -64,23 +67,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write-reports', action='store_true')
     args = parser.parse_args()
-    directory = ROOT / 'output/apriltags_104mm'
+    directory = ROOT / 'output/apriltags'
     manifest = json.loads((directory / 'manifest.json').read_text())
+    sources = {entry['id']: entry for entry in json.loads((ROOT / 'assets/apriltags/sources.json').read_text())}
     tags = manifest['tags']
+    assert {path.name for path in (ROOT / 'output/pdf').glob('*.pdf')} == {
+        'apriltag36h11_130mm_A4.pdf', 'apriltag36h11_130mm_tag_only.pdf'}
+    physical = json.loads((ROOT / 'apriltag_live.json').read_text())
+    assert all(spec['size_m'] == .104 for spec in physical['tags'].values())
     assert [t['id'] for t in tags] == [0, 1, 2, 3, 10, 11, 12, 13]
-    assert all(t['black_edge_mm'] == (104 if t['role'] == 'robot' else 150) for t in tags)
+    assert all(t['black_edge_mm'] == 104 and t['outer_edge_with_white_margin_mm'] == 130 for t in tags)
     geometry, rendered = [], []
     with tempfile.TemporaryDirectory(prefix='acfield-labels-') as temporary:
-        for key in ['pdf', 'robot_pdf']:
-            pdf = ROOT / manifest[key]
-            pdf_tags = tags if key == 'pdf' else [t for t in tags if t['role'] == 'robot']
-            geometry.extend(check_pdf_geometry(pdf, pdf_tags, directory))
+        for key, pdf_path in manifest['pdfs'].items():
+            pdf = Path(pdf_path)
+            pdf_tags = tags
+            geometry.extend(check_pdf_geometry(pdf, pdf_tags, key))
             prefix = Path(temporary) / key
             subprocess.run(['pdftoppm', '-r', '144', '-gray', '-png', str(pdf), str(prefix)],
                            check=True, capture_output=True)
             paths = sorted(Path(temporary).glob(f'{key}-*.png'))
             assert len(paths) == len(pdf_tags)
-            rendered.extend((cv2.imread(str(path), 0), tag) for path, tag in zip(paths, pdf_tags))
+            rendered.extend((cv2.imread(str(path), 0), tag, key) for path, tag in zip(paths, pdf_tags))
 
     results = []
     for backend in ['native', 'opencv']:
@@ -105,8 +113,9 @@ def main():
         for tag in tags:
             tag_id = tag['id']
             print(f'Checking {backend}: preview ID {tag_id}', flush=True)
-            source_path = directory / 'source' / f'tag36_11_{tag_id:05d}.png'
+            source_path = ROOT / 'assets/apriltags' / f'tag36_11_{tag_id:05d}.png'
             assert hashlib.sha256(source_path.read_bytes()).hexdigest() == tag['source_sha256']
+            assert tag['source_sha256'] == sources[tag_id]['sha256']
             original = cv2.imread(str(directory / tag['png_file']), 0)
             source = cv2.imread(str(source_path), 0)
             canonical = cv2.resize(source, (1600, 1600), interpolation=cv2.INTER_NEAREST)
@@ -136,12 +145,13 @@ def main():
                     warped = cv2.GaussianBlur(warped, (3,3), .6)
                     expected = cv2.perspectiveTransform(expected.reshape(1,4,2), matrix)[0]
                     decode(warped, tag_id, expected)
-        for image, tag in rendered:
+        for image, tag, layout in rendered:
             print(f'Checking {backend}: PDF ID {tag["id"]}, shape={image.shape}', flush=True)
             outer = tag['outer_edge_with_white_margin_mm']
-            left, bottom = (210-outer)/2, (297-outer)/2+7
+            left, bottom = ((210-outer)/2, (297-outer)/2+7) if layout == 'a4' else (0,0)
+            page_height = 297 if layout == 'a4' else 130
             inset, size = tag['white_margin_each_side_mm'], tag['black_edge_mm']
-            x, y = left + inset, 297 - bottom - inset - size
+            x, y = left + inset, page_height - bottom - inset - size
             expected = np.float32([[x,y],[x+size,y],[x+size,y+size],[x,y+size]]) * (144/25.4)
             decode(image, tag['id'], expected)
         results.append({'backend':backend, 'cases':count, 'failures':0,
@@ -149,7 +159,7 @@ def main():
                         'minimum_decision_margin':min(margins) if margins else None})
     report = {'scope':'Digital artwork only; no screw occlusion or physical-camera test.',
               'png_cases':'8 IDs x 3 pixel sizes x 4 rotations x 2 perspectives x 2 backends',
-              'pdf_cases':'12 A4 pages rasterized by Poppler at 144 dpi x 2 backends',
+              'pdf_cases':'16 pages (A4 and 130 mm square) rasterized by Poppler at 144 dpi x 2 backends',
               'results':results}
     if args.write_reports:
         for name, data in [('pdf_geometry_check.json',geometry),('detection_check.json',report)]:

@@ -21,6 +21,12 @@ Keep changes focused. Update documentation and add regression coverage when chan
 
 The main repository maintains the common platform and small examples. Paper-specific training, weights and experiments should depend on a pinned platform commit in a separate repository.
 
+Commit editable code/design sources, tests, documentation, dependency lockfiles and third-party notices. Keep official AprilTag source images once in `assets/apriltags/`; demos, printing and tests share them.
+
+Generated files are committed only when they directly serve users: the two current printable PDFs in `output/pdf/`, current STL files and assembly model/parameters, and figures used or linked by the documentation. SVG and PNG documentation figures intentionally support web reading and presentation downloads. Update these artifacts with their sources.
+
+Do not commit individual tag previews, generated manifests/check reports, local CAD audit reports or duplicate preview images. They can be reproduced with the documented commands and are ignored by Git. Historical size variants, shopping carts and design comparisons belong in Git history. Keep the current generic BOM, print order and wiring references. Avoid adding backups, caches, recordings, local databases or personal supplier quotations.
+
 ## License
 
 Contributions are licensed under Apache-2.0. Identify provenance and licenses for third-party material.

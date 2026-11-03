@@ -4,7 +4,7 @@ Original ACField code, documentation and reference design files are distributed 
 
 ## AprilTag marker images
 
-Canonical tag36h11 images in `output/apriltags/source/`, `output/apriltags_90mm/source/` and `output/apriltags_104mm/source/` originate from [AprilRobotics/apriltag-imgs](https://github.com/AprilRobotics/apriltag-imgs). Printed PNG/PDF markers are derived from these images. The upstream BSD-2-Clause license is reproduced in [`third_party/apriltag-imgs-LICENSE`](third_party/apriltag-imgs-LICENSE). Generation manifests record source URLs and SHA-256 hashes.
+Canonical tag36h11 images in `assets/apriltags/` originate from [AprilRobotics/apriltag-imgs](https://github.com/AprilRobotics/apriltag-imgs). Printed PNG/PDF markers are derived from these images. The upstream BSD-2-Clause license is reproduced in [`third_party/apriltag-imgs-LICENSE`](third_party/apriltag-imgs-LICENSE). [`assets/apriltags/sources.json`](assets/apriltags/sources.json) records source URLs and SHA-256 hashes.
 
 ## Embedded label font
 

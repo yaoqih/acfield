@@ -18,9 +18,12 @@ python3 -m venv .venv
 
 公共设备布局与相机覆盖关系见[场地与相机布置](../hardware/arena)。
 
-使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。下载[完整 8 页 A4 打印文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_ground150_robot104_A4.pdf)，或[仅车顶 ID 10–13 的 4 页文件](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_robot104_4tags_A4.pdf)。地面黑框仍为 150 mm，车顶黑框改为 104 mm。
+使用 `tag36h11`：地面 ID 0–3，车辆 ID 10–13。所有物理标签统一为 **104 mm 黑框、130 mm 含白边外尺寸**。仓库只提供两份当前 PDF，每份均按相同顺序包含全部 8 个 ID：
 
-检测尺寸指黑色外框，不包含白边。车顶黑框 **104 × 104 mm**，四周各保留 **13 mm** 白边，完整裁切尺寸正好是 **130 × 130 mm**。100% 实际大小打印，禁用适应纸张，尺量 PDF 中的 100 mm 标尺；沿白边外侧的裁切标记裁切。
+- [A4 打印版](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_130mm_A4.pdf)：每页一个标签，附尺寸、裁切标记和 100 mm 校验标尺。
+- [130 × 130 mm 纯标签版](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_130mm_tag_only.pdf)：每页就是完整标签，无页眉、标尺、裁切标记或额外页面留白。
+
+检测尺寸指黑色外框，不包含白边。黑框 **104 × 104 mm**，四周各保留 **13 mm** 白边，完整尺寸为 **130 × 130 mm**。纯标签版保留这圈检测必需的白色静区。两份文件都按 100% 实际大小打印，禁用适应纸张；A4 版可尺量 100 mm 标尺，沿白边外侧的标记裁切。
 
 ### 车顶整面布局 {#full-cover-layout}
 
@@ -28,20 +31,20 @@ python3 -m venv .venv
 
 标签覆盖 130 mm 顶盖整面，不为螺丝缩小或开缺口。ID 使用约 5.7 pt 小字，前向箭头及 FRONT 放在另一侧黑框内部，颜色为接近黑底的深灰 `#303030`。编码单元、黑框边缘和白色静区保持完整。箭头朝图案的标准上边，安装时对准车体前方（+X）；视觉朝向采用同一边，正常安装的 `heading_offset_deg=0`。
 
-当前公开视觉配置中，车辆 ID 10–13 的 `size_m=0.104`，名义 `height_m=0.0646`。实际贴纸高度仍需装车后测量；已有本地配置不会自动迁移。服务器的 `tag_size` 也应记录为 `0.104`。
+当前公开视觉配置中，地面与车辆 ID 的 `size_m` 均为 `0.104`。车辆名义 `height_m=0.0646`，地面为 `0`。实际贴纸高度仍需装车后测量；服务器的 `tag_size` 也应记录为 `0.104`。已有本地配置不会自动迁移，尤其是更换旧 150 mm 地面标签后，需要更新尺寸、实测坐标并重新标定场地。
 
-数字图稿通过两种检测后端共 408 次检查，覆盖多尺度、四个旋转方向、透视与轻微模糊，以及 PDF 实际栅格化结果；同时核对了黑框尺寸与完整白边。这不代替贴装后在全场相机下的实测，尤其是螺丝处纸面起伏和反光。
+数字图稿通过两种检测后端共 416 次检查，覆盖多尺度、四个旋转方向、透视与轻微模糊，以及两份 PDF 共 16 页的实际栅格化结果；同时核对黑框尺寸、页面尺寸和完整白边。这不代替贴装后在全场相机下的实测，尤其是螺丝处纸面起伏和反光。
 
 从仓库根目录重新生成：
 
 ```bash
 python -m pip install -r requirements-print.txt
-python generate_apriltags.py --robot-pdf output/pdf/apriltag36h11_robot104_4tags_A4.pdf
+python generate_apriltags.py
 # 检测还需 requirements-apriltag.txt 与 Poppler 的 pdftoppm
 python verify_apriltags.py --write-reports
 ```
 
-PNG 用于预览，打印请使用矢量 PDF。旧 90 mm 文件保留为历史备选，合成演示仍使用自己的 120 mm 素材与尺寸。
+两份 PDF 是提交到仓库的发布文件。逐张 PNG、生成清单和检查报告写入被忽略的 `output/apriltags/`；官方源图统一保留在 `assets/apriltags/`，供打印、演示和检测测试共用。旧尺寸产物已移除，可从 Git 历史查阅；合成演示仍使用独立定义的尺寸。
 
 ## 标定顺序 {#calibration-order}
 

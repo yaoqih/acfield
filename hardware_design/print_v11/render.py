@@ -49,24 +49,6 @@ fig.tight_layout()
 fig.savefig(P/'layout_and_stability.png', dpi=180)
 plt.close(fig)
 
-old = v['comparison_V9']
-fig, axes = plt.subplots(1, 3, figsize=(12, 4.5))
-for ax, title, vals in zip(axes,
-                        ['Estimated CG height (mm)', 'Drive axle to caster (mm)', 'Minimum support margin (mm)'],
-                        [[old['center_of_mass_mm'][2], v['center_of_mass_mm'][2]],
-                         [old['drive_axle_to_caster_mm'], v['drive_axle_to_caster_mm']],
-                         [old['minimum_quasistatic_support_margin_mm'], v['minimum_quasistatic_support_margin_mm']]]):
-    ax.bar(['V9', 'V11'], vals, color=['#aab8bc', '#317e8f'], width=.55)
-    for i, value in enumerate(vals):
-        ax.text(i, value+.02*max(vals), f'{value:.2f}', ha='center')
-    ax.set_title(title, fontsize=11)
-    ax.set_ylim(0, max(vals)*1.2)
-    ax.grid(axis='y', alpha=.15)
-fig.suptitle('Nominal estimates only: no physical dynamics validation', fontsize=11)
-fig.tight_layout()
-fig.savefig(P/'comparison.png', dpi=150)
-plt.close(fig)
-
 # Actual triangles cut near caster X, including both bolt locations. A 0.0001mm
 # offset avoids slicing exactly along tessellation vertices and shared edges.
 fig, ax = plt.subplots(figsize=(11, 5))

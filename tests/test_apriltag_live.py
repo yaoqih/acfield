@@ -20,7 +20,7 @@ def test_native_detector_survives_repeated_detection_and_cleanup():
     program = """
 import cv2
 from apriltag_live import Detector, ROOT
-image = cv2.imread(str(ROOT / "output/apriltags/tag36h11_id010_robot.png"), 0)
+image = cv2.imread(str(ROOT / "assets/apriltags/tag36_11_00010.png"), 0)
 image = cv2.resize(image, (200, 200), interpolation=cv2.INTER_NEAREST)
 for _ in range(20):
     detector = Detector(backend="native")
@@ -46,7 +46,7 @@ def test_both_backends_decode_same_canonical_corners_at_all_rotations(backend):
         pytest.importorskip('pupil_apriltags')
     detector = Detector(backend=backend)
     for tag_id in [0, 1, 2, 3, 10, 11, 12, 13]:
-        image = cv2.imread(str(ROOT/f'output/apriltags/tag36h11_id{tag_id:03d}_{"fixed" if tag_id < 4 else "robot"}.png'), 0)
+        image = cv2.imread(str(ROOT/f'assets/apriltags/tag36_11_{tag_id:05d}.png'), 0)
         image = cv2.resize(image, (400, 400), interpolation=cv2.INTER_NEAREST)
         original = np.array([[40., 40.], [359., 40.], [359., 359.], [40., 359.]])
         for rotation in range(4):

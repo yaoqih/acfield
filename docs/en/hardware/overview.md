@@ -39,7 +39,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 | Tag | tag36h11, 104 mm black border | 1 |
 | Shared equipment | Camera/lens/mount, router, computer, charging equipment | Per arena |
 
-CSV files retain design-time material and price references. They are not complete current quotations and omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
+CSV files retain current material, print-order and wiring references. Personal shopping carts and historical quotations remain in Git history. The lists omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
 
 ## Why this layout {#why-this-layout}
 

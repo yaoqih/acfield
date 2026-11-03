@@ -65,9 +65,17 @@ jobs:
       - run: python -m pytest -q tests/test_apriltag_live.py
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Regenerate the physical label artwork
-        run: python generate_apriltags.py --robot-pdf output/pdf/apriltag36h11_robot104_4tags_A4.pdf
+        run: python generate_apriltags.py
       - name: Physical label dimensions and both detection backends
-        run: python verify_apriltags.py
+        run: python verify_apriltags.py --write-reports
+      - name: Label verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: label-verification
+          path: output/apriltags/*check.json
+          if-no-files-found: ignore
+          retention-days: 7
   frontend:
     name: Console typecheck and build
     runs-on: ubuntu-latest

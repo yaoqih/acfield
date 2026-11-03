@@ -74,7 +74,7 @@ original('chassis', chassis, palette.chassis)
 const top = group('top')
 original('top_board', top, palette.top)
 // Full-cover tag36h11 ID10: 104 mm black square, 130 mm including white.
-const tag = await new T.TextureLoader().loadAsync('/output/apriltags_104mm/tag36h11_id010_robot.png')
+const tag = await new T.TextureLoader().loadAsync('/docs/public/images/robot-tag.png')
 tag.colorSpace = T.SRGBColorSpace; tag.magFilter = T.NearestFilter; tag.minFilter = T.NearestFilter
 const tagMesh = new T.Mesh(new T.PlaneGeometry(params.tag_outer_white_mm, params.tag_outer_white_mm), new T.MeshStandardMaterial({ map: tag, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }))
 tagMesh.rotation.z = -Math.PI / 2 // FRONT (image top) points toward chassis +X.

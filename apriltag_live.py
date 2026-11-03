@@ -243,7 +243,7 @@ class DemoSource:
         self.config['world'] = {'configured': True, 'boundary_xy_m': [[0, 0], [3, 0], [3, 3], [0, 3]]}
         self.patterns = {}
         for i in [0, 1, 2, 3, 10, 11, 12, 13]:
-            name = ROOT / 'output/apriltags/source' / f'tag36_11_{i:05d}.png'
+            name = ROOT / 'assets/apriltags' / f'tag36_11_{i:05d}.png'
             pattern = cv2.imread(str(name), cv2.IMREAD_GRAYSCALE)
             if pattern is None:
                 raise ValueError('演示需要原有标签图案，请先运行 generate_apriltags.py')

@@ -21,7 +21,7 @@ GitHub Actions builds the console and four firmware environments, and runs contr
 
 Before import, the source project recorded 33 backend tests, 10 vision tests and four firmware builds passing. That history is not evidence for future revisions.
 
-The V11 geometry report records two valid STL files and 213 nominal assembly checks, including the cover’s continuous upper tag face and orientation. These use supplier dimensions and estimated mass; they do not test strength, print tolerances, tire friction or motor dynamics.
+The V11 build and audit scripts generate local reports checking two STL files and 213 nominal assembly conditions, including the cover’s continuous upper tag face and orientation. These use supplier dimensions and estimated mass; they do not test strength, print tolerances, tire friction or motor dynamics.
 
 ## Physical evidence still needed {#physical-evidence-still-needed}
 

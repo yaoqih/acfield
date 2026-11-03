@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create vector A4 PDFs and PNG previews from official tag36h11 images."""
+"""Create A4 and tag-only PDFs with a shared 130 mm label size."""
 
 import argparse
 import hashlib
@@ -20,6 +20,7 @@ from reportlab.pdfgen.canvas import Canvas
 
 SOURCE_BASE = "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11"
 FAMILY = "tag36h11"
+ROOT = Path(__file__).resolve().parent
 LABEL_FONT = Path(reportlab.__file__).parent / "fonts" / "Vera.ttf"
 pdfmetrics.registerFont(TTFont("ACFieldLabel", str(LABEL_FONT)))
 ANNOTATION_GRAY = 48  # Small, low-contrast marks inside the black detection ring.
@@ -102,17 +103,18 @@ def get_source(tag_id, source_dir):
     name = f"tag36_11_{tag_id:05d}.png"
     url = f"{SOURCE_BASE}/{name}"
     path = source_dir / name
-    cached = Path("output/apriltags/source") / name
     if path.exists():
         data = path.read_bytes()
-    elif cached.exists():
-        data = cached.read_bytes()
     else:
         request = Request(url, headers={"User-Agent": "AprilTag-print-generator/1.0"})
         with urlopen(request, timeout=30) as response:
             data = response.read()
     with Image.open(io.BytesIO(data)) as source:
         im = source.convert("L")
+    records = json.loads((source_dir / "sources.json").read_text())
+    known = next((entry for entry in records if entry["id"] == tag_id), None)
+    if known and hashlib.sha256(data).hexdigest() != known["sha256"]:
+        raise ValueError(f"Official source hash mismatch for ID {tag_id}")
     if im.size != (10, 10) or not set(im.tobytes()) <= {0, 255}:
         raise ValueError(f"Unexpected official image for ID {tag_id}: {im.size}")
     if any(im.getpixel((x, y)) != 255 for x in range(10) for y in range(10)
@@ -121,7 +123,8 @@ def get_source(tag_id, source_dir):
     if any(im.getpixel((x, y)) != 0 for x in range(1, 9) for y in range(1, 9)
            if x in (1, 8) or y in (1, 8)):
         raise ValueError(f"Unexpected black detection border for ID {tag_id}")
-    path.write_bytes(data)
+    if not path.exists():
+        path.write_bytes(data)
     return im, url, hashlib.sha256(data).hexdigest()
 
 
@@ -181,39 +184,47 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fixed-ids", type=int, nargs="*", default=[0, 1, 2, 3])
     parser.add_argument("--robot-ids", type=int, nargs="+", default=[10, 11, 12, 13])
-    parser.add_argument("--fixed-size-mm", type=float, default=150)
-    parser.add_argument("--robot-size-mm", type=float, default=104)
-    parser.add_argument("--output-dir", type=Path, default=Path("output/apriltags_104mm"))
-    parser.add_argument("--pdf", type=Path,
-                        default=Path("output/pdf/apriltag36h11_ground150_robot104_A4.pdf"))
-    parser.add_argument("--robot-pdf", type=Path,
-                        help="Also write a separate A4 PDF containing only robot labels.")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "output/apriltags",
+                        help="Ignored local PNG previews, manifest and check reports.")
+    parser.add_argument("--pdf-dir", type=Path, default=ROOT / "output/pdf")
     args = parser.parse_args()
+    size_mm = 104.0
+    outer_mm = 130.0
     ids = args.fixed_ids + args.robot_ids
     if len(set(ids)) != len(ids) or any(i < 0 or i > 586 for i in ids):
         parser.error("Use unique tag36h11 IDs between 0 and 586.")
-    # Fixed headers/footers and an outer quiet zone must all fit on A4.
-    if any(not 20 <= size <= 150 for size in (args.fixed_size_mm, args.robot_size_mm)):
-        parser.error("This A4 layout supports black-square edges from 20 to 150 mm.")
-
-    source_dir = args.output_dir / "source"
+    source_dir = ROOT / "assets/apriltags"
     source_dir.mkdir(parents=True, exist_ok=True)
-    args.pdf.parent.mkdir(parents=True, exist_ok=True)
-    specs = ([(i, "fixed", args.fixed_size_mm) for i in args.fixed_ids]
-             + [(i, "robot", args.robot_size_mm) for i in args.robot_ids])
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    args.pdf_dir.mkdir(parents=True, exist_ok=True)
+    specs = ([(i, "fixed", size_mm) for i in args.fixed_ids]
+             + [(i, "robot", size_mm) for i in args.robot_ids])
     with ThreadPoolExecutor(max_workers=4) as pool:
         sources = list(pool.map(lambda s: get_source(s[0], source_dir), specs))
 
-    if args.robot_pdf and args.robot_pdf.resolve() == args.pdf.resolve():
-        parser.error("--robot-pdf must differ from --pdf.")
-    canvas = Canvas(str(args.pdf), pagesize=A4, pageCompression=1, invariant=1)
-    canvas.setTitle("AprilTag tag36h11 - fixed markers and robot markers")
-    canvas.setAuthor("AClab / ACField")
+    pdfs = {
+        "a4": args.pdf_dir / "apriltag36h11_130mm_A4.pdf",
+        "tag_only": args.pdf_dir / "apriltag36h11_130mm_tag_only.pdf",
+    }
+    canvases = {
+        "a4": Canvas(str(pdfs["a4"]), pagesize=A4, pageCompression=1, invariant=1),
+        "tag_only": Canvas(str(pdfs["tag_only"]), pagesize=(outer_mm * mm, outer_mm * mm),
+                           pageCompression=1, invariant=1),
+    }
+    for layout, canvas in canvases.items():
+        canvas.setTitle(f"ACField tag36h11 - 130 mm labels - {layout}")
+        canvas.setAuthor("AClab / ACField")
     manifest = []
     for page, ((tag_id, role, size_mm), (im, url, sha)) in enumerate(zip(specs, sources), 1):
         png_path = args.output_dir / f"{FAMILY}_id{tag_id:03d}_{role}.png"
         marker_preview(im, tag_id, size_mm).save(png_path)
-        draw_page(canvas, im, tag_id, role, size_mm, page, len(specs))
+        draw_page(canvases["a4"], im, tag_id, role, size_mm, page, len(specs))
+        draw_marker(canvases["tag_only"], im, tag_id, size_mm, 0, 0)
+        canvases["tag_only"].showPage()
+        if tag_id == 10:
+            preview = ROOT / "docs/public/images/robot-tag.png"
+            preview.parent.mkdir(parents=True, exist_ok=True)
+            preview.write_bytes(png_path.read_bytes())
         manifest.append({
             "family": FAMILY, "id": tag_id, "role": role, "pdf_page": page,
             "black_edge_mm": size_mm, "tagsize_m": size_mm / 1000,
@@ -226,27 +237,16 @@ def main():
                            "id_text": f"ID {tag_id:02d}",
                            "front": "canonical top edge, corners 0 and 1"},
         })
-    canvas.save()
-    if args.robot_pdf:
-        args.robot_pdf.parent.mkdir(parents=True, exist_ok=True)
-        robot_canvas = Canvas(str(args.robot_pdf), pagesize=A4, pageCompression=1, invariant=1)
-        robot_canvas.setTitle("ACField - robot top-cover labels")
-        robot_canvas.setAuthor("AClab / ACField")
-        robot_specs = [(spec, source) for spec, source in zip(specs, sources)
-                       if spec[1] == "robot"]
-        for page, ((tag_id, role, size_mm), (im, _, _)) in enumerate(robot_specs, 1):
-            draw_page(robot_canvas, im, tag_id, role, size_mm, page, len(robot_specs))
-        robot_canvas.save()
-        print(f"Created {args.robot_pdf} ({len(robot_specs)} A4 pages)")
+    for layout, canvas in canvases.items():
+        canvas.save()
+        print(f"Created {pdfs[layout]} ({len(specs)} pages, {layout})")
     (args.output_dir / "manifest.json").write_text(
-        json.dumps({"pdf": str(args.pdf),
-                    "robot_pdf": str(args.robot_pdf) if args.robot_pdf else None,
+        json.dumps({"pdfs": {key: str(path.resolve()) for key, path in pdfs.items()},
                     "layout": "full square, no screw cutouts or screw avoidance",
                     "png_note":
                     "PNG previews have no guaranteed physical print size; use the vector PDF at 100%.",
                     "tags": manifest}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Created {args.pdf} ({len(specs)} A4 pages)")
-    print(f"PNG previews, cached official sources and manifest: {args.output_dir}")
+    print(f"Local PNG previews and manifest (not committed): {args.output_dir}")
 
 
 if __name__ == "__main__":

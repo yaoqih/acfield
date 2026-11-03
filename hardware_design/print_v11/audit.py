@@ -235,9 +235,6 @@ scenarios = []
 for ax, ay in itertools.product([-.6, -.3, 0, .3, .6], repeat=2):
     scenarios.append({'ax_m_s2': ax, 'ay_m_s2': ay, **support(*cg, ax, ay)})
 static = support(*cg, 0, 0)['normal_load_fractions']
-old = json.loads((P/'previous_design_reference.json').read_text())
-old_cg = old['center_of_mass_mm']
-old_tip_accel = 9.81*(old_cg[0]+16)/old_cg[2]
 tip_accel = 9.81*(cg[0]-AX)/cg[2]
 
 # Sensitivity sweep of poorly known component weights/locations. These are
@@ -277,13 +274,6 @@ validation = {
                      'all_inside_support': all(r['inside_support_triangle'] for r in sensitivity),
                      'minimum_support_margin_mm': min(r['support_margin_mm'] for r in sensitivity),
                      'meaning': 'chosen ranges only, not universal tolerance or probability'},
-    'comparison_V9': {'mass_g': old['mass_g'], 'center_of_mass_mm': old_cg,
-                       'solid_print_mass_g': old['solid_print_mass_g'],
-                       'drive_axle_to_caster_mm': old['drive_axle_to_caster_mm'],
-                       'minimum_quasistatic_support_margin_mm': old['minimum_quasistatic_support_margin_mm'],
-                       'caster_static_load_fraction': old['static_normal_load_fractions']['caster'],
-                       'ideal_forward_acceleration_to_lift_caster_m_s2': old_tip_accel,
-                       'CG_height_reduction_mm': old_cg[2]-float(cg[2])},
     'limitations': ['solid CAD PETG and assumed purchased masses; not weighed or sliced',
                     'quasi-static rigid-body calculation; no impact, tilt, compliance or friction model',
                     'tip acceleration is not a recommended driving limit; grip/sliding may limit first',
@@ -295,7 +285,6 @@ print(json.dumps({'geometry_status': report['status'], 'checks': len(rows),
                   'failures': [r for r in rows if not r['pass']], 'mass_g': mass,
                   'CG_mm': cg.tolist(), 'static_loads': static,
                   'min_support_margin_mm': validation['minimum_quasistatic_support_margin_mm'],
-                  'height_reduction_mm': validation['comparison_V9']['CG_height_reduction_mm'],
                   'sensitivity_worst_mm': validation['sensitivity']['minimum_support_margin_mm']}, indent=2))
 assert all(r['pass'] for r in rows)
 assert all(r['inside_support_triangle'] for r in scenarios)
