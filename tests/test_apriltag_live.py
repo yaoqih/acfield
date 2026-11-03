@@ -45,7 +45,7 @@ def test_both_backends_decode_same_canonical_corners_at_all_rotations(backend):
     if backend == 'native':
         pytest.importorskip('pupil_apriltags')
     detector = Detector(backend=backend)
-    for tag_id in [0, 1, 2, 3, 10, 11, 12, 13]:
+    for tag_id in [0, 1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17]:
         image = cv2.imread(str(ROOT/f'assets/apriltags/tag36_11_{tag_id:05d}.png'), 0)
         image = cv2.resize(image, (400, 400), interpolation=cv2.INTER_NEAREST)
         original = np.array([[40., 40.], [359., 40.], [359., 359.], [40., 359.]])
@@ -100,7 +100,9 @@ def test_resolution_and_calibration_guards(scene):
 
 def test_family_mismatch_does_not_reuse_physical_dimensions():
     engine = LiveEngine(load_settings(ROOT/'apriltag_live.json'))
-    assert len(engine.tag_specs()) == 8
+    assert len(engine.tag_specs()) == 12
+    assert {int(tag_id) for tag_id in engine.tag_specs()} == set(range(4)) | set(range(10, 18))
+    assert all(engine.tag_specs()[str(tag_id)]['role'] == 'robot' for tag_id in range(14, 18))
     engine.family = 'tag16h5'
     assert engine.tag_specs() == {}
 

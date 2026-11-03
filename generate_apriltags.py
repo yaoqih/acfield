@@ -183,7 +183,8 @@ def draw_page(canvas, image, tag_id, role, size_mm, page_no, page_count):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fixed-ids", type=int, nargs="*", default=[0, 1, 2, 3])
-    parser.add_argument("--robot-ids", type=int, nargs="+", default=[10, 11, 12, 13])
+    parser.add_argument("--robot-ids", type=int, nargs="+",
+                        default=[10, 11, 12, 13, 14, 15, 16, 17])
     parser.add_argument("--output-dir", type=Path, default=ROOT / "output/apriltags",
                         help="Ignored local PNG previews, manifest and check reports.")
     parser.add_argument("--pdf-dir", type=Path, default=ROOT / "output/pdf")

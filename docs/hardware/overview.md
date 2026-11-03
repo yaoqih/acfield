@@ -49,17 +49,16 @@ STL、参数、构建与审查源文件位于 [hardware_design/print_v11](https:
 
 ## 可编辑与可审查 {#editable-and-inspectable}
 
-可单独安装 CAD 环境后运行：
+使用仓库根目录的共享 Python 环境运行 CAD 工具：
 
 ```bash
-python3 -m venv .venv-cad
-.venv-cad/bin/python -m pip install -r hardware_design/requirements.txt
-.venv-cad/bin/python hardware_design/print_v11/build.py
-.venv-cad/bin/python hardware_design/print_v11/audit.py
+uv sync --python 3.12 --extra test
+uv run --python 3.12 python hardware_design/print_v11/build.py
+uv run --python 3.12 python hardware_design/print_v11/audit.py
 # 安装仓库 JS 依赖与渲染浏览器
 npm ci
 npx playwright install chromium
-.venv-cad/bin/python hardware_design/print_v11/render.py
+uv run --python 3.12 python hardware_design/print_v11/render.py
 ```
 
 构建会重新生成 STL、装配与参数文件，审查会更新名义几何报告。供应商尺寸假设在参数中显式标记，变化时应重新生成与核对。渲染可以在 build 产生预览网格后运行。

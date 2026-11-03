@@ -17,7 +17,7 @@ npm --prefix robot_server/frontend run build
 
 # 后端
 cd robot_server
-uv sync --extra test
+uv sync --python 3.12 --extra test
 uv run pytest -q
 ```
 

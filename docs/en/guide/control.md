@@ -9,11 +9,10 @@ Python algorithms should use the [Python SDK](./python-sdk): `Client` handles HT
 Start the [demo server](./quickstart), then run from the repository root:
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 
 # Submit two robots' actions in one batch
-robot_server/.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
+.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
 ```
 
 The example defaults to 0.05 m/s, 100 ms updates, a 300 ms TTL and at most 30 seconds. It demonstrates velocity integration, not formation control. It checks mode, readiness and arming, then requests stop/disarm on exit. Ctrl+C enters the same cleanup path; forced termination relies on server and device TTL.

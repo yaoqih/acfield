@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const fmt = (v, n=1) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(n);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const roles = {fixed:'固定角点',pursuer:'追捕车',evader:'逃逸车',unknown:'未配置标签'};
+const roles = {fixed:'固定角点',pursuer:'追捕车',evader:'逃逸车',robot:'小车',unknown:'未配置标签'};
 const colors = ['#18a87b','#e4a125','#438de0','#b87acb'];
 let selected=10, state=null, familiesKey='', toastTimer, lastEvent='', sourceInitialized=false;
 function toast(message, error=false){$('toast').textContent=message;$('toast').className=error?'error':'';$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
@@ -32,7 +32,7 @@ function render(s){
   $('clock').textContent=new Date().toLocaleTimeString('zh-CN',{hour12:false});
   $('connection').textContent=healthy?(s.demo?'演示运行中':'实时连接中'):'等待输入源';$('connection').className='pill '+(healthy?'good':'bad');
   $('fps').textContent=healthy?fmt(s.fps):'0.0';$('visible').textContent=healthy?(s.visible_count??0):0;
-  $('fleet-count').textContent=`已配置 ${s.known_count??8} 个身份`;
+  $('fleet-count').textContent=`已配置 ${s.known_count??12} 个身份`;
   $('detect-time').textContent=fmt(s.detection_ms);$('frame-age').textContent=fmt(s.frame_age_ms??s.state_age_ms,0);
   $('resolution').textContent=s.width?`${s.width} × ${s.height}`:'—';
   $('image-quality').textContent=`亮度 ${fmt(s.mean_brightness,0)} / 255 · 清晰度 ${fmt(s.laplacian_variance,0)}`;
@@ -97,7 +97,7 @@ function renderPursuit(s,healthy){
   if(ps.length===3&&e){const pp=ps.map(point),ep=point(e);const cross=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);const area=Math.abs(cross(pp[0],pp[1],pp[2]));if(area<1e-8)inside='追捕点共线';else{const cs=pp.map((p,i)=>cross(p,pp[(i+1)%3],ep));inside=(cs.every(x=>x>0)||cs.every(x=>x<0))?'在凸包内':'在凸包外 / 边界';}}
   const pairs=[['追捕 / 逃逸可见',`${ps.length} / ${e?'1':'0'}`],['几何包围',inside]];
   if(e)for(const p of ps){const a=point(p),b=point(e);pairs.push([`ID ${p.id} → ${e.id}`,`${fmt(Math.hypot(a[0]-b[0],a[1]-b[1]),metric?3:0)} ${unit}`]);}
-  const robots=tags.filter(t=>['pursuer','evader'].includes(t.role));let minimum=Infinity;for(let i=0;i<robots.length;i++)for(let j=i+1;j<robots.length;j++){const a=point(robots[i]),b=point(robots[j]);minimum=Math.min(minimum,Math.hypot(a[0]-b[0],a[1]-b[1]));}
+  const robots=tags.filter(t=>['pursuer','evader','robot'].includes(t.role));let minimum=Infinity;for(let i=0;i<robots.length;i++)for(let j=i+1;j<robots.length;j++){const a=point(robots[i]),b=point(robots[j]);minimum=Math.min(minimum,Math.hypot(a[0]-b[0],a[1]-b[1]));}
   pairs.push(['车间最小中心距',Number.isFinite(minimum)?fmt(minimum,metric?3:0)+' '+unit:'—']);dl('pursuit-details',pairs);
 }
 async function poll(){

@@ -30,7 +30,7 @@ pio pkg install -d esp32_software/firmware -e general-driver
 
 ## 端口占用 {#ports-already-in-use}
 
-控制默认 HTTP 8000、设备 UDP 9999、视觉 HTTP 5050。检查旧进程是否仍在运行；不要为解决占用直接增加控制服务 worker。可以修改端口，但服务、固件与示例的地址必须一致。
+控制默认 HTTP 8000、设备 UDP 9999、视觉 HTTP 8765。检查旧进程是否仍在运行；不要为解决占用直接增加控制服务 worker。可以修改端口，但服务、固件与示例的地址必须一致。
 
 ## Linux 原生检测器退出崩溃 {#native-detector-crashes-on-linux-cleanup}
 

@@ -8,10 +8,11 @@
 
 ```bash
 git clone https://github.com/yaoqih/acfield.git
-cd acfield/robot_server
-uv sync --extra test
-npm --prefix frontend ci
-npm --prefix frontend run build
+cd acfield
+uv sync --python 3.12 --extra test
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
@@ -20,11 +21,12 @@ npm --prefix frontend run build
 没有 uv 时：
 
 ```bash
-cd acfield/robot_server
+cd acfield
 python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[test]'
-npm --prefix frontend ci
-npm --prefix frontend run build
+.venv/bin/python -m pip install -r requirements-dev.txt
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
@@ -52,8 +54,7 @@ curl http://127.0.0.1:8000/api/state
 
 ```bash
 # 在仓库根目录；控制服务保持运行
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
 例子默认拒绝硬件模式；实车操作必须显式添加 `--hardware`，并先完成[首车验收](../hardware/bringup)。

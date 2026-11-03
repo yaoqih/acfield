@@ -10,6 +10,9 @@ The control service defaults to `http://127.0.0.1:8000`. Runtime OpenAPI is avai
 | `GET /api/state` | Current arena, robot, camera and event snapshot |
 | `GET /api/config` | Persistent configuration |
 | `PUT /api/config` | Validate/save; all robots must be disarmed |
+| `GET /api/vision/config?url=...` | Read vision status and camera profile |
+| `POST /api/vision/cameras` | Scan camera IDs 0–5 on the vision host |
+| `POST /api/vision/operations` | Run `calibrate`, `load_world` or `reset_world`; robots remain locked |
 | `POST /api/robots/{id}/arm` | `{"enabled":true}` arms; `false` disarms |
 | `POST /api/robots/{id}/release` | Stop/disarm if control ID still matches; returns `released` |
 | `POST /api/robots/{id}/command` | Individual velocity |
@@ -41,6 +44,8 @@ Invalid input returns 422; missing robots return 404. Ownership, localization, p
 `armed` becomes true only after device confirmation. ACK establishes protocol state; physical motion needs wheel-speed and vision measurements.
 
 `ready` concerns all configured robots, not only an experiment subset. The server accepts 1–16 robot configurations and provides four reference firmware environments. Larger scales need separate validation.
+
+In hardware mode, `PUT /api/config` may include a `vision` camera profile. The control server first stops and locks all robots, then applies the profile to AprilTag and saves control configuration only after success. If the camera configuration fails, the save fails and global stop remains active.
 
 ## State data {#state-data}
 

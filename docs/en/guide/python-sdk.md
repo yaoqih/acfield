@@ -15,11 +15,11 @@ python -m pip install ./sdk/python
 python -m pip install -e './sdk/python[test]'
 ```
 
-To reuse the server environment, run from the root:
+The repository's shared environment installs both the server and SDK. From the repository root:
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
+uv sync --python 3.12 --extra test
+.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
 ```
 
 You can also install directly from Git:
@@ -144,7 +144,7 @@ Independent packaging keeps the algorithm environment dependent only on HTTPX an
 Tests use the actual control API and cover multi-robot ownership, races, partial failure, uncertain timeout outcomes, device-confirmation polling, TTL and response errors. CI installs the packaged SDK on Python 3.11, 3.12 and 3.13.
 
 ```bash
-# Repository root, in a development environment
-python -m pip install -e './robot_server[test]' -e './sdk/python[test]'
-python -m pytest sdk/python/tests -q
+# Repository root, in the shared environment
+uv sync --python 3.12 --extra test
+uv run --python 3.12 pytest sdk/python/tests -q
 ```

@@ -44,7 +44,7 @@ pio device monitor
 ```sh
 clang++ -std=c++11 -Wall -Wextra -Werror -I include test/protocol_test.cpp -o /tmp/robot-protocol-test
 /tmp/robot-protocol-test
-# 从robot_server运行：.venv/bin/python -m pytest -q
+# 从仓库根目录建立共享环境；从robot_server目录运行：../.venv/bin/python -m pytest -q
 ```
 
 服务端测试会编译`test/device_peer.cpp`，用真实服务端报文调用固件的`command_wire.h`和`protocol.h`，覆盖丢首包、绑定、解锁、超时和重连。需先执行过`pio run`安装ArduinoJson，并有clang++/g++。

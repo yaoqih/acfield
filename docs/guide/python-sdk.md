@@ -15,11 +15,11 @@ python -m pip install ./sdk/python
 python -m pip install -e './sdk/python[test]'
 ```
 
-如果希望使用已有服务端虚拟环境，在仓库根目录执行：
+仓库的共享环境会同时安装主控和 SDK；从根目录执行：
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
+uv sync --python 3.12 --extra test
+.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
 ```
 
 也可以直接从 Git 安装：
@@ -144,7 +144,7 @@ SDK 不自动重试动作或解锁，也没有后台线程为旧动作续期。�
 测试对接实际控制 API，并检查多车生命周期、控制权竞态、部分失败、超时结果不确定、等待车端确认、TTL 过期与格式错误。CI 在 Python 3.11、3.12、3.13 上安装打包后的 SDK 运行这些检查。
 
 ```bash
-# 仓库根目录，开发环境中
-python -m pip install -e './robot_server[test]' -e './sdk/python[test]'
-python -m pytest sdk/python/tests -q
+# 仓库根目录，共享开发环境
+uv sync --python 3.12 --extra test
+uv run --python 3.12 pytest sdk/python/tests -q
 ```

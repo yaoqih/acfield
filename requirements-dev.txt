@@ -1,0 +1,5 @@
+-e ./robot_server[test]
+-e ./sdk/python[test]
+-r requirements-apriltag.txt
+-r requirements-print.txt
+-r hardware_design/requirements.txt

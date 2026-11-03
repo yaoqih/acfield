@@ -4,10 +4,10 @@ Questions and issues are welcome in Chinese or English. For substantial features
 
 ## Development
 
-- Backend: `cd robot_server && uv sync --extra test && uv run pytest -q`.
-- Python SDK: from the root, install `python -m pip install -e './robot_server[test]' -e './sdk/python[test]'`, then run `python -m pytest sdk/python/tests -q`. Keep API and SDK protocol changes in one pull request.
+- Python: from the repository root, run `uv sync --python 3.12 --extra test`. This installs the control server, SDK, vision service, CAD/print tools and test dependencies into the root `.venv`; the root `uv.lock` is the single Python lockfile.
+- Platform tests: run `uv run --python 3.12 --extra test pytest -q` from the repository root. Run SDK tests with `cd sdk/python && uv run --python 3.12 pytest -q`; both commands use the same root `.venv`. Firmware contract tests also need a host C++ compiler and PlatformIO's ArduinoJson.
 - Console: `npm --prefix robot_server/frontend ci` then `npm --prefix robot_server/frontend run build`.
-- Vision: install `requirements-apriltag.txt`; run `python -m pytest -q tests/test_apriltag_live.py` from the root.
+- Vision-only setup: install `requirements-apriltag.txt`; run `python -m pytest -q tests/test_apriltag_live.py` from the root.
 - Firmware: install PlatformIO and build the four environments.
 - Docs: `npm ci && npm run docs:build`; preview with `npm run docs:dev`.
 

@@ -34,8 +34,12 @@ def ingest(fleet, data, began, last_frame):
              and isinstance(timestamp, str) and bool(timestamp)
              and number(age) and 0 <= age < 200)
     fresh = valid and frame != last_frame
-    fleet.camera = {"connected": fresh, "fps": fps if number(fps) and fps >= 0 else 0,
-                    "reason": "视觉已连接" if fresh else "等待新鲜、已标定的实时相机数据"}
+    available = (data.get('status') == 'running' and data.get('demo') is False and source == 'camera'
+                 and number(age) and 0 <= age < 1000)
+    fleet.camera = {"connected": fresh, "available": available,
+                    "fps": fps if number(fps) and fps >= 0 else 0,
+                    "reason": "视觉已连接" if fresh else "相机已连接，请完成场地标定" if available
+                    else data.get('error', "等待新鲜、已标定的实时相机数据")}
     if not valid:
         # A source switch or invalid calibration invalidates old poses immediately.
         for r in fleet.robots.values():
@@ -92,11 +96,20 @@ async def watch(fleet, base_url):
     async with httpx.AsyncClient(timeout=.7) as client:
         while True:
             began = time.monotonic()
+            url = base_url() if callable(base_url) else base_url
+            revision = (fleet.session, fleet.vision_revision)
+            if not url or fleet.vision_updating or fleet.vision_sync_error:
+                await asyncio.sleep(.05)
+                continue
             try:
-                response = await client.get(base_url + "/api/state")
+                response = await client.get(url + "/api/state")
                 response.raise_for_status()
+                if fleet.vision_updating or fleet.vision_sync_error or revision != (fleet.session, fleet.vision_revision):
+                    continue
                 last_frame = ingest(fleet, response.json(), began, last_frame)
             except (httpx.HTTPError, ValueError, KeyError, TypeError, OverflowError) as exc:
+                if revision != (fleet.session, fleet.vision_revision):
+                    continue
                 fleet.camera = {"connected": False, "fps": 0, "reason": "视觉数据无效或服务不可用"}
                 log.debug("Vision unavailable: %s", exc)
             await asyncio.sleep(max(0, .05-(time.monotonic()-began)))

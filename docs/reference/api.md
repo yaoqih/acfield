@@ -10,6 +10,9 @@
 | `GET /api/state` | 当前场地、车辆、相机与事件快照 |
 | `GET /api/config` | 当前持久配置 |
 | `PUT /api/config` | 校验并保存；要求全部车辆锁定 |
+| `GET /api/vision/config?url=...` | 读取视觉服务状态与相机配置 |
+| `POST /api/vision/cameras` | 扫描视觉服务主机上的相机 ID 0–5 |
+| `POST /api/vision/operations` | 执行 `calibrate`、`load_world`、`reset_world`；全部车辆保持锁定 |
 | `POST /api/robots/{id}/arm` | `{"enabled":true}` 解锁；`false` 锁定 |
 | `POST /api/robots/{id}/release` | 控制 ID 仍匹配时停车锁定，返回 `released` |
 | `POST /api/robots/{id}/command` | 单车速度命令 |
@@ -41,6 +44,8 @@
 `armed` 只在设备确认相应状态后成立。设备 ACK 证明协议状态确认，物理运动需要结合轮速与视觉反馈检查。
 
 `ready` 针对全部配置车辆，而不是某个实验参与子集。主控支持 1–16 台配置记录，已提供四台参考固件构建环境；更大规模需单独验证。
+
+真实模式下 `PUT /api/config` 可附带 `vision` 相机档案。主控先锁定所有车辆，再让 AprilTag 服务应用配置，服务成功后才保存主控配置。相机不可用时设置保存会失败，并保持全局停止。
 
 ## 状态数据 {#state-data}
 

@@ -75,8 +75,10 @@ def main():
         'apriltag36h11_130mm_A4.pdf', 'apriltag36h11_130mm_tag_only.pdf'}
     physical = json.loads((ROOT / 'apriltag_live.json').read_text())
     assert all(spec['size_m'] == .104 for spec in physical['tags'].values())
-    assert [t['id'] for t in tags] == [0, 1, 2, 3, 10, 11, 12, 13]
+    assert [t['id'] for t in tags] == [0, 1, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17]
     assert all(t['black_edge_mm'] == 104 and t['outer_edge_with_white_margin_mm'] == 130 for t in tags)
+    assert set(physical['tags']) == {str(i) for i in [0, 1, 2, 3, *range(10, 18)]}
+    assert all(physical['tags'][str(i)]['role'] == 'robot' for i in range(14, 18))
     geometry, rendered = [], []
     with tempfile.TemporaryDirectory(prefix='acfield-labels-') as temporary:
         for key, pdf_path in manifest['pdfs'].items():
@@ -158,8 +160,8 @@ def main():
                         'max_corner_error_px':max_error,
                         'minimum_decision_margin':min(margins) if margins else None})
     report = {'scope':'Digital artwork only; no screw occlusion or physical-camera test.',
-              'png_cases':'8 IDs x 3 pixel sizes x 4 rotations x 2 perspectives x 2 backends',
-              'pdf_cases':'16 pages (A4 and 130 mm square) rasterized by Poppler at 144 dpi x 2 backends',
+              'png_cases':'12 IDs x 3 pixel sizes x 4 rotations x 2 perspectives x 2 backends',
+              'pdf_cases':'24 pages (A4 and 130 mm square) rasterized by Poppler at 144 dpi x 2 backends',
               'results':results}
     if args.write_reports:
         for name, data in [('pdf_geometry_check.json',geometry),('detection_check.json',report)]:

@@ -65,6 +65,9 @@ class Fleet:
         self.robots = {c.id: Robot(c, bound=mode == "demo") for c in settings.robots}
         self.estop = False
         self.runtime_fault = None
+        self.vision_updating = False
+        self.vision_sync_error = None
+        self.vision_revision = 0
         self.control_at = time.monotonic()
         self.send = lambda packet, endpoint: None
         self.record = lambda kind, data: None
@@ -80,6 +83,10 @@ class Fleet:
         return self.robots[ident]
 
     def ready(self, r, now):
+        if self.vision_sync_error:
+            return self.vision_sync_error
+        if self.vision_updating:
+            return "视觉配置正在更新，请等待操作完成"
         if self.runtime_fault:
             return "控制服务故障，请重启服务：" + self.runtime_fault
         if self.estop:

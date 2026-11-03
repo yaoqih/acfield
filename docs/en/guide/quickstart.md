@@ -8,10 +8,11 @@ Install Git, Python 3.11+ (3.12 recommended) and Node.js 20.19+ or 22.12+. [uv](
 
 ```bash
 git clone https://github.com/yaoqih/acfield.git
-cd acfield/robot_server
-uv sync --extra test
-npm --prefix frontend ci
-npm --prefix frontend run build
+cd acfield
+uv sync --python 3.12 --extra test
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
@@ -20,11 +21,12 @@ Open **http://127.0.0.1:8000**. For later launches, run `./run.sh` inside `robot
 Without uv:
 
 ```bash
-cd acfield/robot_server
+cd acfield
 python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[test]'
-npm --prefix frontend ci
-npm --prefix frontend run build
+.venv/bin/python -m pip install -r requirements-dev.txt
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
@@ -52,8 +54,7 @@ Interactive API documentation is at **http://127.0.0.1:8000/docs**. With the ser
 
 ```bash
 # From the repository root
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
 The example refuses hardware mode by default. Real robots require explicit `--hardware` and prior [bring-up](../hardware/bringup).

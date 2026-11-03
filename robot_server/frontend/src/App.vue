@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Battery, Camera, Check, ChevronDown, CircleHelp, Crosshair, Expand, Focus, Grid2X2, Layers, LockKeyhole, Maximize2, MousePointer2, Radio, Route, Settings2, ShieldCheck, Square, Unplug, UnlockKeyhole, Wifi, X } from 'lucide-vue-next'
-import type { Robot, Settings, Snapshot } from './types'
+import type { Robot, Settings, Snapshot, VisionProfile, VisionResponse, VisionStatus } from './types'
+import CameraSettings from './CameraSettings.vue'
 
 const state = ref<Snapshot | null>(null)
 const connected = ref(false)
@@ -22,6 +23,16 @@ const draft = ref<Settings | null>(null)
 const saving = ref(false)
 const configError = ref('')
 const originalConfig = ref('')
+const visionProfile = ref<VisionProfile | null>(null)
+const visionStatus = ref<VisionStatus | null>(null)
+const originalVision = ref('')
+const visionError = ref('')
+const visionBusy = ref(false)
+const visionNeedsSync = ref(false)
+const cameraDevices = ref<{id: string; name: string}[]>([])
+const streamKey = ref(0)
+const loadedVisionUrl = ref('')
+const profileJson = (profile: VisionProfile | null) => JSON.stringify(profile ? { ...profile, saved_world: undefined } : null)
 const discardPrompt = ref(false)
 const notice = ref('')
 const armPending = ref(false)
@@ -30,7 +41,7 @@ const modalElement = ref<HTMLElement | null>(null)
 const modalReturnFocus = ref<HTMLElement | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
 const armedCount = computed(() => state.value?.robots.filter(r => r.armed || r.arm_pending).length ?? 0)
-const dirty = computed(() => draft.value !== null && JSON.stringify(draft.value) !== originalConfig.value)
+const dirty = computed(() => draft.value !== null && (visionNeedsSync.value || JSON.stringify(draft.value) !== originalConfig.value || profileJson(visionProfile.value) !== originalVision.value))
 const duplicateTags = computed(() => draft.value ? new Set(draft.value.robots.map(r => r.tag_id)).size !== draft.value.robots.length : false)
 const blockedReason = computed(() => {
   if (!connected.value) return '服务器连接中断，恢复后才能控制'
@@ -64,7 +75,7 @@ async function toggleArm() {
   finally { armPending.value = false }
 }
 function closeSettings() {
-  if (saving.value) return
+  if (saving.value || visionBusy.value) return
   if (dirty.value) { discardPrompt.value = true; return }
   settingsOpen.value = false
   discardPrompt.value = false
@@ -85,6 +96,8 @@ let socket: WebSocket | null = null
 let reconnect: ReturnType<typeof setTimeout> | undefined
 let holdTimer: ReturnType<typeof setInterval> | undefined
 let clockTimer: ReturnType<typeof setInterval> | undefined
+let visionTimer: ReturnType<typeof setInterval> | undefined
+let visionPollPending = false
 let disposed = false
 let generation = 0
 let commandPending = false
@@ -97,8 +110,8 @@ const points = (xy: number[][]) => xy.map(p => `${p[0]},${p[1]}`).join(' ')
 const clock = (t: number) => new Date(t * 1000).toLocaleTimeString('zh-CN', { hour12: false })
 const commandLabel = (r: Robot) => ({ idle: '等待指令', sent: '已发送 · 等待确认', confirmed: '设备已确认', expired: '指令已过期' }[r.command_status] ?? r.command_status)
 
-async function api<T>(path: string, body?: unknown, method = 'POST'): Promise<T> {
-  const response = await fetch(path, { method, headers: { 'Content-Type': 'application/json', 'X-Control-ID': controlId }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(1500) })
+async function api<T>(path: string, body?: unknown, method = 'POST', timeout = 1500): Promise<T> {
+  const response = await fetch(path, { method, headers: { 'Content-Type': 'application/json', 'X-Control-ID': controlId }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(timeout) })
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}))
     const message = Array.isArray(detail.detail)
@@ -167,20 +180,94 @@ async function openSettings() {
   try {
     draft.value = await api<Settings>('/api/config', undefined, 'GET')
     originalConfig.value = JSON.stringify(draft.value)
+    visionProfile.value = null; originalVision.value = profileJson(null)
+    loadedVisionUrl.value = ''
+    visionStatus.value = null; visionError.value = ''; cameraDevices.value = []
     configError.value = ''; discardPrompt.value = false; settingsOpen.value = true
+    if (state.value?.mode === 'hardware') await loadVision()
   }
   catch (e) { error.value = (e as Error).message }
 }
-async function saveSettings() {
-  if (armedCount.value || duplicateTags.value || saving.value) return
+async function loadVision() {
+  if (!draft.value || visionBusy.value || saving.value) return
+  visionBusy.value = true; visionError.value = ''
+  const url = draft.value.vision_url || 'http://127.0.0.1:8765'
+  try {
+    const response = await api<VisionResponse>(`/api/vision/config?url=${encodeURIComponent(url)}`, undefined, 'GET', 5000)
+    loadedVisionUrl.value = url
+    visionProfile.value = response.config; visionStatus.value = response.state
+    originalVision.value = profileJson(response.config)
+    draft.value.vision_url = url
+  } catch (e) { visionError.value = (e as Error).message }
+  finally { visionBusy.value = false }
+}
+async function pollVision() {
+  if (!settingsOpen.value || visionBusy.value || saving.value || visionPollPending || !visionProfile.value || !draft.value?.vision_url) return
+  visionPollPending = true
+  const url = draft.value.vision_url
+  try {
+    const response = await api<VisionResponse>(`/api/vision/config?url=${encodeURIComponent(url)}`, undefined, 'GET', 5000)
+    if (settingsOpen.value && !visionBusy.value && !saving.value && draft.value?.vision_url === url) {
+      visionStatus.value = response.state
+      if (visionProfile.value) visionProfile.value.saved_world = response.config.saved_world
+    }
+  } catch { visionStatus.value = {status: 'error', error: '视觉服务连接中断，请检查服务后重新读取配置'} }
+  finally { visionPollPending = false }
+}
+async function scanCameras() {
+  if (dirty.value || visionBusy.value) return
+  visionBusy.value = true; visionError.value = ''
+  try {
+    const result = await api<{cameras: {id: string; name: string}[]}>('/api/vision/cameras', {}, 'POST', 30000)
+    cameraDevices.value = result.cameras
+    toast(result.cameras.length ? '设备列表已刷新，全车保持锁定' : '未发现相机，可手填 ID；请检查系统相机权限')
+  } catch (e) {
+    visionNeedsSync.value = true
+    visionError.value = `${(e as Error).message}；请重新保存配置以解除安全锁定`
+  }
+  finally { visionBusy.value = false }
+}
+async function visionOperation(action: 'calibrate' | 'reset_world' | 'load_world') {
+  if (dirty.value || visionBusy.value) return
+  visionBusy.value = true; visionError.value = ''
+  try {
+    await api('/api/vision/operations', { action }, 'POST', 30000)
+    toast(action === 'reset_world' ? '标定已清除，全车保持锁定' : '标定已完成并保存，全车保持锁定')
+  } catch (e) {
+    visionNeedsSync.value = true
+    visionError.value = `${(e as Error).message}；请重新保存配置以解除安全锁定`
+  }
+  finally { visionBusy.value = false; void pollVision() }
+}
+async function connectCamera(enabled: boolean) {
+  if (!visionProfile.value) return
+  configError.value = ''
+  const form = modalElement.value?.querySelector('form')
+  if (form && !form.reportValidity()) return
+  if (armedCount.value) {
+    await lockForSettings()
+    if (configError.value) return
+    try { state.value = await api<Snapshot>('/api/state', undefined, 'GET') }
+    catch (e) { configError.value = (e as Error).message; return }
+  }
+  visionProfile.value.enabled = enabled
+  await saveSettings(false)
+}
+async function saveSettings(close = true) {
+  if (duplicateTags.value || saving.value || visionBusy.value) return
   configError.value = ''
   saving.value = true
   try {
-    await api('/api/config', draft.value, 'PUT')
-    settingsOpen.value = false
+    const profile = state.value?.mode === 'hardware' && visionProfile.value ? JSON.parse(profileJson(visionProfile.value)) : undefined
+    const saved = await api<Settings>('/api/config', { ...draft.value, vision: profile }, 'PUT', 30000)
+    draft.value = saved; originalConfig.value = JSON.stringify(saved)
+    originalVision.value = profileJson(visionProfile.value)
+    visionNeedsSync.value = false
+    streamKey.value++; cameraFailed.value = false
+    if (close) settingsOpen.value = false
     toast('配置已保存，全车保持锁定')
   } catch (e) { configError.value = (e as Error).message }
-  finally { saving.value = false }
+  finally { saving.value = false; void pollVision() }
 }
 function pageHidden() { if (document.hidden) endHold() }
 function keydown(event: KeyboardEvent) {
@@ -203,6 +290,12 @@ function keydown(event: KeyboardEvent) {
   }
 }
 watch(controlReady, ready => { if (!ready) endHold() })
+watch(() => draft.value?.vision_url, url => {
+  if (url !== loadedVisionUrl.value && !saving.value) {
+    visionProfile.value = null; visionStatus.value = null
+    originalVision.value = profileJson(null); cameraDevices.value = []
+  }
+})
 watch(() => settingsOpen.value || help.value, async open => {
   if (open) {
     endHold()
@@ -225,6 +318,7 @@ watch(selectedId, () => {
 })
 onMounted(() => {
   connect()
+  visionTimer = setInterval(pollVision, 1500)
   clockTimer = setInterval(() => {
     now.value = Date.now()
     if (updated.value && now.value - updated.value > 1500) { connected.value = false; endHold(); socket?.close() }
@@ -236,7 +330,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', pageHidden)
 })
 onUnmounted(() => {
-  disposed = true; document.body.style.overflow = ''; clearTimeout(noticeTimer); endHold(); clearTimeout(reconnect); clearInterval(clockTimer); socket?.close()
+  disposed = true; document.body.style.overflow = ''; clearTimeout(noticeTimer); endHold(); clearTimeout(reconnect); clearInterval(clockTimer); clearInterval(visionTimer); socket?.close()
   window.removeEventListener('pointerup', endHold); window.removeEventListener('pointercancel', endHold)
   window.removeEventListener('blur', endHold); window.removeEventListener('keydown', keydown)
   document.removeEventListener('visibilitychange', pageHidden)
@@ -328,9 +422,9 @@ onUnmounted(() => {
 </details>
             </template><div v-else class="waiting-device">等待设备状态…</div>
           </aside>
-          <section class="panel camera-panel"><div class="panel-header"><div class="panel-title"><Camera :size="16" />视觉观察<span class="small-label">{{ state?.mode === 'demo' ? 'PREVIEW' : 'CAMERA' }}</span></div><button class="text-button" :disabled="!connected || state?.mode !== 'hardware' || !state.camera.connected" @click="cameraOpen = !cameraOpen; cameraFailed = false">{{ state?.mode !== 'hardware' ? '模拟模式无相机' : !state.camera.connected ? '等待相机连接' : cameraOpen ? '收起画面' : '展开画面' }}<Expand :size="13" /></button></div>
-            <div v-if="cameraOpen && state?.mode === 'hardware' && state.camera.connected && !cameraFailed" class="camera-stream"><img :src="'/api/camera/stream'" alt="实时相机画面" @error="cameraFailed = true" /></div>
-            <div v-else class="camera-placeholder"><div class="camera-illustration"><Camera :size="30" /><span class="camera-corner tl"></span><span class="camera-corner br"></span></div><div><h3>{{ state?.mode === 'demo' ? '先在模拟场地完成一次实验' : '连接你的俯视相机' }}</h3><p>{{ state?.mode === 'demo' ? '当前使用合成定位。接入 AprilTag 视觉服务后，可在此查看实时画面。' : cameraFailed ? '相机流暂时不可用，点击展开画面重试。' : state?.camera.reason }}</p></div><span class="camera-tag">{{ state?.camera.connected ? '已连接' : '未接入相机' }}</span></div>
+          <section class="panel camera-panel"><div class="panel-header"><div class="panel-title"><Camera :size="16" />视觉观察<span class="small-label">{{ state?.mode === 'demo' ? 'PREVIEW' : 'CAMERA' }}</span></div><button class="text-button" :disabled="!connected || state?.mode !== 'hardware' || !state.camera.available" @click="cameraOpen = !cameraOpen; cameraFailed = false">{{ state?.mode !== 'hardware' ? '模拟模式无相机' : !state.camera.available ? '等待相机连接' : cameraOpen ? '收起画面' : '展开画面' }}<Expand :size="13" /></button></div>
+            <div v-if="cameraOpen && state?.mode === 'hardware' && state.camera.available && !cameraFailed" class="camera-stream"><img :src="'/api/camera/stream'" alt="实时相机画面" @error="cameraFailed = true" /></div>
+            <div v-else class="camera-placeholder"><div class="camera-illustration"><Camera :size="30" /><span class="camera-corner tl"></span><span class="camera-corner br"></span></div><div><h3>{{ state?.mode === 'demo' ? '先在模拟场地完成一次实验' : '连接你的俯视相机' }}</h3><p>{{ state?.mode === 'demo' ? '当前使用合成定位。接入 AprilTag 视觉服务后，可在此查看实时画面。' : cameraFailed ? '相机流暂时不可用，点击展开画面重试。' : state?.camera.reason }}</p></div><span class="camera-tag">{{ state?.camera.available ? '已连接' : '未接入相机' }}</span></div>
           </section>
           <section class="panel events-panel"><div class="panel-header"><div class="panel-title"><Activity :size="16" />运行记录</div><span class="small-label">本次会话</span></div><div class="events-list"><div v-for="(event, index) in state?.events.slice(0, 4)" :key="`${event.time}-${index}`" class="event"><span class="mono">{{ clock(event.time) }}</span><i></i><span>{{ event.message }}</span></div><div v-if="!state?.events.length" class="empty-events">等待服务器事件</div></div></section>
         </div>
@@ -339,7 +433,7 @@ onUnmounted(() => {
     </div>
     <div v-if="notice" class="toast" role="status"><Check :size="17" />{{ notice }}</div>
     <button v-if="selected && !settingsOpen && !help" class="mobile-control-jump" @click="focusControls"><Focus :size="17" />{{ selected.config.name }} · 查看控制</button>
-    <div v-if="settingsOpen && draft" class="modal-backdrop" @click.self="closeSettings"><section ref="modalElement" tabindex="-1" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="modal-header"><div><div class="eyebrow">EXPERIMENT SETTINGS</div><h2 id="settings-title">实验配置</h2></div><button aria-label="关闭配置" @click="closeSettings"><X :size="20" /></button></div><form @submit.prevent="saveSettings"><div class="modal-body"><p class="settings-note">调整场地和设备参数。保存后全车保持锁定，需要重新释放全局停止并解锁。</p><div v-if="armedCount" class="settings-warning"><span>{{ armedCount }} 辆小车尚未锁定，暂时不能保存。</span><button type="button" class="button subtle" :disabled="!connected" @click="lockForSettings">全车停车并锁定</button></div><p v-if="duplicateTags" class="modal-error" role="alert">AprilTag ID 不能重复，请为每辆小车分配不同的标签。</p><h3>场地尺寸</h3><div class="form-grid"><label>宽度 / m<input v-model.number="draft.arena_width" type="number" min="1" max="20" step=".1" required /></label><label>高度 / m<input v-model.number="draft.arena_height" type="number" min="1" max="20" step=".1" required /></label></div><details v-for="robot in draft.robots" :key="robot.id" class="robot-config" :open="robot.id === selectedId"><summary><i :style="{ background: robot.color }"></i>{{ robot.name }} <span class="mono">{{ robot.id.toUpperCase() }}</span><ChevronDown :size="14" /></summary><div class="form-grid"><label>设备名称<input v-model="robot.name" maxlength="40" required /></label><label>AprilTag ID<input v-model.number="robot.tag_id" type="number" min="0" max="65535" required /></label><label>标签边长 / m<input v-model.number="robot.tag_size" type="number" min=".001" max="1" step=".001" required /></label><label>显示颜色<input v-model="robot.color" type="color" /></label><label>车体长度 / m<input v-model.number="robot.length" type="number" min=".01" max="1" step=".01" required /></label><label>车体宽度 / m<input v-model.number="robot.width" type="number" min=".01" max="1" step=".01" required /></label><label>标签前向偏移 / m<input v-model.number="robot.tag_offset_x" type="number" min="-1" max="1" step=".001" required /></label><label>标签左向偏移 / m<input v-model.number="robot.tag_offset_y" type="number" min="-1" max="1" step=".001" required /></label><label>航向修正 / rad<input v-model.number="robot.heading_offset" type="number" min="-3.142" max="3.142" step=".001" required /></label><label>最大线速度 / m/s<input v-model.number="robot.max_v" type="number" min=".02" max="1" step=".01" required /></label><label>最大角速度 / rad/s<input v-model.number="robot.max_omega" type="number" min=".1" max="6" step=".1" required /></label></div><p class="field-note">标签偏移与航向需和视觉标定一致；标签边长不会自动同步到识别服务。</p></details></div><div v-if="configError" class="modal-error" role="alert">{{ configError }}</div><div v-if="discardPrompt" class="discard-prompt" role="alert"><span>有未保存的修改，是否放弃？</span><button type="button" @click="discardPrompt = false">继续编辑</button><button type="button" @click="settingsOpen = false; discardPrompt = false">放弃修改</button></div><div class="modal-footer"><span class="save-state">{{ saving ? '正在保存…' : dirty ? '有未保存的修改' : '配置未修改' }}</span><button type="button" class="button subtle" @click="closeSettings">取消</button><button type="submit" class="button primary" :disabled="saving || !connected || armedCount > 0 || duplicateTags || !dirty"><Check :size="16" />{{ saving ? '保存中…' : '保存配置' }}</button></div></form></section></div>
-    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>按住方向按钮运行，松开后停车；左右按钮原地旋转。键盘可用 Tab 聚焦方向按钮，按住回车或空格操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>标签尺寸用于记录；识别端的标签尺寸和世界坐标标定仍需在 AprilTag 服务中配置。</p></div></section></div>
+    <div v-if="settingsOpen && draft" class="modal-backdrop" @click.self="closeSettings"><section ref="modalElement" tabindex="-1" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="modal-header"><div><div class="eyebrow">EXPERIMENT SETTINGS</div><h2 id="settings-title">实验配置</h2></div><button aria-label="关闭配置" @click="closeSettings"><X :size="20" /></button></div><form @submit.prevent="saveSettings()"><div class="modal-body"><p class="settings-note">调整场地和设备参数。保存后全车保持锁定，需要重新释放全局停止并解锁。</p><div v-if="armedCount" class="settings-warning"><span>{{ armedCount }} 辆小车尚未锁定，暂时不能保存。</span><button type="button" class="button subtle" :disabled="!connected" @click="lockForSettings">全车停车并锁定</button></div><p v-if="duplicateTags" class="modal-error" role="alert">AprilTag ID 不能重复，请为每辆小车分配不同的标签。</p><CameraSettings :settings="draft" :profile="visionProfile" :status="visionStatus" :cameras="cameraDevices" :busy="visionBusy || saving" :error="visionError" :hardware="state?.mode === 'hardware'" :dirty="dirty" :preview="!!state?.camera.available" :stream-key="streamKey" @refresh="loadVision" @scan="scanCameras" @connect="connectCamera" @operation="visionOperation" /><h3>场地尺寸</h3><div class="form-grid"><label>宽度 / m<input v-model.number="draft.arena_width" type="number" min="1" max="20" step=".1" required /></label><label>高度 / m<input v-model.number="draft.arena_height" type="number" min="1" max="20" step=".1" required /></label></div><details v-for="robot in draft.robots" :key="robot.id" class="robot-config" :open="robot.id === selectedId"><summary><i :style="{ background: robot.color }"></i>{{ robot.name }} <span class="mono">{{ robot.id.toUpperCase() }}</span><ChevronDown :size="14" /></summary><div class="form-grid"><label>设备名称<input v-model="robot.name" maxlength="40" required /></label><label>AprilTag ID<input v-model.number="robot.tag_id" type="number" min="0" max="586" required /></label><label>标签黑框边长 / m<input v-model.number="robot.tag_size" type="number" min=".005" max="1" step=".001" required /></label><label>标签安装高度 / m<input v-model.number="robot.tag_height" type="number" min="0" max="10" step=".0001" required /></label><label>显示颜色<input v-model="robot.color" type="color" /></label><label>车体长度 / m<input v-model.number="robot.length" type="number" min=".01" max="1" step=".01" required /></label><label>车体宽度 / m<input v-model.number="robot.width" type="number" min=".01" max="1" step=".01" required /></label><label>标签前向偏移 / m<input v-model.number="robot.tag_offset_x" type="number" min="-1" max="1" step=".001" required /></label><label>标签左向偏移 / m<input v-model.number="robot.tag_offset_y" type="number" min="-1" max="1" step=".001" required /></label><label>航向修正 / rad<input v-model.number="robot.heading_offset" type="number" min="-3.142" max="3.142" step=".001" required /></label><label>最大线速度 / m/s<input v-model.number="robot.max_v" type="number" min=".02" max="1" step=".01" required /></label><label>最大角速度 / rad/s<input v-model.number="robot.max_omega" type="number" min=".1" max="6" step=".1" required /></label></div><p class="field-note">真实模式保存时，标签黑框边长与安装高度会同步到视觉服务。航向修正在主控端应用，请按实测填写。</p></details></div><div v-if="configError" class="modal-error" role="alert">{{ configError }}</div><div v-if="discardPrompt" class="discard-prompt" role="alert"><span>有未保存的修改，是否放弃？</span><button type="button" @click="discardPrompt = false">继续编辑</button><button type="button" @click="settingsOpen = false; discardPrompt = false">放弃修改</button></div><div class="modal-footer"><span class="save-state">{{ saving ? '正在保存…' : dirty ? '有未保存的修改' : '配置未修改' }}</span><button type="button" class="button subtle" @click="closeSettings">取消</button><button type="submit" class="button primary" :disabled="saving || visionBusy || !connected || armedCount > 0 || duplicateTags || !dirty"><Check :size="16" />{{ saving ? '保存中…' : '保存配置' }}</button></div></form></section></div>
+    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>按住方向按钮运行，松开后停车；左右按钮原地旋转。键盘可用 Tab 聚焦方向按钮，按住回车或空格操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
   </div>
 </template>

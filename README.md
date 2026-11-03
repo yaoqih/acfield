@@ -11,14 +11,15 @@ ACField provides an inspectable path from localization to multi-robot velocity e
 
 ## Start without robots
 
-Requirements: Python 3.11+ (3.12 recommended), Node.js 20.19+ or 22.12+, Git and [uv](https://docs.astral.sh/uv/). See the [quick start](https://yaoqih.github.io/acfield/guide/quickstart) for a standard venv alternative.
+Requirements: Python 3.11+ (3.12 recommended), Node.js 20.19+ or 22.12+, Git and [uv](https://docs.astral.sh/uv/). See the [quick start](https://yaoqih.github.io/acfield/guide/quickstart) for a pip/venv alternative.
 
 ```bash
 git clone https://github.com/yaoqih/acfield.git
-cd acfield/robot_server
-uv sync --extra test
-npm --prefix frontend ci
-npm --prefix frontend run build
+cd acfield
+uv sync --python 3.12 --extra test
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
@@ -27,8 +28,7 @@ Open **http://127.0.0.1:8000**. Default demo mode does not open the device UDP t
 With the server still running, execute a bounded example from the repository root:
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
 ## What is included
@@ -82,7 +82,7 @@ npm run docs:dev
 npm run docs:build
 
 # Backend, inside robot_server/
-uv run --extra test pytest -q
+uv run --python 3.12 --extra test pytest -q
 ```
 
 CI checks the backend, actual firmware parser contract, Python SDK on Python 3.11–3.13, localization, frontend types/build and four firmware environments. Contract tests require a host C++ compiler and PlatformIO-installed ArduinoJson; see [CONTRIBUTING.md](CONTRIBUTING.md).

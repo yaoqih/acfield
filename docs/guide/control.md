@@ -9,11 +9,10 @@ Python 算法推荐通过 [Python SDK](./python-sdk) 接入：`Client` 负责 HT
 先按[快速开始](./quickstart)运行演示服务，再在仓库根目录运行：
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 
 # 两车以同一批请求提交动作
-robot_server/.venv/bin/python examples/velocity_control.py   --robots car-01 car-02 --duration 2
+.venv/bin/python examples/velocity_control.py --robots car-01 car-02 --duration 2
 ```
 
 示例默认直行 0.05 m/s、每 100 ms 更新、TTL 300 ms，最多运行 30 s。它只负责速度接口演示，不是编队算法。它会检查模式、就绪和解锁状态，并在退出路径中请求参与车停车锁定。Ctrl+C 同样进入清理流程；进程被强制终止时则依赖服务器与设备 TTL。

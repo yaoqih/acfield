@@ -1,5 +1,6 @@
 """Wire contracts. Distances in metres, angles in radians, CCW positive."""
 from typing import Literal
+from urllib.parse import urlparse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -13,6 +14,7 @@ class RobotConfig(Model):
     tag_id: int = Field(ge=0, le=65535)
     color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
     tag_size: float = Field(default=.104, gt=0, le=1)
+    tag_height: float = Field(default=.0646, ge=0, le=10)
     length: float = Field(default=.20, gt=0, le=1)
     width: float = Field(default=.16, gt=0, le=1)
     body_offset_x: float = Field(default=0, ge=-1, le=1)
@@ -26,12 +28,18 @@ class RobotConfig(Model):
 
 
 class Settings(Model):
+    vision_url: str = Field(default="", max_length=2048)
     arena_width: float = Field(default=3, ge=1, le=20)
     arena_height: float = Field(default=3, ge=1, le=20)
     robots: list[RobotConfig] = Field(min_length=1, max_length=16)
 
     @model_validator(mode="after")
     def unique_ids(self):
+        if self.vision_url:
+            url = urlparse(self.vision_url)
+            if url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password or url.query or url.fragment:
+                raise ValueError('视觉服务地址必须是无账号、查询参数的 HTTP(S) 地址')
+            self.vision_url = self.vision_url.rstrip('/')
         for key in ("id", "tag_id"):
             values = [getattr(r, key) for r in self.robots]
             if len(values) != len(set(values)):

@@ -14,18 +14,18 @@ ACField 把外部视觉定位、统一状态与速度接口、Web 控制台、�
 
 ```bash
 git clone https://github.com/yaoqih/acfield.git
-cd acfield/robot_server
-uv sync --extra test
-npm --prefix frontend ci
-npm --prefix frontend run build
+cd acfield
+uv sync --python 3.12 --extra test
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
+cd robot_server
 ./run.sh
 ```
 
 打开 http://127.0.0.1:8000。点击小车、解锁并按住方向按钮。全局停止会锁定所有车，释放后需重新解锁。服务保持运行时，从仓库根目录执行：
 
 ```bash
-uv pip install --python robot_server/.venv/bin/python -e ./sdk/python
-robot_server/.venv/bin/python examples/velocity_control.py --duration 2
+.venv/bin/python examples/velocity_control.py --duration 2
 ```
 
 ## 内容入口

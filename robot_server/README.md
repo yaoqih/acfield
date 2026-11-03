@@ -7,10 +7,11 @@ FastAPI state/control service and Vue 3 / TypeScript console. Default demo mode 
 Requirements: Python 3.11+ (3.12 recommended), Node.js 20.19+ or 22.12+.
 
 ```bash
+cd acfield
+uv sync --python 3.12 --extra test
+npm --prefix robot_server/frontend ci
+npm --prefix robot_server/frontend run build
 cd robot_server
-uv sync --extra test
-npm --prefix frontend ci
-npm --prefix frontend run build
 ./run.sh
 ```
 
@@ -27,7 +28,7 @@ the address reachable on your experiment network, especially when using a VPN.
 Complete firmware and camera calibration before using hardware mode:
 
 ```bash
-ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ROBOT_VISION_URL=http://127.0.0.1:5050 ./run.sh
+ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ROBOT_VISION_URL=http://127.0.0.1:8765 ./run.sh
 ```
 
 Use one process and one worker. This local/LAN service has no account authentication or authenticated UDP transport. The `X-Control-ID` header manages ownership only. Device arming, fresh camera localization and finite command lifetimes remain required.
@@ -35,9 +36,12 @@ Use one process and one worker. This local/LAN service has no account authentica
 ## Development
 
 ```bash
-uv run --extra test pytest -q
-npm --prefix frontend run dev
-npm --prefix frontend run build
+cd ..
+uv run --python 3.12 --extra test pytest -q
+cd ../sdk/python
+uv run --python 3.12 pytest -q
+npm --prefix robot_server/frontend run dev
+npm --prefix robot_server/frontend run build
 ```
 
 The backend tests include the actual firmware parser contract; install a host C++ compiler and PlatformIO's ArduinoJson first. CI makes missing contract dependencies an error.

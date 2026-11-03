@@ -30,7 +30,7 @@ Missing local dependencies cause explicit skips. CI sets `ACFIELD_REQUIRE_FIRMWA
 
 ## Ports already in use {#ports-already-in-use}
 
-Defaults are HTTP 8000, device UDP 9999 and vision HTTP 5050. Check old processes. Do not add server workers to resolve contention. Ports may change, but update server, firmware and examples consistently.
+Defaults are HTTP 8000, device UDP 9999 and vision HTTP 8765. Check old processes. Do not add server workers to resolve contention. Ports may change, but update server, firmware and examples consistently.
 
 ## Native detector crashes on Linux cleanup {#native-detector-crashes-on-linux-cleanup}
 

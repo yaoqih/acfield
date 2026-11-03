@@ -21,6 +21,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from flask import Flask, Response, jsonify, request, send_file
+from vision_settings import discover_cameras, save_runtime, validate_profile
 
 ROOT = Path(__file__).resolve().parent
 NATIVE_FAMILIES = ['tag36h11', 'tag16h5', 'tag25h9', 'tagStandard41h12',
@@ -382,10 +383,15 @@ class Tracker:
 
 
 class LiveEngine:
-    def __init__(self, settings, source='demo', backend='auto', family='tag36h11', width=1280, height=720):
+    def __init__(self, settings, source='demo', backend='auto', family='tag36h11', width=1280, height=720,
+                 fps=30, runtime_path=None):
         self.settings = settings
         self.backend = backend
         self.width, self.height = width, height
+        self.fps = fps
+        self.runtime_path = runtime_path
+        self.saved_world = None
+        self.camera_id = str(source) if str(source).isdecimal() else '0'
         self.lock = threading.RLock()
         self.condition = threading.Condition(self.lock)
         self.pending = deque()
@@ -414,7 +420,9 @@ class LiveEngine:
         self.events.appendleft({'time': datetime.now().strftime('%H:%M:%S'), 'text': text, 'level': level})
 
     def open_source(self, source):
-        if source == 'demo':
+        if source == 'disconnected':
+            capture, active = None, copy.deepcopy(self.settings)
+        elif source == 'demo':
             if self.family != 'tag36h11':
                 raise ValueError('现有演示图案为 tag36h11，请选相同标签族')
             capture = DemoSource(self.settings)
@@ -436,24 +444,99 @@ class LiveEngine:
             if isinstance(value, int):
                 capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
                 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                capture.set(cv2.CAP_PROP_FPS, self.fps)
                 capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                # Verify a real frame before announcing a successful connection.
+                frame = None
+                for _ in range(10):
+                    ok, frame = capture.read()
+                    if ok and frame is not None:
+                        break
+                    time.sleep(.05)
+                if frame is None:
+                    capture.release()
+                    raise ValueError('相机已打开但没有图像；请检查权限、占用或采集模式')
             active = copy.deepcopy(self.settings)
         if self.capture is not None:
             self.capture.release()
         self.capture, self.active = capture, active
         self.source_name = source
+        if source.isdecimal():
+            self.camera_id = source
         self.extrinsic, self.world_info, self.camera = None, None, None
         self.world_bad_frames = 0
         self.raw_detections = []
         self.latest_acquired = None
         self.tracker = Tracker()
+        with self.condition:
+            self.jpeg = None
+            self.state = {'status': 'starting', 'tags': [], 'frame_id': self.frame_id,
+                          'source': source, 'world_calibrated': False}
+            self.condition.notify_all()
         self.event('已连接合成演示（真实检测器）' if source == 'demo' else f'已连接输入源 {source}')
 
-    def command(self, payload):
+    def configuration(self):
+        with self.lock:
+            return copy.deepcopy({
+                'source': self.camera_id, 'enabled': self.source_name.isdecimal() and self.capture is not None,
+                'width': self.width, 'height': self.height, 'fps': self.fps,
+                'family': self.family, 'decimate': self.decimate,
+                'camera': self.settings.get('camera'), 'tags': self.settings['tags'],
+                'world': self.settings.get('world', {'configured': False}),
+                'saved_world': self.saved_world is not None,
+            })
+
+    def persist_configuration(self):
+        save_runtime(self.runtime_path, {'profile': self.configuration(), 'saved_world': self.saved_world})
+
+    def configure(self, profile):
+        profile = validate_profile(profile)
+        detector = Detector(profile['family'], profile['decimate'], self.backend)
+        old = (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector)
+        old_profile, old_world, old_source = self.configuration(), self.saved_world, self.source_name
+        self.settings = {key: copy.deepcopy(profile[key]) for key in ('camera', 'tags', 'world', 'family')}
+        self.width, self.height, self.fps = profile['width'], profile['height'], profile['fps']
+        self.family, self.decimate, self.detector = profile['family'], profile['decimate'], detector
+        try:
+            # Drivers commonly reject opening an already occupied camera. Release it first.
+            if self.capture is not None and self.source_name == profile['source']:
+                self.capture.release()
+                self.capture = None
+            self.open_source(profile['source'] if profile['enabled'] else 'disconnected')
+            self.camera_id = profile['source']
+            # Disconnect/reconnect of an identical profile retains a manually loadable calibration.
+            comparable = lambda p: {k: v for k, v in p.items() if k not in ('enabled', 'saved_world')}
+            if comparable(old_profile) != comparable(profile):
+                self.saved_world = None
+            self.persist_configuration()
+        except (ValueError, RuntimeError, OSError, cv2.error):
+            (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector) = old
+            self.saved_world, self.camera_id = old_world, old_profile['source']
+            try:
+                self.open_source(old_source)
+            except (ValueError, OSError, cv2.error):
+                self.open_source('disconnected')
+            raise
+        self.event('相机与物理配置已保存；请确认内参后重新锁定场地外参')
+
+    def execute(self, payload, timeout=20):
+        """Wait for the capture worker's result, including actual driver/calibration failures."""
+        completion = {'event': threading.Event(), 'started': False, 'cancelled': False}
+        self.command(payload, completion)
+        if not completion['event'].wait(timeout):
+            with self.lock:
+                completion['cancelled'] = not completion['started']
+            raise TimeoutError('相机操作超时；请检查设备并刷新状态，全车应保持锁定')
+        if 'error' in completion:
+            raise ValueError(completion['error'])
+        return completion.get('result', self.configuration())
+
+    def command(self, payload, completion=None):
         if not isinstance(payload, dict):
             raise ValueError('Expected a JSON object')
         action = payload.get('action')
-        if action not in ('source', 'detector', 'calibrate', 'reset_world', 'clear_tracks', 'record'):
+        if action not in ('source', 'detector', 'calibrate', 'reset_world', 'clear_tracks', 'record',
+                          'configure', 'scan_cameras', 'load_world'):
             raise ValueError('Unknown action')
         if action == 'source':
             source = payload.get('source', '')
@@ -466,6 +549,11 @@ class LiveEngine:
                 raise ValueError('Unsupported family for this backend')
             decimate = finite_number(payload.get('decimate', 1), 'decimate', 1, 4)
             payload = {'action': action, 'family': family, 'decimate': decimate}
+        if action == 'configure':
+            payload = {'action': action, 'profile': validate_profile(payload.get('profile'))}
+        payload = dict(payload)
+        if completion is not None:
+            payload['_completion'] = completion
         with self.lock:
             if len(self.pending) > 8:
                 raise ValueError('请等待上一个操作完成')
@@ -479,11 +567,24 @@ class LiveEngine:
             commands = list(self.pending)
             self.pending.clear()
         for p in commands:
+            completion = p.get('_completion')
+            if completion is not None:
+                with self.lock:
+                    if completion['cancelled']:
+                        completion['event'].set()
+                        continue
+                    completion['started'] = True
             try:
                 action = p['action']
-                if action in ('source', 'detector', 'calibrate', 'reset_world') and self.record:
+                if action in ('source', 'detector', 'calibrate', 'reset_world', 'configure', 'load_world') and self.record:
                     self.stop_recording()
-                if action == 'source':
+                if action == 'configure':
+                    self.configure(p['profile'])
+                elif action == 'scan_cameras':
+                    devices = discover_cameras(self.source_name, self.capture)
+                    if completion is not None:
+                        completion['result'] = {'cameras': devices, 'scanned_indices': [0, 5]}
+                elif action == 'source':
                     self.open_source(p['source'])
                 elif action == 'detector':
                     if self.source_name == 'demo' and p['family'] != 'tag36h11':
@@ -506,10 +607,31 @@ class LiveEngine:
                         self.raw_detections, self.tag_specs(), self.camera)
                     self.world_bad_frames = 0
                     self.tracker = Tracker()
+                    self.saved_world = {'rotation': self.extrinsic[0].tolist(),
+                                        'translation': self.extrinsic[1].tolist(), 'info': self.world_info,
+                                        'profile': self.configuration()}
+                    self.persist_configuration()
                     self.event(f'场地外参已锁定，RMS {self.world_info["rms_px"]:.2f}px；移动相机后需重标')
+                elif action == 'load_world':
+                    saved = self.saved_world
+                    if saved is None or self.camera is None or self.latest_acquired is None or time.monotonic() - self.latest_acquired > .3:
+                        raise ValueError('没有可加载的标定，或相机尚无有效的新鲜图像')
+                    current = self.configuration()
+                    if any(saved['profile'].get(k) != current.get(k) for k in
+                           ('source', 'width', 'height', 'camera', 'tags', 'world', 'family')):
+                        raise ValueError('已保存标定与当前相机或物理配置不一致，请重新标定')
+                    # Re-solve from currently visible fixed tags; never trust stale camera placement.
+                    extrinsic, info = calibrate_world(self.raw_detections, self.tag_specs(), self.camera)
+                    if np.linalg.norm(np.array(saved['info']['camera_world_xyz_m']) - info['camera_world_xyz_m']) > .03:
+                        raise ValueError('相机位置与保存标定不一致，请重新标定')
+                    self.extrinsic, self.world_info = extrinsic, info
+                    self.tracker = Tracker()
+                    self.event('已核验并加载场地标定')
                 elif action == 'reset_world':
                     self.extrinsic, self.world_info = None, None
                     self.tracker = Tracker()
+                    self.saved_world = None
+                    self.persist_configuration()
                     self.event('已清除场地标定')
                 elif action == 'clear_tracks':
                     self.tracker = Tracker()
@@ -530,6 +652,11 @@ class LiveEngine:
                         self.event(f'开始记录：{folder.relative_to(ROOT)}')
             except (ValueError, RuntimeError, cv2.error, OSError) as error:
                 self.event(str(error), 'error')
+                if completion is not None:
+                    completion['error'] = str(error)
+            finally:
+                if completion is not None:
+                    completion['event'].set()
 
     def stop_recording(self):
         if self.record:
@@ -582,7 +709,7 @@ class LiveEngine:
             self.apply_commands()
             try:
                 if self.capture is None:
-                    raise ValueError('没有可用输入源，请连接演示或摄像头')
+                    raise ValueError('相机未连接，请选择相机并连接')
                 ok, frame = self.capture.read()
                 acquired = time.monotonic()
                 if not ok or frame is None:
@@ -770,6 +897,34 @@ def create_app(engine):
     def state():
         return jsonify(engine.snapshot())
 
+    @app.get('/api/config')
+    def configuration():
+        return jsonify(config=engine.configuration(), state=engine.snapshot())
+
+    def execute_camera(payload):
+        try:
+            result = engine.execute(payload)
+            return jsonify(result)
+        except (ValueError, TypeError) as error:
+            return jsonify(error=str(error)), 400
+        except TimeoutError as error:
+            return jsonify(error=str(error)), 504
+
+    @app.post('/api/config')
+    def configure():
+        return execute_camera({'action': 'configure', 'profile': request.get_json(silent=True)})
+
+    @app.post('/api/cameras')
+    def cameras():
+        return execute_camera({'action': 'scan_cameras'})
+
+    @app.post('/api/operations')
+    def operation():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or payload.get('action') not in ('calibrate', 'reset_world', 'load_world'):
+            return jsonify(error='不支持的标定操作'), 400
+        return execute_camera(payload)
+
     @app.post('/api/control')
     def control():
         try:
@@ -835,17 +990,34 @@ def create_app(engine):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', default='demo', help='demo, camera index (0), or a video file')
+    parser.add_argument('--source', default=None, help='demo, camera index (0), or a video file; defaults to saved profile or demo')
     parser.add_argument('--config', type=Path, default=ROOT/'apriltag_live.json')
     parser.add_argument('--family', default='tag36h11', choices=NATIVE_FAMILIES)
     parser.add_argument('--backend', choices=['auto', 'native', 'opencv'], default='auto')
-    parser.add_argument('--width', type=int, default=1280)
-    parser.add_argument('--height', type=int, default=720)
+    parser.add_argument('--width', type=int)
+    parser.add_argument('--height', type=int)
+    parser.add_argument('--fps', type=float)
+    parser.add_argument('--runtime-config', type=Path, default=ROOT/'output/vision-settings.json')
     parser.add_argument('--port', type=int, default=8765)
     args = parser.parse_args()
-    engine = LiveEngine(load_settings(args.config), args.source, args.backend, args.family, args.width, args.height)
+    settings = load_settings(args.config)
+    profile, saved_world = {}, None
+    if args.runtime_config.is_file():
+        runtime = json.loads(args.runtime_config.read_text(encoding='utf-8'))
+        profile = validate_profile(runtime['profile'])
+        saved_world = runtime.get('saved_world')
+        settings = {key: profile[key] for key in ('camera', 'tags', 'world', 'family')}
+    source = args.source if args.source is not None else (
+        profile['source'] if profile.get('enabled') else 'disconnected' if profile else 'demo')
+    engine = LiveEngine(settings, source, args.backend, args.family,
+                        args.width or profile.get('width', 1280), args.height or profile.get('height', 720),
+                        args.fps or profile.get('fps', 30), args.runtime_config)
+    engine.camera_id = profile.get('source', engine.camera_id)
+    engine.decimate = profile.get('decimate', 1)
+    engine.detector = Detector(engine.family, engine.decimate, engine.backend)
+    engine.saved_world = saved_world
     engine.start()
-    print(f'AprilTag dashboard: http://127.0.0.1:{args.port} (source={args.source})', flush=True)
+    print(f'AprilTag dashboard: http://127.0.0.1:{args.port} (source={source})', flush=True)
     try:
         create_app(engine).run(host='127.0.0.1', port=args.port, threaded=True, debug=False, use_reloader=False)
     finally:
