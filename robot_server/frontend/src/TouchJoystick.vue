@@ -8,6 +8,7 @@ const stick = ref<HTMLElement | null>(null)
 const x = ref(0)
 const y = ref(0)
 let pointer: number | null = null
+const keys = new Set<string>()
 
 function move(event: PointerEvent) {
   if (event.pointerId !== pointer || !stick.value) return
@@ -21,7 +22,7 @@ function move(event: PointerEvent) {
   emit('move', length < .12 ? 0 : dx, length < .12 ? 0 : -dy)
 }
 function start(event: PointerEvent) {
-  if (props.disabled || pointer !== null) return
+  if (props.disabled || pointer !== null || keys.size) return
   pointer = event.pointerId
   stick.value?.setPointerCapture(pointer)
   move(event)
@@ -32,15 +33,40 @@ function stop(event?: PointerEvent) {
   pointer = null; x.value = 0; y.value = 0
   emit('stop')
 }
+function updateKeys() {
+  const dx = Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'))
+  const dy = Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'))
+  const length = Math.max(1, Math.hypot(dx, dy))
+  x.value = dx / length; y.value = dy / length
+  emit('move', x.value, -y.value)
+}
+function keyMove(event: KeyboardEvent) {
+  if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return
+  event.preventDefault()
+  if (props.disabled || pointer !== null) return
+  keys.add(event.key)
+  updateKeys()
+}
+function keyStop(event?: KeyboardEvent) {
+  if (!keys.size) return
+  if (event) {
+    if (!keys.has(event.key)) return
+    event.preventDefault()
+    keys.delete(event.key)
+  } else keys.clear()
+  if (keys.size) { updateKeys(); return }
+  x.value = 0; y.value = 0
+  emit('stop')
+}
 watch(() => [props.disabled, props.active], ([disabled, active]) => {
-  if (disabled || !active) { pointer = null; x.value = 0; y.value = 0 }
+  if (disabled || !active) { pointer = null; keys.clear(); x.value = 0; y.value = 0 }
 })
 </script>
 
 <template>
   <div class="touch-control">
-    <div ref="stick" class="joystick" :class="{ disabled }" role="application" aria-label="触控摇杆"
-      @pointerdown.prevent="start" @pointermove.prevent="move" @pointerup="stop" @pointercancel="stop" @lostpointercapture="stop" @contextmenu.prevent>
+    <div ref="stick" class="joystick" :class="{ disabled }" role="application" tabindex="0" aria-label="方向摇杆" :aria-disabled="disabled"
+      @pointerdown.prevent="start" @pointermove.prevent="move" @pointerup="stop" @pointercancel="stop" @lostpointercapture="stop" @keydown="keyMove" @keyup="keyStop" @blur="keyStop()" @contextmenu.prevent>
       <span class="joystick-cross horizontal"></span><span class="joystick-cross vertical"></span>
       <span class="joystick-knob" :style="{ transform: `translate(${x * 66}px, ${y * 66}px)` }"></span>
     </div>

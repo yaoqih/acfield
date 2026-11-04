@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Battery, Camera, Check, ChevronDown, CircleHelp, Crosshair, Expand, Focus, Grid2X2, Layers, LockKeyhole, Maximize2, MousePointer2, Radio, Route, Settings2, ShieldCheck, Smartphone, Square, Unplug, UnlockKeyhole, Wifi, X } from 'lucide-vue-next'
-import type { Robot, Settings, Snapshot, VisionProfile, VisionResponse, VisionStatus } from './types'
+import { Activity, Battery, Camera, Check, ChevronDown, CircleHelp, Crosshair, Expand, Focus, Grid2X2, Layers, LockKeyhole, Maximize2, MousePointer2, Plus, Radio, Route, Settings2, ShieldCheck, Smartphone, Square, Trash2, Unplug, UnlockKeyhole, Wifi, X } from 'lucide-vue-next'
+import type { Robot, RobotConfig, Settings, Snapshot, VisionProfile, VisionResponse, VisionStatus } from './types'
 import CameraSettings from './CameraSettings.vue'
 import TouchJoystick from './TouchJoystick.vue'
 
@@ -22,6 +22,8 @@ const error = ref('')
 const help = ref(false)
 const settingsOpen = ref(false)
 const draft = ref<Settings | null>(null)
+const addedRobotIndex = ref(-1)
+const settingsSection = ref('robots')
 const saving = ref(false)
 const configError = ref('')
 const originalConfig = ref('')
@@ -47,6 +49,47 @@ let noticeTimer: ReturnType<typeof setTimeout> | undefined
 const armedCount = computed(() => state.value?.robots.filter(r => r.armed || r.arm_pending).length ?? 0)
 const dirty = computed(() => draft.value !== null && (visionNeedsSync.value || JSON.stringify(draft.value) !== originalConfig.value || profileJson(visionProfile.value) !== originalVision.value))
 const duplicateTags = computed(() => draft.value ? new Set(draft.value.robots.map(r => r.tag_id)).size !== draft.value.robots.length : false)
+const duplicateIds = computed(() => draft.value ? new Set(draft.value.robots.map(r => r.id)).size !== draft.value.robots.length : false)
+async function addRobot() {
+  if (!draft.value || draft.value.robots.length >= 16) return
+  const ids = new Set(draft.value.robots.map(r => r.id))
+  const tags = new Set([...draft.value.robots.map(r => r.tag_id), ...Object.entries(visionProfile.value?.tags ?? {}).filter(([, tag]) => tag.role === 'fixed').map(([id]) => Number(id))])
+  let index = 1
+  while (ids.has(`car-${String(index).padStart(2, '0')}`)) index++
+  const tagId = Array.from({ length: 587 }, (_, i) => i).find(id => !tags.has(id))
+  if (tagId === undefined) { configError.value = '没有可用的 AprilTag ID'; return }
+  const robot: RobotConfig = { id: `car-${String(index).padStart(2, '0')}`, name: `小车 ${index}`, tag_id: tagId, color: ['#28786b', '#427dc2', '#ac7b35', '#ba6070'][draft.value.robots.length % 4]!, tag_size: .104, tag_height: .0646, length: .20, width: .16, body_offset_x: 0, body_offset_y: 0, tag_offset_x: 0, tag_offset_y: 0, heading_offset: 0, max_v: .10, max_omega: .30 }
+  draft.value.robots.push(robot)
+  addedRobotIndex.value = draft.value.robots.length - 1
+  configError.value = ''
+  await nextTick()
+  modalElement.value?.querySelector('.robot-config:last-of-type')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
+function removeRobot(index: number) {
+  if (!draft.value || draft.value.robots.length <= 1) return
+  const robot = draft.value.robots[index]
+  if (robot && window.confirm(`删除 ${robot.name}（${robot.id}）？保存配置后生效。`)) draft.value.robots.splice(index, 1)
+}
+function showSettingsSection(section: string) {
+  settingsSection.value = section
+  modalElement.value?.querySelector(`#settings-${section}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+}
+function trackSettingsSection(event: Event) {
+  const body = event.currentTarget as HTMLElement
+  const top = body.getBoundingClientRect().top + 40
+  for (const section of ['camera', 'arena', 'robots']) {
+    const element = body.querySelector(`#settings-${section}`)
+    if (element && element.getBoundingClientRect().top <= top) { settingsSection.value = section; return }
+  }
+  settingsSection.value = 'robots'
+}
+function revealInvalid(event: Event) {
+  let element = (event.target as HTMLElement).parentElement
+  while (element && element !== modalElement.value) {
+    if (element instanceof HTMLDetailsElement) element.open = true
+    element = element.parentElement
+  }
+}
 const blockedReason = computed(() => {
   if (!connected.value) return '服务器连接中断，恢复后才能控制'
   if (state.value?.system_fault) return '控制服务故障，请重启服务'
@@ -91,8 +134,6 @@ async function lockForSettings() {
 function windowTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
 function focusControls() { detailPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
 
-const speed = ref(.08)
-const turn = ref(.3)
 const active = ref<string | null>(null)
 const joystick = ref({ x: 0, y: 0 })
 const stopping = ref(false)
@@ -146,9 +187,8 @@ function connect() {
   }
   socket.onerror = () => socket?.close()
 }
-async function beginHold(direction: string, event?: PointerEvent) {
+async function beginHold(direction: string) {
   if (!controlReady.value || active.value) return
-  if (event) (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
   const id = selectedId.value
   const token = ++generation
   active.value = direction
@@ -157,8 +197,8 @@ async function beginHold(direction: string, event?: PointerEvent) {
     commandPending = true
     try {
       pendingRequest = api(`/api/robots/${id}/command`, {
-        v: direction === 'joystick' ? joystick.value.y * (selected.value?.effective_max_v ?? 0) : direction === 'up' ? speed.value : direction === 'down' ? -speed.value : 0,
-        omega: direction === 'joystick' ? -joystick.value.x * (selected.value?.effective_max_omega ?? 0) : direction === 'left' ? turn.value : direction === 'right' ? -turn.value : 0,
+        v: joystick.value.y * (selected.value?.effective_max_v ?? 0),
+        omega: -joystick.value.x * (selected.value?.effective_max_omega ?? 0),
         ttl_ms: 300,
       })
       await pendingRequest
@@ -202,6 +242,8 @@ async function openSettings() {
   endHold()
   try {
     draft.value = await api<Settings>('/api/config', undefined, 'GET')
+    addedRobotIndex.value = draft.value.robots.findIndex(r => r.id === selectedId.value)
+    settingsSection.value = 'robots'
     originalConfig.value = JSON.stringify(draft.value)
     visionProfile.value = null; originalVision.value = profileJson(null)
     loadedVisionUrl.value = ''
@@ -277,7 +319,7 @@ async function connectCamera(enabled: boolean) {
   await saveSettings(false)
 }
 async function saveSettings(close = true) {
-  if (duplicateTags.value || saving.value || visionBusy.value) return
+  if (duplicateTags.value || duplicateIds.value || saving.value || visionBusy.value) return
   configError.value = ''
   saving.value = true
   try {
@@ -331,14 +373,6 @@ watch(() => settingsOpen.value || help.value, async open => {
     modalReturnFocus.value?.focus()
   }
 })
-watch(() => [selected.value?.effective_max_v, selected.value?.effective_max_omega], () => {
-  speed.value = Math.min(speed.value, selected.value?.effective_max_v ?? .1)
-  turn.value = Math.min(turn.value, selected.value?.effective_max_omega ?? .3)
-})
-watch(selectedId, () => {
-  speed.value = Math.min(speed.value, selected.value?.effective_max_v ?? .1)
-  turn.value = Math.min(turn.value, selected.value?.effective_max_omega ?? .3)
-})
 onMounted(() => {
   connect()
   detailObserver = new IntersectionObserver(entries => { detailVisible.value = !!entries[0]?.isIntersecting })
@@ -364,7 +398,7 @@ onUnmounted(() => {
 
 <template>
   <div v-if="mobilePage" class="remote-page">
-    <header class="remote-header"><a href="/" class="remote-brand">ACField <span>/ 控制台</span></a><span class="connection" :class="{ off: !connected }"><i></i>{{ connected ? '已连接' : '连接中断' }}</span></header>
+    <header class="remote-header"><a href="/" class="remote-brand"><img src="/favicon.svg" alt="" />ACField <span>/ 控制台</span></a><span class="connection" :class="{ off: !connected }"><i></i>{{ connected ? '已连接' : '连接中断' }}</span></header>
     <main class="remote-main">
       <div class="remote-title"><div><span class="remote-eyebrow">REMOTE CONTROL</span><h1>小车控制</h1></div><span class="mode-tag">{{ !connected ? '离线' : state?.mode === 'hardware' ? '真实设备' : '模拟环境' }}</span></div>
       <div v-if="error" class="error-banner" role="alert">{{ error }}<button aria-label="关闭提示" @click="error = ''"><X :size="16" /></button></div>
@@ -383,7 +417,7 @@ onUnmounted(() => {
   </div>
   <div v-else class="shell">
     <aside class="rail">
-      <a class="brand-mark" href="/" aria-label="ACField 首页"><Focus :size="27" /></a>
+      <a class="brand-mark" href="/" aria-label="ACField 首页"><img src="/favicon.svg" alt="" /></a>
       <button class="rail-button current" title="实验控制台" aria-label="实验控制台" @click="endHold(); expanded = false; windowTop()"><Grid2X2 :size="21" /></button>
       <button class="rail-button" title="设备与场地设置" aria-label="设备与场地设置" @click="openSettings"><Settings2 :size="21" /></button>
       <div class="rail-bottom"><button class="rail-button" aria-label="操作说明" title="操作说明" @click="help = true"><CircleHelp :size="21" /></button><span class="avatar" title="本地实验工作台">本地</span></div>
@@ -448,15 +482,6 @@ onUnmounted(() => {
               <div class="position-summary"><span>X <b class="mono">{{ metric(selected.x, 2) }}</b> m</span><span>Y <b class="mono">{{ metric(selected.y, 2) }}</b> m</span><span><b class="mono">{{ deg(selected.theta) }}</b></span></div>
               <div class="control-heading"><h3>手动控制</h3><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" :title="blockedReason" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="12"/><LockKeyhole v-else :size="12" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
               <p v-if="blockedReason" class="control-explanation" role="status">{{ blockedReason }}</p><div v-else class="control-explanation ready">控制已就绪</div>
-              <div class="slider-row"><label for="speed">移动速度</label><input id="speed" v-model.number="speed" type="range" :min="Math.min(.02, selected.effective_max_v)" :max="selected.effective_max_v" step=".01" @input="endHold"><output class="mono">{{ speed.toFixed(2) }} <span>m/s</span></output></div>
-              <div class="slider-row"><label for="turn">转向速度</label><input id="turn" v-model.number="turn" type="range" :min="Math.min(.1, selected.effective_max_omega)" :max="selected.effective_max_omega" step=".1" @input="endHold"><output class="mono">{{ turn.toFixed(1) }} <span>rad/s</span></output></div>
-              <div class="dpad" @contextmenu.prevent>
-                <button class="dpad-up" :class="{ pressed: active === 'up' }" :disabled="!controlReady" aria-label="按住前进" @pointerdown.prevent="beginHold('up', $event)" @keydown.enter.prevent="beginHold('up')" @keydown.space.prevent="beginHold('up')" @keyup.enter.prevent="endHold" @keyup.space.prevent="endHold" @blur="endHold" @lostpointercapture="endHold"><ArrowUp :size="20" /><span>前进</span></button>
-                <button class="dpad-left" :class="{ pressed: active === 'left' }" :disabled="!controlReady" aria-label="按住左转" @pointerdown.prevent="beginHold('left', $event)" @keydown.enter.prevent="beginHold('left')" @keydown.space.prevent="beginHold('left')" @keyup.enter.prevent="endHold" @keyup.space.prevent="endHold" @blur="endHold" @lostpointercapture="endHold"><ArrowLeft :size="20" /><span>左转</span></button>
-                <button class="dpad-stop" :disabled="!connected" aria-label="当前小车停车" @click="endHold(); action(`/api/robots/${selectedId}/command`, { v: 0, omega: 0, ttl_ms: 100 })"><Square :size="15" fill="currentColor" /></button>
-                <button class="dpad-right" :class="{ pressed: active === 'right' }" :disabled="!controlReady" aria-label="按住右转" @pointerdown.prevent="beginHold('right', $event)" @keydown.enter.prevent="beginHold('right')" @keydown.space.prevent="beginHold('right')" @keyup.enter.prevent="endHold" @keyup.space.prevent="endHold" @blur="endHold" @lostpointercapture="endHold"><ArrowRight :size="20" /><span>右转</span></button>
-                <button class="dpad-down" :class="{ pressed: active === 'down' }" :disabled="!controlReady" aria-label="按住后退" @pointerdown.prevent="beginHold('down', $event)" @keydown.enter.prevent="beginHold('down')" @keydown.space.prevent="beginHold('down')" @keyup.enter.prevent="endHold" @keyup.space.prevent="endHold" @blur="endHold" @lostpointercapture="endHold"><ArrowDown :size="20" /><span>后退</span></button>
-              </div>
               <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="endHold(); action(`/api/robots/${selectedId}/command`, { v: 0, omega: 0, ttl_ms: 100 })" />
               <p class="control-hint">{{ selected.armed ? '松开控制即停车' : '解锁后可以控制小车' }}</p>
               <div class="command-state"><span class="command-dot" :class="{ on: selected.armed }"></span><span>{{ !connected ? '连接中断 · 暂停控制' : selected.reason }}</span><span class="mono">#{{ String(selected.seq).padStart(4, '0') }}</span></div><div class="ack-status">{{ commandLabel(selected) }} · 有效期 300 ms</div>
@@ -477,7 +502,38 @@ onUnmounted(() => {
     </div>
     <div v-if="notice" class="toast" role="status"><Check :size="17" />{{ notice }}</div>
     <button v-if="selected && !settingsOpen && !help && !detailVisible" class="mobile-control-jump" @click="focusControls"><Focus :size="17" />{{ selected.config.name }} · 查看控制</button>
-    <div v-if="settingsOpen && draft" class="modal-backdrop" @click.self="closeSettings"><section ref="modalElement" tabindex="-1" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="modal-header"><div><div class="eyebrow">EXPERIMENT SETTINGS</div><h2 id="settings-title">实验配置</h2></div><button aria-label="关闭配置" @click="closeSettings"><X :size="20" /></button></div><form @submit.prevent="saveSettings()"><div class="modal-body"><p class="settings-note">调整场地和设备参数。保存后全车保持锁定，需要重新释放全局停止并解锁。</p><div v-if="armedCount" class="settings-warning"><span>{{ armedCount }} 辆小车尚未锁定，暂时不能保存。</span><button type="button" class="button subtle" :disabled="!connected" @click="lockForSettings">全车停车并锁定</button></div><p v-if="duplicateTags" class="modal-error" role="alert">AprilTag ID 不能重复，请为每辆小车分配不同的标签。</p><CameraSettings :settings="draft" :profile="visionProfile" :status="visionStatus" :cameras="cameraDevices" :busy="visionBusy || saving" :error="visionError" :hardware="state?.mode === 'hardware'" :dirty="dirty" :preview="!!state?.camera.available" :stream-key="streamKey" @refresh="loadVision" @scan="scanCameras" @connect="connectCamera" @operation="visionOperation" /><h3>场地尺寸</h3><div class="form-grid"><label>宽度 / m<input v-model.number="draft.arena_width" type="number" min="1" max="20" step=".1" required /></label><label>高度 / m<input v-model.number="draft.arena_height" type="number" min="1" max="20" step=".1" required /></label></div><details v-for="robot in draft.robots" :key="robot.id" class="robot-config" :open="robot.id === selectedId"><summary><i :style="{ background: robot.color }"></i>{{ robot.name }} <span class="mono">{{ robot.id.toUpperCase() }}</span><ChevronDown :size="14" /></summary><div class="form-grid"><label>设备名称<input v-model="robot.name" maxlength="40" required /></label><label>AprilTag ID<input v-model.number="robot.tag_id" type="number" min="0" max="586" required /></label><label>标签黑框边长 / m<input v-model.number="robot.tag_size" type="number" min=".005" max="1" step=".001" required /></label><label>标签安装高度 / m<input v-model.number="robot.tag_height" type="number" min="0" max="10" step=".0001" required /></label><label>显示颜色<input v-model="robot.color" type="color" /></label><label>车体长度 / m<input v-model.number="robot.length" type="number" min=".01" max="1" step=".01" required /></label><label>车体宽度 / m<input v-model.number="robot.width" type="number" min=".01" max="1" step=".01" required /></label><label>标签前向偏移 / m<input v-model.number="robot.tag_offset_x" type="number" min="-1" max="1" step=".001" required /></label><label>标签左向偏移 / m<input v-model.number="robot.tag_offset_y" type="number" min="-1" max="1" step=".001" required /></label><label>航向修正 / rad<input v-model.number="robot.heading_offset" type="number" min="-3.142" max="3.142" step=".001" required /></label><label>最大线速度 / m/s<input v-model.number="robot.max_v" type="number" min=".02" max="1" step=".01" required /></label><label>最大角速度 / rad/s<input v-model.number="robot.max_omega" type="number" min=".1" max="6" step=".1" required /></label></div><p class="field-note">真实模式保存时，标签黑框边长与安装高度会同步到视觉服务。航向修正在主控端应用，请按实测填写。</p></details></div><div v-if="configError" class="modal-error" role="alert">{{ configError }}</div><div v-if="discardPrompt" class="discard-prompt" role="alert"><span>有未保存的修改，是否放弃？</span><button type="button" @click="discardPrompt = false">继续编辑</button><button type="button" @click="settingsOpen = false; discardPrompt = false">放弃修改</button></div><div class="modal-footer"><span class="save-state">{{ saving ? '正在保存…' : dirty ? '有未保存的修改' : '配置未修改' }}</span><button type="button" class="button subtle" @click="closeSettings">取消</button><button type="submit" class="button primary" :disabled="saving || visionBusy || !connected || armedCount > 0 || duplicateTags || !dirty"><Check :size="16" />{{ saving ? '保存中…' : '保存配置' }}</button></div></form></section></div>
-    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>手机拖动摇杆控制移动和转向；电脑按住方向按钮运行，左右按钮原地旋转。松开后停车。键盘可用 Tab 聚焦方向按钮，按住回车或空格操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
+    <div v-if="settingsOpen && draft" class="modal-backdrop settings-backdrop" @click.self="closeSettings">
+      <section ref="modalElement" tabindex="-1" class="modal settings-workspace" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-header"><div><h2 id="settings-title">实验配置</h2><p>设备、场地与视觉设置</p></div><button aria-label="关闭配置" @click="closeSettings"><X :size="20" /></button></div>
+        <form @submit.prevent="saveSettings()" @invalid.capture="revealInvalid">
+          <div class="settings-layout">
+            <nav class="settings-nav" aria-label="配置分区">
+              <button type="button" :class="{ current: settingsSection === 'robots' }" :aria-current="settingsSection === 'robots' ? 'location' : undefined" @click="showSettingsSection('robots')"><Focus :size="17" />小车<span>{{ draft.robots.length }}</span></button>
+              <button type="button" :class="{ current: settingsSection === 'arena' }" :aria-current="settingsSection === 'arena' ? 'location' : undefined" @click="showSettingsSection('arena')"><Maximize2 :size="17" />场地</button>
+              <button type="button" :class="{ current: settingsSection === 'camera' }" :aria-current="settingsSection === 'camera' ? 'location' : undefined" @click="showSettingsSection('camera')"><Camera :size="17" />相机与标定</button>
+            </nav>
+            <div class="modal-body settings-content" @scroll="trackSettingsSection">
+              <p class="settings-note">保存配置后全车保持锁定，需要重新释放全局停止并解锁。</p>
+              <div v-if="armedCount" class="settings-warning"><span>{{ armedCount }} 辆小车尚未锁定，暂时不能保存。</span><button type="button" class="button subtle" :disabled="!connected" @click="lockForSettings">全车停车并锁定</button></div>
+              <p v-if="duplicateIds" class="modal-error" role="alert">设备 ID 不能重复，请为每辆小车分配不同的 ID。</p>
+              <p v-if="duplicateTags" class="modal-error" role="alert">AprilTag ID 不能重复，请为每辆小车分配不同的标签。</p>
+              <section id="settings-robots" class="settings-group" aria-labelledby="settings-robots-title">
+                <div class="settings-section-title robot-section-title"><div><h3 id="settings-robots-title">小车配置 <span>{{ draft.robots.length }} / 16</span></h3><p>管理车辆身份、尺寸和速度限制</p></div><button type="button" class="button subtle" :disabled="draft.robots.length >= 16" @click="addRobot"><Plus :size="15" />添加小车</button></div>
+                <details v-for="(robot, index) in draft.robots" :key="index" class="robot-config" :open="index === addedRobotIndex"><summary><i :style="{ background: robot.color }"></i>{{ robot.name }} <span class="mono">{{ robot.id.toUpperCase() }}</span><ChevronDown :size="14" /></summary><div class="form-grid"><label>设备 ID<input v-model="robot.id" pattern="[a-zA-Z0-9_-]{1,32}" maxlength="32" title="1 至 32 位字母、数字、下划线或短横线" required /></label><label>设备名称<input v-model="robot.name" maxlength="40" required /></label><label>AprilTag ID<input v-model.number="robot.tag_id" type="number" min="0" max="586" required /></label><label>标签黑框边长 / m<input v-model.number="robot.tag_size" type="number" min=".005" max="1" step=".001" required /></label><label>标签安装高度 / m<input v-model.number="robot.tag_height" type="number" min="0" max="10" step=".0001" required /></label><label>显示颜色<input v-model="robot.color" type="color" /></label><label>车体长度 / m<input v-model.number="robot.length" type="number" min=".01" max="1" step=".01" required /></label><label>车体宽度 / m<input v-model.number="robot.width" type="number" min=".01" max="1" step=".01" required /></label><label>标签前向偏移 / m<input v-model.number="robot.tag_offset_x" type="number" min="-1" max="1" step=".001" required /></label><label>标签左向偏移 / m<input v-model.number="robot.tag_offset_y" type="number" min="-1" max="1" step=".001" required /></label><label>航向修正 / rad<input v-model.number="robot.heading_offset" type="number" min="-3.142" max="3.142" step=".001" required /></label><label>最大线速度 / m/s<input v-model.number="robot.max_v" type="number" min=".02" max="1" step=".01" required /></label><label>最大角速度 / rad/s<input v-model.number="robot.max_omega" type="number" min=".1" max="6" step=".1" required /></label></div><p class="field-note">真实模式保存时，标签黑框边长与安装高度会同步到视觉服务。航向修正在主控端应用，请按实测填写。设备 ID 必须与车端固件配置一致。</p><button type="button" class="button robot-delete" :disabled="draft.robots.length <= 1" :title="draft.robots.length <= 1 ? '至少保留一辆小车' : '删除这辆小车'" @click="removeRobot(index)"><Trash2 :size="15" />删除小车</button></details>
+              </section>
+              <section id="settings-arena" class="settings-group" aria-labelledby="settings-arena-title">
+                <h3 id="settings-arena-title">场地尺寸</h3><p class="settings-group-description">设置实验场地的实际宽度和高度</p>
+                <div class="form-grid"><label>宽度 / m<input v-model.number="draft.arena_width" type="number" min="1" max="20" step=".1" required /></label><label>高度 / m<input v-model.number="draft.arena_height" type="number" min="1" max="20" step=".1" required /></label></div>
+              </section>
+              <section id="settings-camera" class="settings-group"><CameraSettings :settings="draft" :profile="visionProfile" :status="visionStatus" :cameras="cameraDevices" :busy="visionBusy || saving" :error="visionError" :hardware="state?.mode === 'hardware'" :dirty="dirty" :preview="!!state?.camera.available" :stream-key="streamKey" @refresh="loadVision" @scan="scanCameras" @connect="connectCamera" @operation="visionOperation" /></section>
+            </div>
+          </div>
+          <div v-if="configError" class="modal-error" role="alert">{{ configError }}</div>
+          <div v-if="discardPrompt" class="discard-prompt" role="alert"><span>有未保存的修改，是否放弃？</span><button type="button" @click="discardPrompt = false">继续编辑</button><button type="button" @click="settingsOpen = false; discardPrompt = false">放弃修改</button></div>
+          <div class="modal-footer"><span class="save-state">{{ saving ? '正在保存…' : dirty ? '有未保存的修改' : '配置未修改' }}</span><button type="button" class="button subtle" @click="closeSettings">取消</button><button type="submit" class="button primary" :disabled="saving || visionBusy || !connected || armedCount > 0 || duplicateTags || duplicateIds || !dirty"><Check :size="16" />{{ saving ? '保存中…' : '保存配置' }}</button></div>
+        </form>
+      </section>
+    </div>
+    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>拖动摇杆控制移动和转向，松开后停车。电脑可用 Tab 聚焦摇杆并按住方向键操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
   </div>
 </template>

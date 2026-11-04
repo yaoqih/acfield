@@ -7,11 +7,14 @@ class Simulator:
     def __init__(self, fleet):
         self.fleet = fleet
         self.previous = time.monotonic()
+        count = len(fleet.robots)
+        cols = 2 if count <= 4 else math.ceil(math.sqrt(count * fleet.settings.arena_width / fleet.settings.arena_height))
+        rows = 2 if count <= 4 else math.ceil(count / cols)
         for i, r in enumerate(fleet.robots.values()):
-            x = fleet.settings.arena_width * (.28 + .44*(i % 2))
-            y = fleet.settings.arena_height * (.28 + .44*((i//2) % 2))
+            x = fleet.settings.arena_width * (.28 + .44*(i % 2)) if count <= 4 else fleet.settings.arena_width * (i % cols + .5) / cols
+            y = fleet.settings.arena_height * (.28 + .44*((i//2) % 2)) if count <= 4 else fleet.settings.arena_height * (i // cols + .5) / rows
             fleet.pose(r, x, y, [0, math.pi/2, -math.pi/2, math.pi][i % 4], self.previous)
-            r.battery = 96-i*7
+            r.battery = max(0, 96-i*7)
 
     def step(self, now):
         dt = min(.1, now-self.previous)

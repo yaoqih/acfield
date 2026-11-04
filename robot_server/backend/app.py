@@ -391,6 +391,12 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     if dist.is_dir():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
+    @app.get("/favicon.svg", include_in_schema=False)
+    async def favicon():
+        if not (dist / "favicon.svg").is_file():
+            raise HTTPException(404, "Icon not found")
+        return FileResponse(dist / "favicon.svg", media_type="image/svg+xml")
+
     @app.get("/mobile", include_in_schema=False)
     @app.get("/")
     async def index():

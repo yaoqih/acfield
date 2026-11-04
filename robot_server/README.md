@@ -17,6 +17,17 @@ cd robot_server
 
 Open http://127.0.0.1:8000. Reuse `./run.sh` after the frontend is built. Configuration is created in `data/config.sqlite3` and runs are recorded in `data/runs/` by default; neither belongs in version control.
 
+On Windows, install Node.js and uv, then run in PowerShell:
+
+```powershell
+cd acfield
+uv sync --python 3.12 --extra test
+cd robot_server
+.\run.bat
+```
+
+The Windows launcher builds the frontend if needed, starts both services and stops them on Ctrl+C. For LAN access, set `$env:ROBOT_HOST = '0.0.0.0'` before launch; for hardware also set `$env:ROBOT_UDP_HOST = '0.0.0.0'`. Camera and device networking need validation on the target Windows machine.
+
 `./run.sh` also starts `apriltag_live.py` on `127.0.0.1:8765` and stops it when the control server exits. Open **Experiment settings → Camera and vision** to select a camera and edit, save and calibrate its settings. Demo mode can configure a real camera while robot positions remain simulated. The first start leaves the camera disconnected; later starts restore its saved connection state. Vision settings are saved in `../output/vision-settings.json`.
 
 Set `ROBOT_VISION_PORT` to change the local vision port, or `ROBOT_START_VISION=0` to use an independently running vision service. The console stores its vision URL; `ROBOT_VISION_URL` explicitly overrides the stored address on startup. `ROBOT_VISION_RUNTIME_CONFIG` changes the vision settings file used by the script.
@@ -51,6 +62,8 @@ npm --prefix robot_server/frontend run build
 ```
 
 The backend tests include the actual firmware parser contract; install a host C++ compiler and PlatformIO's ArduinoJson first. CI makes missing contract dependencies an error.
+
+From the repository root, run `npm --prefix robot_server/frontend run build` and `npm run console:test` for the joystick and settings browser checks. They use an isolated demo server and temporary database; install Chromium with `npx playwright install chromium` on the first run.
 
 | Module | Responsibility |
 | --- | --- |

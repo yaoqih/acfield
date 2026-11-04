@@ -46,6 +46,6 @@ def startup_summary(host, port, mode):
     if host == "0.0.0.0":
         lines.extend(f"  LAN / SDK:  http://{address}:{port}" for address in addresses)
     elif host in ("localhost", "::1") or host.startswith("127."):
-        lines.append("  Local access only. For LAN: ROBOT_HOST=0.0.0.0 ./run.sh")
+        lines.append("  Local access only. For LAN, set ROBOT_HOST to 0.0.0.0 and restart.")
     lines.append("  Choose the address reachable from your client network (VPNs may add addresses).")
     return "\n".join(lines)

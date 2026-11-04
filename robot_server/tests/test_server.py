@@ -110,6 +110,31 @@ def test_api_websocket_config_and_persistence(tmp_path):
         assert not client.get("/api/state").json()["robots"][0]["armed"]
 
 
+def test_vehicle_list_changes_and_simulator_positions(tmp_path):
+    path = tmp_path / 'vehicles.sqlite3'
+    with TestClient(create_app(db_path=path)) as client:
+        client.headers['X-Control-ID'] = 'test-owner'
+        config = client.get('/api/config').json()
+        template = config['robots'][0]
+        config['robots'] = [dict(template, id=f'car-{i:02}', name=f'Car {i}', tag_id=i) for i in range(16)]
+        assert client.put('/api/config', json=config).status_code == 200
+        state = client.get('/api/state').json()
+        positions = {(r['x'], r['y']) for r in state['robots']}
+        assert len(positions) == 16
+        assert all(0 <= r['battery'] <= 100 for r in state['robots'])
+        assert state['estop'] and all(not r['armed'] for r in state['robots'])
+        config['robots'][1]['id'] = config['robots'][0]['id']
+        assert client.put('/api/config', json=config).status_code == 422
+        config['robots'][1]['id'] = 'car-01'
+        config['robots'].pop(0)
+        assert client.put('/api/config', json=config).status_code == 200
+        assert client.post('/api/robots/car-00/arm', json={'enabled': True}).status_code == 404
+        assert client.put('/api/config', json={**config, 'robots': []}).status_code == 422
+        assert client.put('/api/config', json={**config, 'robots': config['robots'] + [template, dict(template, id='extra', tag_id=100)]}).status_code == 422
+    with TestClient(create_app(db_path=path)) as client:
+        assert [r['id'] for r in client.get('/api/config').json()['robots']] == [f'car-{i:02}' for i in range(1, 16)]
+
+
 def test_hardware_real_udp_datagram(tmp_path):
     with TestClient(create_app(mode="hardware", db_path=tmp_path/"real.db", udp_port=0)) as client:
         client.headers["X-Control-ID"] = "test-owner"
