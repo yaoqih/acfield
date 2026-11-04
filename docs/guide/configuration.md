@@ -2,6 +2,8 @@
 
 主控服务默认本机监听、演示模式。真实设备模式需要明确指定，且不会同时运行内置模拟器。
 
+网页顶部可在模拟数据与真实设备之间切换。切换会停车并锁定全车；真实模式仍需设备绑定和有效的实景定位。该选择只影响当前运行，重启后由 `ROBOT_MODE` 决定。手机与服务器接入同一网络后，可使用局域网地址打开控制台，通过触控摇杆控制选中的小车；松手停车。
+
 ## 主控环境变量 {#server-environment-variables}
 
 | 变量 | 默认 | 用途 |
@@ -11,7 +13,10 @@
 | `ROBOT_PORT` | `8000` | HTTP 端口 |
 | `ROBOT_UDP_HOST` | `127.0.0.1` | 设备监听地址，局域网接入常设为 `0.0.0.0` |
 | `ROBOT_UDP_PORT` | `9999` | UDP 端口 |
-| `ROBOT_VISION_URL` | 空 | 已标定相机服务 URL |
+| `ROBOT_VISION_URL` | 未设置 | 显式覆盖保存的视觉服务 URL |
+| `ROBOT_START_VISION` | `1` | 设为 `0` 时不启动本地视觉服务 |
+| `ROBOT_VISION_PORT` | `8765` | 脚本启动的本地视觉服务端口 |
+| `ROBOT_VISION_RUNTIME_CONFIG` | `output/vision-settings.json` | 脚本启动的视觉服务配置文件 |
 | `ROBOT_DB` | `robot_server/data/config.sqlite3` | 持久配置 |
 | `ROBOT_LOG_DIR` | 数据库旁的 `runs/` | 运行日志目录 |
 
@@ -27,15 +32,11 @@ ROBOT_HOST=0.0.0.0 ./run.sh
 
 ## 相机视觉服务 {#camera-vision-service}
 
-在仓库根目录运行 `python apriltag_live.py --source demo`（虚拟标签只用于验证流程），或使用真实相机：
-
-```bash
-python apriltag_live.py --source 0 --port 8765
-```
+在 `robot_server/` 运行 `./run.sh` 会同时启动主控和本机视觉服务，并在退出时关闭该脚本启动的视觉进程。首次启动默认不连接相机；保存配置后，重启会恢复上次的连接状态。模拟模式下也可以配置真实相机，但车辆位置仍来自模拟器。视觉端口被占用时可设置 `ROBOT_VISION_PORT`；使用独立或远程视觉服务时设置 `ROBOT_START_VISION=0`，并在网页填写其地址。
 
 在主控「实验配置 → 相机与视觉」中读取服务配置，刷新设备列表并选择相机。主控和视觉服务可以在不同电脑上运行；填写的是主控服务器可访问的视觉服务地址，摄像头 ID 则属于视觉服务所在的电脑。采集分辨率和帧率是请求值，应对照页面显示的实际图像尺寸和帧率调整。
 
-内参必须来自当前相机和分辨率的实测标定。标签边长取 AprilTag 黑色外框实测尺寸，安装高度取场地地面到标签中心的实测高度。按场地原点填写四个固定标签的 ID 和坐标，确认测量后保存并连接相机；全部固定标签同时可见时，执行「标定并保存」。切换相机或修改内参、尺寸和坐标后需重新标定。重新启动视觉服务会断开相机；可用界面的连接操作恢复，并核验已保存的标定。
+内参必须来自当前相机和分辨率的实测标定。标签边长取 AprilTag 黑色外框实测尺寸，安装高度取场地地面到标签中心的实测高度。按场地原点填写四个固定标签的 ID 和坐标，确认测量后保存并连接相机；全部固定标签同时可见时，执行「标定并保存」。切换相机或修改内参、尺寸和坐标后需重新标定。重启后应核验已保存的场地标定。
 
 视觉相机配置保存在仓库根目录 `output/vision-settings.json`；主控配置存于 `robot_server/data/config.sqlite3`。旧的 `apriltag_live.json` 仍用于初始默认值，界面运行配置不会覆盖它。请备份相机内参和固定标签实测坐标。
 
@@ -44,10 +45,10 @@ python apriltag_live.py --source 0 --port 8765
 完成硬件与相机标定后，在 `robot_server/` 运行：
 
 ```bash
-ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ROBOT_VISION_URL=http://127.0.0.1:8765 ./run.sh
+ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ./run.sh
 ```
 
-运行主控时先启动仓库根目录的 `apriltag_live.py`，默认地址为 `http://127.0.0.1:8765`。也可在网页中填写视觉服务地址；服务地址将保存在主控配置中。
+默认视觉服务地址为 `http://127.0.0.1:8765`。网页填写的服务地址将保存在主控配置中；显式设置 `ROBOT_VISION_URL` 会在启动时覆盖该地址。
 
 ## 车辆与场地配置 {#robot-and-arena-configuration}
 

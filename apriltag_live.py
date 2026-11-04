@@ -991,6 +991,8 @@ def create_app(engine):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', default=None, help='demo, camera index (0), or a video file; defaults to saved profile or demo')
+    parser.add_argument('--initial-source', choices=['demo', 'disconnected'], default='demo',
+                        help='source when no saved profile exists')
     parser.add_argument('--config', type=Path, default=ROOT/'apriltag_live.json')
     parser.add_argument('--family', default='tag36h11', choices=NATIVE_FAMILIES)
     parser.add_argument('--backend', choices=['auto', 'native', 'opencv'], default='auto')
@@ -1008,7 +1010,7 @@ def main():
         saved_world = runtime.get('saved_world')
         settings = {key: profile[key] for key in ('camera', 'tags', 'world', 'family')}
     source = args.source if args.source is not None else (
-        profile['source'] if profile.get('enabled') else 'disconnected' if profile else 'demo')
+        profile['source'] if profile.get('enabled') else 'disconnected' if profile else args.initial_source)
     engine = LiveEngine(settings, source, args.backend, args.family,
                         args.width or profile.get('width', 1280), args.height or profile.get('height', 720),
                         args.fps or profile.get('fps', 30), args.runtime_config)

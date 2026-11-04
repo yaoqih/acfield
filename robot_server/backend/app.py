@@ -34,6 +34,11 @@ class ArmRequest(BaseModel):
     enabled: bool
 
 
+class ModeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    mode: Literal['demo', 'hardware']
+
+
 def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path | None = None,
                udp_host: str | None = None, udp_port: int | None = None, vision_url: str | None = None):
     mode = mode or os.getenv("ROBOT_MODE", "demo")
@@ -45,9 +50,12 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         raise ValueError("ROBOT_VISION_URL must be an HTTP URL")
 
     async def clockwork(fleet):
-        simulator = Simulator(fleet) if mode == "demo" else None
+        simulator, simulator_mode = None, None
         while True:
             now = time.monotonic()
+            if fleet.mode != simulator_mode:
+                simulator = Simulator(fleet) if fleet.mode == 'demo' else None
+                simulator_mode = fleet.mode
             # Interlocks run before integration, so an expired command never keeps moving.
             fleet.tick(now)
             if simulator:
@@ -58,8 +66,10 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     async def lifespan(app):
         store = Store(db_path)
         fleet = Fleet(store.load(), mode)
-        if vision_url:
-            fleet.settings.vision_url = vision_url
+        default_vision_url = os.getenv('ROBOT_DEFAULT_VISION_URL', '')
+        if vision_url or (default_vision_url and not fleet.settings.vision_url):
+            fleet.settings.vision_url = Settings.model_validate({**fleet.settings.model_dump(),
+                'vision_url': vision_url or default_vision_url}).vision_url
         app.state.store, app.state.fleet = store, fleet
         app.state.configuration_lock = asyncio.Lock()
         recorder = Recorder(Path(os.getenv("ROBOT_LOG_DIR", str(db_path.parent/"runs"))),
@@ -68,7 +78,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         fleet.record = recorder.record
         fleet.record("startup", {"session": fleet.session})
         app.state.recorder = recorder
-        transport = None
+        app.state.transport = None
         tasks = {}
         app.state.tasks = tasks
 
@@ -83,9 +93,10 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                 fleet.stop_all()
                 fleet.event("后台任务故障，请重启服务："+fleet.runtime_fault)
                 log.exception("Critical task %s failed", name)
+        app.state.supervise = supervise
         try:
             if mode == "hardware":
-                transport, protocol = await asyncio.get_running_loop().create_datagram_endpoint(
+                app.state.transport, protocol = await asyncio.get_running_loop().create_datagram_endpoint(
                     lambda: DeviceProtocol(fleet), local_addr=(udp_host or os.getenv("ROBOT_UDP_HOST", "127.0.0.1"),
                     udp_port if udp_port is not None else int(os.getenv("ROBOT_UDP_PORT", "9999"))))
                 app.state.udp = protocol
@@ -100,9 +111,9 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
             for task in tasks.values():
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
-            if transport:
+            if app.state.transport:
                 await asyncio.sleep(.05)
-                transport.close()
+                app.state.transport.close()
             store.close()
             await asyncio.to_thread(recorder.close)
 
@@ -128,7 +139,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         healthy = (not fleet.runtime_fault and all(v == "running" for v in tasks.values())
                    and time.monotonic()-fleet.control_at < .5 and not recorder.error and recorder.dropped == 0)
         return JSONResponse(status_code=200 if healthy else 503, content={
-            "status": "ok" if healthy else "degraded", "mode": mode, "tasks": tasks,
+            "status": "ok" if healthy else "degraded", "mode": fleet.mode, "tasks": tasks,
             "fault": fleet.runtime_fault, "vision_connected": fleet.camera["connected"],
             "ready": healthy and all(fleet.ready(r, time.monotonic()) is None for r in fleet.robots.values()),
             "run_id": recorder.run_id, "recording_error": recorder.error, "recording_dropped": recorder.dropped})
@@ -149,20 +160,18 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         if any(r.armed or (r.pending and r.pending["action"] == "arm") for r in fleet.robots.values()):
             raise HTTPException(409, "请先锁定所有小车再修改配置")
         settings = Settings.model_validate(body.model_dump(exclude={'vision'}))
-        if body.vision is not None and mode != 'hardware':
-            raise HTTPException(409, '模拟模式不操作真实相机，请以 ROBOT_MODE=hardware 启动')
         async with app.state.configuration_lock:
             if any(r.armed or (r.pending and r.pending["action"] == "arm") for r in fleet.robots.values()):
                 raise HTTPException(409, '请先锁定所有小车再修改配置')
             # Keep motion blocked even if another client releases the emergency stop.
-            if mode == 'hardware' and settings.vision_url:
+            if settings.vision_url and (fleet.mode == 'hardware' or body.vision is not None):
                 begin_vision_update(fleet)
                 try:
                     profile = body.vision.model_dump() if body.vision else (
                         await request_vision(settings.vision_url, 'GET', '/api/config'))['config']
                     profile = synchronize_profile(profile, settings, fleet.settings)
                     await request_vision(settings.vision_url, 'POST', '/api/config', profile)
-                    return save_configuration(settings)
+                    return save_configuration(settings, vision_synced=True)
                 except Exception:
                     fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再解锁'
                     fleet.camera = {'connected': False, 'available': False, 'fps': 0,
@@ -174,17 +183,19 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                 raise HTTPException(422, '请填写视觉服务地址')
             return save_configuration(settings)
 
-    def save_configuration(settings):
+    def save_configuration(settings, vision_synced=False):
         fleet = app.state.fleet
         # Save first; failed writes must not replace live state.
         app.state.store.save(settings)
         fleet.stop_all()
-        fresh = Fleet(settings, mode)
+        fresh = Fleet(settings, fleet.mode)
         fresh.send, fresh.estop, fresh.record = fleet.send, fleet.estop, fleet.record
         fresh.runtime_fault = fleet.runtime_fault
+        if not vision_synced:
+            fresh.vision_sync_error = fleet.vision_sync_error
         fleet.__dict__.update(fresh.__dict__)
         fleet.record("configuration", {"session": fleet.session, "settings": settings.model_dump()})
-        if mode == "demo":
+        if fleet.mode == "demo":
             Simulator(fleet)
         fleet.event("配置已保存 · 全车锁定，请释放全局停止后重新解锁")
         return settings
@@ -196,6 +207,66 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         for r in fleet.robots.values():
             r.pose_at = 0
         fleet.camera = {'connected': False, 'available': False, 'fps': 0, 'reason': '正在更新相机配置'}
+
+    @app.put('/api/mode')
+    async def set_mode(body: ModeRequest):
+        fleet = app.state.fleet
+        if app.state.configuration_lock.locked():
+            raise HTTPException(409, '相机或配置操作正在进行，请稍后再试')
+        async with app.state.configuration_lock:
+            if body.mode == fleet.mode:
+                return {'mode': fleet.mode}
+            begin_vision_update(fleet)
+            new_transport = None
+            try:
+                if body.mode == 'hardware':
+                    if fleet.settings.vision_url:
+                        try:
+                            profile = (await request_vision(fleet.settings.vision_url, 'GET', '/api/config'))['config']
+                            profile = synchronize_profile(profile, fleet.settings, fleet.settings)
+                            await request_vision(fleet.settings.vision_url, 'POST', '/api/config', profile)
+                            fleet.vision_sync_error = None
+                        except Exception:
+                            fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再解锁'
+                            raise
+                    try:
+                        new_transport, protocol = await asyncio.get_running_loop().create_datagram_endpoint(
+                            lambda: DeviceProtocol(fleet), local_addr=(udp_host or os.getenv('ROBOT_UDP_HOST', '127.0.0.1'),
+                            udp_port if udp_port is not None else int(os.getenv('ROBOT_UDP_PORT', '9999'))))
+                    except OSError as exc:
+                        raise HTTPException(409, '设备通信端口不可用，模式未切换') from exc
+                old_vision = app.state.tasks.pop('vision', None)
+                if old_vision:
+                    old_vision.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await old_vision
+                if app.state.transport:
+                    await asyncio.sleep(.05)
+                    app.state.transport.close()
+                old_record, old_fault, old_vision_error = fleet.record, fleet.runtime_fault, fleet.vision_sync_error
+                new_send = protocol.send if new_transport else None
+                fresh = Fleet(fleet.settings, body.mode)
+                fresh.record, fresh.runtime_fault, fresh.estop = old_record, old_fault, True
+                fresh.vision_sync_error = old_vision_error
+                if new_send:
+                    fresh.send = new_send
+                fleet.__dict__.update(fresh.__dict__)
+                app.state.transport = new_transport
+                if new_transport:
+                    app.state.udp = protocol
+                    app.state.tasks['vision'] = asyncio.create_task(app.state.supervise(
+                        'vision', watch(fleet, lambda: fleet.settings.vision_url)))
+                else:
+                    app.state.udp = None
+                    Simulator(fleet)
+                fleet.record('mode', {'session': fleet.session, 'mode': fleet.mode})
+                fleet.event('模式已切换 · 全车锁定')
+                return {'mode': fleet.mode}
+            finally:
+                if new_transport and new_transport is not app.state.transport:
+                    new_transport.close()
+                fleet.estop = True
+                fleet.vision_updating = False
 
     @app.get('/api/vision/config')
     async def vision_configuration(url: str | None = None):
@@ -209,8 +280,6 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
 
     async def camera_operation(path, body):
         fleet = app.state.fleet
-        if mode != 'hardware':
-            raise HTTPException(409, '模拟模式不操作真实相机，请以 ROBOT_MODE=hardware 启动')
         if app.state.configuration_lock.locked():
             raise HTTPException(409, '相机或配置操作正在进行，请稍后再试')
         async with app.state.configuration_lock:
@@ -299,8 +368,8 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     @app.get("/api/camera/stream")
     async def camera():
         current_url = app.state.fleet.settings.vision_url
-        if mode == "demo" or not current_url:
-            raise HTTPException(404, "未配置真实相机；模拟模式仅展示合成场地")
+        if not current_url:
+            raise HTTPException(404, "未配置视觉服务地址")
         client = httpx.AsyncClient(timeout=httpx.Timeout(5, read=10))
         try:
             response = await client.send(client.build_request("GET", current_url+"/stream.mjpg"), stream=True)
@@ -322,6 +391,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     if dist.is_dir():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
+    @app.get("/mobile", include_in_schema=False)
     @app.get("/")
     async def index():
         if not (dist / "index.html").is_file():

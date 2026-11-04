@@ -132,3 +132,35 @@ def test_real_http_bridge_synchronizes_robot_dimensions(engine, tmp_path):
         server.shutdown()
         server.server_close()
         thread.join(3)
+
+
+def test_demo_console_configures_real_vision_without_using_its_poses(engine, tmp_path):
+    from fastapi.testclient import TestClient
+    from werkzeug.serving import make_server
+    from robot_server.backend.app import create_app as control_app
+
+    server = make_server('127.0.0.1', 0, create_app(engine), threaded=True)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        path = tmp_path/'control.db'
+        with TestClient(control_app(mode='demo', db_path=path)) as client:
+            settings = client.get('/api/config').json()
+            settings['vision_url'] = f'http://127.0.0.1:{server.server_port}'
+            settings['vision'] = engine.configuration()
+            settings['vision'].pop('saved_world')
+            settings['vision'].update(source='2', enabled=True, fps=20)
+            response = client.put('/api/config', json=settings)
+            assert response.status_code == 200, response.json()
+            saved = json.loads(engine.runtime_path.read_text())['profile']
+            assert (saved['source'], saved['enabled'], saved['fps']) == ('2', True, 20)
+            assert client.post('/api/vision/cameras', json={}).status_code == 200
+            assert client.post('/api/vision/operations', json={'action': 'reset_world'}).status_code == 200
+            assert client.get('/api/state').json()['mode'] == 'demo'
+            assert client.get('/api/state').json()['robots'][0]['x'] is not None
+        with TestClient(control_app(mode='demo', db_path=path)) as client:
+            assert client.get('/api/config').json()['vision_url'] == settings['vision_url']
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(3)

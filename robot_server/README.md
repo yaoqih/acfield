@@ -17,6 +17,12 @@ cd robot_server
 
 Open http://127.0.0.1:8000. Reuse `./run.sh` after the frontend is built. Configuration is created in `data/config.sqlite3` and runs are recorded in `data/runs/` by default; neither belongs in version control.
 
+`./run.sh` also starts `apriltag_live.py` on `127.0.0.1:8765` and stops it when the control server exits. Open **Experiment settings → Camera and vision** to select a camera and edit, save and calibrate its settings. Demo mode can configure a real camera while robot positions remain simulated. The first start leaves the camera disconnected; later starts restore its saved connection state. Vision settings are saved in `../output/vision-settings.json`.
+
+Set `ROBOT_VISION_PORT` to change the local vision port, or `ROBOT_START_VISION=0` to use an independently running vision service. The console stores its vision URL; `ROBOT_VISION_URL` explicitly overrides the stored address on startup. `ROBOT_VISION_RUNTIME_CONFIG` changes the vision settings file used by the script.
+
+The console can switch the current session between demo and hardware modes. Switching stops and locks all robots and starts or closes the device transport. When a vision URL is configured, switching to hardware synchronizes the robot dimensions and arena with the vision service first; a failed sync leaves the fleet locked. Hardware mode still requires device binding and calibrated live localization. A restart uses `ROBOT_MODE` (default `demo`) again. On a phone, open the server's LAN address followed by `/mobile` for the dedicated remote-control page. Select a robot and use the touch joystick: vertical and horizontal displacement control linear and angular speed in proportion to the robot's effective speed limits. Releasing it stops the selected robot. Start with `ROBOT_HOST=0.0.0.0` for LAN access, and use `ROBOT_UDP_HOST=0.0.0.0` for hardware on the LAN.
+
 `./run.sh` and `python -m backend.app` print console/API addresses and the detected
 host IPv4. To connect from another computer's Python SDK, start with
 `ROBOT_HOST=0.0.0.0 ./run.sh` and use the printed LAN URL. The default listener is
@@ -28,7 +34,7 @@ the address reachable on your experiment network, especially when using a VPN.
 Complete firmware and camera calibration before using hardware mode:
 
 ```bash
-ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ROBOT_VISION_URL=http://127.0.0.1:8765 ./run.sh
+ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ./run.sh
 ```
 
 Use one process and one worker. This local/LAN service has no account authentication or authenticated UDP transport. The `X-Control-ID` header manages ownership only. Device arming, fresh camera localization and finite command lifetimes remain required.

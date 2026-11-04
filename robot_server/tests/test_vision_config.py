@@ -136,7 +136,7 @@ def test_concurrent_config_write_cannot_rearm_during_vision_change(tmp_path, mon
     asyncio.run(scenario())
 
 
-def test_conflicting_fixed_id_and_demo_camera_operations_are_rejected(tmp_path, monkeypatch):
+def test_conflicting_fixed_id_and_invalid_vision_address_are_rejected(tmp_path, monkeypatch):
     monkeypatch.setattr('backend.app.watch', idle_watch)
     with TestClient(create_app(mode='hardware', db_path=tmp_path/'hardware.db', udp_port=0)) as client:
         settings = client.get('/api/config').json()
@@ -144,9 +144,53 @@ def test_conflicting_fixed_id_and_demo_camera_operations_are_rejected(tmp_path, 
         settings['robots'][0]['tag_id'] = 0
         assert client.put('/api/config', json=settings).status_code == 422
     with TestClient(create_app(db_path=tmp_path/'demo.db')) as client:
-        assert client.post('/api/vision/cameras', json={}).status_code == 409
-        assert client.post('/api/vision/operations', json={'action': 'calibrate'}).status_code == 409
         assert client.get('/api/vision/config?url=file:///etc/passwd').status_code == 422
+
+
+def test_default_vision_url_does_not_override_saved_address(tmp_path, monkeypatch):
+    monkeypatch.setenv('ROBOT_DEFAULT_VISION_URL', 'http://127.0.0.1:8766')
+    path = tmp_path/'demo.db'
+    with TestClient(create_app(mode='demo', db_path=path)) as client:
+        settings = client.get('/api/config').json()
+        assert settings['vision_url'] == 'http://127.0.0.1:8766'
+        settings['vision_url'] = 'http://camera:8765'
+        assert client.put('/api/config', json=settings).status_code == 200
+    with TestClient(create_app(mode='demo', db_path=path)) as client:
+        assert client.get('/api/config').json()['vision_url'] == 'http://camera:8765'
+
+
+def test_switch_to_hardware_synchronizes_vision_before_enabling(tmp_path, monkeypatch):
+    calls = []
+    async def vision_request(url, method, path, body=None):
+        calls.append((method, path, body))
+        if method == 'GET':
+            return {'config': profile()}
+        return {}
+    monkeypatch.setattr('backend.app.request_vision', vision_request)
+    monkeypatch.setattr('backend.app.watch', idle_watch)
+    with TestClient(create_app(mode='demo', db_path=tmp_path/'demo.db', udp_port=0)) as client:
+        settings = client.get('/api/config').json()
+        settings['vision_url'] = 'http://camera:8765'
+        settings['robots'][0]['tag_size'] = .12
+        assert client.put('/api/config', json=settings).status_code == 200
+        assert client.put('/api/mode', json={'mode': 'hardware'}).status_code == 200
+        assert calls[-1][0:2] == ('POST', '/api/config')
+        assert calls[-1][2]['tags']['10']['size_m'] == .12
+
+
+def test_switch_to_hardware_with_failed_vision_sync_remains_locked(tmp_path, monkeypatch):
+    async def unavailable(*args):
+        raise HTTPException(502, '视觉服务不可用')
+    monkeypatch.setattr('backend.app.request_vision', unavailable)
+    app = create_app(mode='demo', db_path=tmp_path/'demo.db', udp_port=0)
+    with TestClient(app) as client:
+        settings = client.get('/api/config').json()
+        settings['vision_url'] = 'http://camera:8765'
+        assert client.put('/api/config', json=settings).status_code == 200
+        assert client.put('/api/mode', json={'mode': 'hardware'}).status_code == 502
+        assert app.state.fleet.mode == 'demo' and app.state.fleet.estop
+        assert app.state.fleet.vision_sync_error
+        assert app.state.transport is None
 
 
 def test_uncalibrated_camera_can_preview_without_usable_pose():

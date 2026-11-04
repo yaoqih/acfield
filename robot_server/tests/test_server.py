@@ -132,6 +132,53 @@ def test_hardware_real_udp_datagram(tmp_path):
             assert client.app.state.udp.rejected == 2
 
 
+def test_mode_switch_replaces_session_stops_and_isolates_hardware(tmp_path):
+    app = create_app(mode='demo', db_path=tmp_path/'config.db', udp_port=0)
+    with TestClient(app, headers={'X-Control-ID': 'mode-test'}) as client:
+        initial = client.get('/api/state').json()
+        assert client.post('/api/robots/car-01/arm', json={'enabled': True}).status_code == 200
+        assert client.post('/api/robots/car-01/command', json={'v': .05, 'omega': 0}).status_code == 200
+        assert client.put('/api/mode', json={'mode': 'hardware'}).status_code == 200
+        hardware = client.get('/api/state').json()
+        assert hardware['mode'] == 'hardware' and hardware['session'] != initial['session']
+        assert hardware['estop'] and all(not r['armed'] and not r['visible'] for r in hardware['robots'])
+        assert client.get('/api/health').json()['mode'] == 'hardware'
+        assert app.state.udp.transport.get_extra_info('sockname')[1] > 0
+        assert client.put('/api/mode', json={'mode': 'demo'}).status_code == 200
+        demo = client.get('/api/state').json()
+        assert demo['mode'] == 'demo' and demo['session'] != hardware['session']
+        assert demo['estop'] and all(not r['armed'] for r in demo['robots'])
+        assert app.state.transport is None and app.state.udp is None
+        assert client.post('/api/robots/car-01/arm', json={'enabled': True}).status_code == 409
+
+
+def test_mode_switch_udp_failure_stays_in_demo_and_stops(tmp_path):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as occupied:
+        occupied.bind(('127.0.0.1', 0))
+        app = create_app(mode='demo', db_path=tmp_path/'config.db', udp_port=occupied.getsockname()[1])
+        with TestClient(app, headers={'X-Control-ID': 'mode-test'}) as client:
+            assert client.post('/api/robots/car-01/arm', json={'enabled': True}).status_code == 200
+            assert client.put('/api/mode', json={'mode': 'hardware'}).status_code == 409
+            state = client.get('/api/state').json()
+            assert state['mode'] == 'demo' and state['estop']
+            assert all(not r['armed'] for r in state['robots'])
+            assert app.state.transport is None
+
+
+def test_mode_switch_preserves_vision_sync_failure(tmp_path):
+    app = create_app(mode='demo', db_path=tmp_path/'config.db', udp_port=0)
+    with TestClient(app, headers={'X-Control-ID': 'mode-test'}) as client:
+        app.state.fleet.vision_sync_error = '视觉配置同步失败'
+        settings = client.get('/api/config').json()
+        assert client.put('/api/config', json=settings).status_code == 200
+        assert app.state.fleet.vision_sync_error == '视觉配置同步失败'
+        assert client.put('/api/mode', json={'mode': 'hardware'}).status_code == 200
+        assert app.state.fleet.vision_sync_error == '视觉配置同步失败'
+        assert client.put('/api/mode', json={'mode': 'demo'}).status_code == 200
+        assert client.post('/api/reset-stop').status_code == 200
+        assert client.post('/api/robots/car-01/arm', json={'enabled': True}).status_code == 409
+
+
 def test_vision_offset_frozen_frame_and_demo_rejection(monkeypatch):
     import asyncio
     import contextlib

@@ -55,12 +55,12 @@ function selectCamera(event: Event) {
 <template>
   <section class="vision-settings">
     <div class="settings-section-title"><h3>相机与视觉</h3><span>{{ hardware ? '真实设备' : '模拟模式' }}</span></div>
-    <p class="field-note" v-if="!hardware">模拟模式可保存服务地址。操作真实相机需以 ROBOT_MODE=hardware 启动控制服务。</p>
+    <p class="field-note" v-if="!hardware">模拟模式下可配置真实相机，车辆位置仍使用模拟数据。</p>
     <label class="full-field">视觉服务地址<input v-model="settings.vision_url" type="url" placeholder="http://127.0.0.1:8765" :disabled="busy" /></label>
     <div class="vision-actions"><button type="button" class="button subtle" :disabled="busy" @click="emit('refresh')">{{ busy ? '操作中…' : '读取服务配置' }}</button><span class="field-note">留空时可通过读取连接本机 8765 端口。</span></div>
     <p v-if="error || localError" class="modal-error" role="alert">{{ error || localError }}</p>
     <template v-if="profile">
-      <fieldset :disabled="busy || !hardware" class="vision-fields">
+      <fieldset :disabled="busy" class="vision-fields">
         <div class="form-grid">
           <label>相机设备<select :value="profile.source" @change="selectCamera"><option v-if="!cameras.some(c => c.id === profile?.source)" :value="profile.source">相机 {{ profile.source }}</option><option v-for="camera in cameras" :key="camera.id" :value="camera.id">{{ camera.name }}</option></select></label>
           <label>相机 ID（可手动填写）<input :value="profile.source" @input="selectCamera" type="text" inputmode="numeric" pattern="[0-9]|[1-5][0-9]|6[0-3]" required /></label>
@@ -99,7 +99,7 @@ function selectCamera(event: Event) {
         </details>
       </fieldset>
       <div v-if="status" class="vision-status" aria-live="polite"><strong>{{ status.status === 'running' ? '视觉服务运行中' : '等待有效图像' }}</strong><span>{{ status.width ?? '—' }} × {{ status.height ?? '—' }} px · {{ status.fps?.toFixed(1) ?? '—' }} fps · 延迟 {{ status.frame_age_ms?.toFixed(0) ?? '—' }} ms</span><span>内参{{ status.calibrated ? '有效' : '未配置或不匹配' }} · 场地{{ status.world_calibrated ? '已标定' : '未标定' }}<template v-if="status.world_info"> · RMS {{ status.world_info.rms_px.toFixed(2) }} px</template></span><span v-if="status.error">{{ status.error }}</span><span v-for="warning in status.warnings ?? []" :key="warning">{{ warning }}</span></div>
-      <div v-if="preview" class="vision-preview"><img :key="streamKey" :src="`/api/camera/stream?v=${streamKey}`" alt="配置相机实时预览" /></div>
+      <div v-if="status?.source_kind === 'camera' && status.status === 'running' && settings.vision_url && !dirty" class="vision-preview"><img :key="streamKey" :src="`/api/camera/stream?v=${streamKey}`" alt="配置相机实时预览" /></div>
     </template>
   </section>
 </template>

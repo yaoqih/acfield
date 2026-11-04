@@ -9,3 +9,48 @@
 .position-summary{display:flex;justify-content:space-between;margin:0 20px;padding:16px 0 0;font-size:10px;color:#7c8c70;gap:8px}.position-summary b{font-weight:500;color:#466441;font-size:13px}.telemetry-section{border-top:1px solid #e6ecdf}.telemetry-section>summary{display:flex;align-items:center;justify-content:space-between;padding:15px 21px;cursor:pointer;font-size:11px;color:#6b805d;list-style:none;min-height:44px}.telemetry-section>summary::-webkit-details-marker{display:none}.telemetry-section[open]>summary svg{transform:rotate(180deg)}.telemetry-section .extra-telemetry{padding-bottom:18px}.main-grid{grid-template-rows:auto auto auto;row-gap:18px}.camera-panel{align-self:start}.control-heading{padding-top:18px}
 /* Camera configuration shares the existing experiment settings dialog. */
 .vision-settings{border-bottom:1px solid #e6ebdf;padding-bottom:22px;margin-bottom:22px}.settings-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.settings-section-title span{font-size:10px;color:#8c9982}.full-field{display:flex;flex-direction:column;gap:8px;font-size:11px;color:#7c8b6e}.full-field input,.vision-fields input,.vision-fields select{min-width:0;width:100%;box-sizing:border-box;border:1px solid #dce4d4;border-radius:5px;padding:9px 10px;background:#fbfcf8;color:#425d3e;font:inherit}.vision-fields{border:0;padding:0;margin:18px 0 0;min-width:0}.vision-fields:disabled{opacity:.65}.vision-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:13px}.vision-actions .field-note{margin:0}.vision-details{border-top:1px solid #e8eddf;margin-top:20px;padding-top:14px}.vision-details summary{font-size:11px;font-weight:500;cursor:pointer}.checkbox-field{display:flex;align-items:center;gap:8px;margin:14px 0;font-size:11px;color:#6b7e5e}.checkbox-field input{width:auto}.fixed-tags{display:grid;gap:8px;margin-top:12px}.fixed-tag-row{display:grid;grid-template-columns:.7fr 1.1fr 1fr 1fr;gap:8px}.fixed-tag-heading{font-size:10px;color:#8d9c7e}.vision-status{display:flex;flex-direction:column;gap:7px;margin-top:16px;background:#f5f8f0;border:1px solid #e2e9d9;border-radius:6px;padding:12px;font-size:10px;color:#7d906e;overflow-wrap:anywhere}.vision-status strong{font-size:11px;color:#527147}.vision-preview{margin-top:12px;background:#19251f;border-radius:6px;overflow:hidden}.vision-preview img{display:block;width:100%;max-height:300px;object-fit:contain}button:disabled{cursor:default}.modal .form-grid select{width:100%;border:1px solid #dce4d4;border-radius:5px;padding:9px 10px;background:#fbfcf8;color:#425d3e;font:inherit}
+
+.mode-bar{display:flex;align-items:center;gap:12px;margin:0 0 20px;color:#55685d;font-size:12px}
+.mode-switch{display:flex;padding:3px;border:1px solid #d6e0da;border-radius:6px;background:#eaf0ec}
+.mode-switch button{min-height:32px;padding:0 14px;border-radius:4px;color:#52665b;font-size:12px}
+.mode-switch button.chosen{background:#fff;color:#23664f;box-shadow:0 1px 3px #294a3826;font-weight:600}
+.mode-caption{color:#718078;font-size:11px}
+.touch-control{display:none}
+@media(max-width:850px){
+  .main-grid{display:flex;flex-direction:column}
+  .main-grid>section,.main-grid>aside{width:100%}
+  .detail-panel{order:0}.arena-panel{order:1}.camera-panel{order:2}.events-panel{order:3}
+  .detail-panel .dpad{display:none}
+  .detail-panel .slider-row{display:none}
+  .touch-control{display:flex;align-items:center;justify-content:center;gap:22px;margin:12px 20px 0}
+  .joystick{position:relative;width:184px;height:184px;flex:none;border-radius:50%;border:1px solid #b9cbc0;background:#eef4f0;touch-action:none;user-select:none;overflow:hidden}
+  .joystick.disabled{opacity:.45}.joystick-cross{position:absolute;background:#d0ded5;pointer-events:none}
+  .joystick-cross.horizontal{height:1px;left:16px;right:16px;top:50%}.joystick-cross.vertical{width:1px;top:16px;bottom:16px;left:50%}
+  .joystick-knob{position:absolute;left:calc(50% - 26px);top:calc(50% - 26px);width:52px;height:52px;border-radius:50%;background:#337961;border:4px solid #fff;box-shadow:0 2px 8px #183f2e40;pointer-events:none}
+  .touch-stop{width:60px;height:60px;border-radius:50%;background:#f9eae7;border:1px solid #dfa99e;color:#a44337;flex-direction:column;font-size:11px}
+  .mode-bar{flex-wrap:wrap;gap:8px}.mode-caption{flex-basis:100%}
+  .mobile-control-jump{border-radius:6px}
+}
+@media(max-width:520px){
+  .rail{display:none}.workspace{margin-left:0}.toast{top:64px;bottom:auto}
+  .stats-row{gap:8px;margin-bottom:14px}.stat{min-height:64px;padding:10px}.page-heading{margin-bottom:14px}
+  .page-heading p{display:none}.topbar{height:54px}.main-grid{gap:12px}.detail-panel .robot-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .robot-tabs button{flex-direction:row;justify-content:flex-start;padding:8px}.robot-tabs button small{margin-left:auto}
+  .device-identity{padding:16px 16px 10px}.control-heading{padding:16px 16px 12px}.position-summary{margin:0 16px}
+  .modal{max-height:calc(100dvh - 24px);display:flex;flex-direction:column}.modal form{min-height:0;display:flex;flex-direction:column}.modal-body{max-height:none;min-height:0;overflow:auto}.modal-footer{flex-wrap:wrap;padding:12px 18px}.save-state{flex-basis:100%}
+  .vision-actions .button{min-height:42px}.fixed-tag-row{gap:4px}.fixed-tag-row input{padding:8px 4px}
+}
+
+.mobile-page-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none}
+.remote-page{min-height:100dvh;background:#f5f7f4;color:#263b33}
+.remote-header{height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dfe6de;background:#fff}
+.remote-brand{font-size:16px;font-weight:700;color:#294d3e;text-decoration:none}.remote-brand span{font-size:12px;font-weight:400;color:#839087}
+.remote-main{max-width:480px;margin:auto;padding:20px 20px 30px}
+.remote-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.remote-title h1{font-size:23px;margin-top:4px}.remote-eyebrow{font-size:10px;color:#819188;font-weight:600}
+.remote-select{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:600;color:#52685a}.remote-select select{width:100%;height:48px;padding:0 12px;border:1px solid #cbd8ce;border-radius:6px;background:#fff;color:#263b33;font:inherit;font-size:14px}
+.remote-status{display:flex;justify-content:space-between;gap:8px;padding:17px 0;border-bottom:1px solid #dfe7df;color:#647d6c;font-size:11px}.remote-status span{display:flex;align-items:center;gap:5px}
+.remote-control-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:19px}.remote-control-heading h2{font-size:15px;margin:0 0 6px}.remote-control-heading p{font-size:11px;line-height:1.5;color:#718176;margin:0}.remote-control-heading .lock-toggle{flex:none;min-height:42px}
+.remote-page .touch-control{display:flex;align-items:center;justify-content:center;gap:22px;margin:16px 0}
+.remote-page .joystick{position:relative;width:184px;height:184px;flex:none;border-radius:50%;border:1px solid #b9cbc0;background:#eaf2ed;touch-action:none;user-select:none;overflow:hidden}.remote-page .joystick.disabled{opacity:.45}.remote-page .joystick-cross{position:absolute;background:#c9d9cf;pointer-events:none}.remote-page .joystick-cross.horizontal{height:1px;left:16px;right:16px;top:50%}.remote-page .joystick-cross.vertical{width:1px;top:16px;bottom:16px;left:50%}.remote-page .joystick-knob{position:absolute;left:calc(50% - 26px);top:calc(50% - 26px);width:52px;height:52px;border-radius:50%;background:#337961;border:4px solid #fff;box-shadow:0 2px 8px #183f2e40;pointer-events:none}.remote-page .touch-stop{width:60px;height:60px;border-radius:50%;background:#f9eae7;border:1px solid #dfa99e;color:#a44337;flex-direction:column;font-size:11px}
+.remote-telemetry{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #dfe7df;padding:16px 0;color:#718176;font-size:11px}.remote-telemetry b{color:#354b3e;font-weight:600}.remote-stop-all{width:100%;min-height:48px;border-radius:6px;background:#b55549;color:#fff;font-weight:600}.remote-estop{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-bottom:16px;background:#f9eae7;color:#9b493f;border-radius:5px}.remote-estop button{min-height:36px;color:#923e35;text-decoration:underline}.remote-empty{padding:30px 0;color:#718176}
+@media(max-width:350px){.remote-main{padding-left:14px;padding-right:14px}.remote-page .touch-control{gap:12px}.remote-status{font-size:10px}}
