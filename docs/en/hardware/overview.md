@@ -1,10 +1,50 @@
 # Materials and mechanical design
 
-The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. Public hardware is organized as the **V11 reference design**, pending first-article measurement and trial assembly. It is not described as production-ready or as a validated four-robot fleet.
+The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. The **current compact first-article candidate** is a 95 × 80 mm acrylic robot, pending assembly and measurements; it is not a validated four-robot fleet.
+
+| Item | Compact candidate |
+| --- | --- |
+| Bottom / top | 95.1 × 80 × 4 mm / 95 × 80 × 2 mm acrylic |
+| Motors / wheels | Two A12 12 V 1:20 quadrature encoder motors and 34 mm wheels; test one pair first |
+| Support / posts | One CY-12B ball caster; four each M3 nylon posts, 45 and 15 mm |
+| Battery | 3S, layout assumes 55 × 30 × 20 mm; actual model, capacity and mass unconfirmed |
+| Robot tag | tag36h11, 72 mm black square, 4 mm white margin per side, 80 mm finished size, no bleed |
+| Nominal mass / height | Approximately 272 g / 59 mm to top surface, subject to model assumptions |
+
+DXF files, label images, the bill of materials and open checks are in the [95 mm candidate](https://github.com/yaoqih/acfield/tree/main/hardware_design/acrylic_95). **The PCB mounting holes lie inside the tag's black square and the current drawing does not resolve the fastener conflict.** Trial assembly must resolve it, along with encoder-to-plate clearance, the thin caster web and battery/connector clearance.
+
+## Assembly and exploded view {#assembly-and-exploded-view}
+
+![95 mm candidate: actual DXF cuts, installed height, assumed centre of mass and tag/hole conflicts; Chinese annotations](/images/acrylic-95-audit.png)
+
+![95 mm acrylic candidate exploded view: top plate, 15 mm PCB hangers, controller, battery, 45 mm outer posts, motors, bottom and underslung caster; bilingual labels](/images/acrylic-95-exploded.png)
+
+The audit image now shows **only the 95 mm version**. Both plates use the actual DXF cuts and holes. Purchased parts are simplified, screws/straps/cables are omitted, and exploded gaps are not assembly dimensions. Four red rings show unresolved hanger-hole conflicts inside the tag's black square.
+
+The [detailed design notes, in Chinese](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/dimensions.md) cover hole coordinates, height chains, controller clearance, mass assumptions and acceptance. The [BOM](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/bom.csv) lists quantities for one and four robots. Acrylic mass is approximately 48.6 g. The estimated 272 g total and 25.9 mm centre-of-mass height assume a 90 g battery and other nominal inputs. The caster carries approximately 46.7% of static load, so measure its rolling resistance.
+
+With 34 mm wheels, the 1:20 motor's supplied 500 rpm rated point corresponds to 0.89 m/s; its no-load point is 1.96 m/s. Two rated torques imply a theoretical 1.73 N wheel-edge force. Test one pair from 0.2 m/s upward; 1:30 is a fallback. Loaded speed, turning, low voltage and temperature determine useful limits.
+
+The differential-drive/unicycle reference point is the axle midpoint. A centred tag lies approximately **30.5 mm forward** of it, requiring offset compensation. The front plate extends approximately 78.1 mm ahead of the axle, so the body envelope also needs an offset. Existing runtime defaults remain V11; measure tag size, height, offsets, wheel diameter, track and encoder counts after assembly.
+
+### Recheck and regenerate
+
+From the repository root, regenerate the report and figures using committed DXFs and historical controller envelopes; no personal supplier-STL path is required:
+
+```sh
+uv run --with ezdxf --with shapely python hardware_design/acrylic_95/review.py
+uv run python hardware_design/acrylic_95/tag_images/generate.py
+cp hardware_design/acrylic_95/audit_layout.png docs/public/images/acrylic-95-audit.png
+cp hardware_design/acrylic_95/exploded.png docs/public/images/acrylic-95-exploded.png
+```
+
+## Older V11 printed reference {#v11-reference}
+
+The following images and figures describe the **older V11 130 mm printed reference**, not the compact robot.
 
 ![V11 complete assembly and internal structure with the cover removed](/images/assembly-en.svg)
 
-## Assembly and exploded view {#assembly-and-exploded-view}
+### V11 exploded view
 
 ![V11 exploded assembly: cover, controller, posts, battery, motors, wheels, chassis and ball caster](/images/exploded-en.svg)
 
@@ -29,7 +69,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 
 ## Bill-of-material categories {#bill-of-material-categories}
 
-| Category | Reference | Per robot |
+| Category | V11 reference | Per robot |
 | --- | --- | --- |
 | Control | General Driver for Robots | 1 |
 | Drive | A12 12 V 1:150 encoder motors and brackets | 2 |
@@ -39,7 +79,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 | Tag | tag36h11, 104 mm black border | 1 |
 | Shared equipment | Camera/lens/mount, router, computer, charging equipment | Per arena |
 
-CSV files retain current material, print-order and wiring references. Personal shopping carts and historical quotations remain in Git history. The lists omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
+Older CSV files retain V11 material, print-order and wiring references; use the separate BOM above for the 95 mm candidate. Personal shopping carts and historical quotations remain in Git history. The lists omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
 
 ## Why this layout {#why-this-layout}
 

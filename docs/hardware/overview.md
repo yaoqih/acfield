@@ -1,10 +1,50 @@
 # 物料与机械设计
 
-参考方案使用 Waveshare General Driver for Robots（SKU23730，ESP32 + TB6612）、双编码器减速电机与场外 AprilTag 定位。公开硬件整理为 **V11 参考设计**，仍需首件测量与试装；它没有被标记为已量产或已完成四车路试。
+参考方案使用 Waveshare General Driver for Robots（SKU23730，ESP32 + TB6612）、双编码器减速电机与场外 AprilTag 定位。**当前紧凑首件候选**为 95 × 80 mm 亚克力车；仍需首件测量与试装，尚未完成四车路试。
+
+| 项目 | 95 mm 首件候选 |
+| --- | --- |
+| 底板 / 顶板 | 95.1 × 80 × 4 mm / 95 × 80 × 2 mm 亚克力 |
+| 电机 / 驱动轮 | A12 12 V 1:20 双相编码电机 × 2，34 mm 轮 × 2；先采购一对测试 |
+| 支撑 / 柱 | CY-12B 球轮 × 1；M3 双通尼龙柱 45 mm 和 15 mm 各 4 根 |
+| 电池 | 3S，布局暂按 55 × 30 × 20 mm；实际型号、容量与质量待确认 |
+| 车顶标签 | tag36h11，72 mm 黑框、四周 4 mm 白边，80 mm 成品，无出血 |
+| 名义质量 / 高度 | 约 272 g / 顶板离地 59 mm，均依赖模型假设 |
+
+加工 DXF、标签图片、物料及待核实事项见 [95 mm 首件方案](https://github.com/yaoqih/acfield/tree/main/hardware_design/acrylic_95)。**顶板主板安装孔位于标签黑框内，现有图纸未解决紧固件与标签的冲突**，必须先通过实物试装确定固定方式；电机编码器与底板净空、球轮薄材料桥及电池/接插件净空也未验证。
+
+## 装配与爆炸图 {#assembly-and-exploded-view}
+
+![95 mm 亚克力候选：实际 DXF 孔位、侧面高度、重心估算与标签孔位冲突](/images/acrylic-95-audit.png)
+
+![95 mm 亚克力候选爆炸图：顶板、15 mm 主板悬挂柱、主板、电池、45 mm 外柱、电机、底板及板下球轮](/images/acrylic-95-exploded.png)
+
+审核图已更新为 **95 mm 单一版本**。爆炸图的两块板使用实际 DXF 轮廓和孔位，采购件为简化外形，螺丝、绑带和线束省略；展开间距不是装配高度。顶板红圈表示四个悬挂孔与标签黑框的冲突，尚未解决。
+
+[尺寸、孔位与装配解释](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/dimensions.md)给出逐孔坐标、高度链、主板接口避让、质量输入与验收顺序；[BOM](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/bom.csv)列出每车及四车数量。板材合计约 48.6 g；整车约 272 g、重心距地 25.9 mm 是按 90 g 电池等条件计算的估算。球轮静载约 46.7%，因此球轮滚阻也需要实测。
+
+1:20 电机配 34 mm 轮，供应商额定点 500 rpm 对应约 0.89 m/s，空载 1.96 m/s；两台额定扭矩对应理论轮缘合力约 1.73 N。建议先验证一对电机，从 0.2 m/s 起步测试；1:30 作为备选。载荷、低电压、原地转向和温升决定实际可用速度，不能用空载转速设围堵速度上限。
+
+差速/unicycle 的参考点是驱动轴中点。标签居中时在轮轴前方约 **30.5 mm**，需补偿标签偏移；车体前缘在轮轴前约 78.1 mm，车体包络也需正确偏置。控制与视觉默认值仍为 V11，装车后填写实测黑框尺寸、高度、偏移、轮径、轮距和编码器计数。
+
+### 复核与更新图片
+
+从仓库根目录运行以下脚本即可更新名义审核结果和两张图；输入包括已提交 DXF 和历史主板元件包络，不依赖个人电脑上的供应商 STL 路径。
+
+```sh
+uv run --with ezdxf --with shapely python hardware_design/acrylic_95/review.py
+uv run python hardware_design/acrylic_95/tag_images/generate.py
+cp hardware_design/acrylic_95/audit_layout.png docs/public/images/acrylic-95-audit.png
+cp hardware_design/acrylic_95/exploded.png docs/public/images/acrylic-95-exploded.png
+```
+
+## 旧版 V11 打印参考 {#v11-reference}
+
+以下图片和数据为 **旧版 V11 130 mm 打印参考**，不表示 95 mm 车的装配图或参数。
 
 ![V11 完整装配与移除顶盖后的内部结构](/images/assembly.svg)
 
-## 装配与爆炸图 {#assembly-and-exploded-view}
+### V11 爆炸图
 
 ![V11 分层爆炸图：顶盖、主控、支柱、电池、电机、轮、底盘与辅助球轮](/images/exploded.svg)
 
@@ -29,7 +69,7 @@ STL、参数、构建与审查源文件位于 [hardware_design/print_v11](https:
 
 ## 物料类别 {#bill-of-material-categories}
 
-| 类别 | 参考内容 | 每车数量 |
+| 类别 | V11 参考内容 | 每车数量 |
 | --- | --- | --- |
 | 控制 | General Driver for Robots | 1 |
 | 动力 | A12 12V 1:150 编码电机与支架 | 2 |
@@ -39,7 +79,7 @@ STL、参数、构建与审查源文件位于 [hardware_design/print_v11](https:
 | 标签 | tag36h11 黑框 104 mm | 1 |
 | 公共设备 | 相机/镜头/固定架、路由器、电脑、充电设备 | 按场地共用 |
 
-目录内 CSV 保留当前物料、打印顺序和接线参考；个人购物车与旧报价已移至 Git 历史。清单未包含所有加工、运费、公共设备和缺件，电机、线束和电池的实物版本要逐项核验。无需为平台额外制作旧 STM32/串口桥或自制 PCB。
+目录内旧 CSV 保留 V11 物料、打印顺序和接线参考；95 mm 采购使用前面的独立 BOM。个人购物车与旧报价已移至 Git 历史。清单未包含所有加工、运费、公共设备和缺件，电机、线束和电池的实物版本要逐项核验。无需为平台额外制作旧 STM32/串口桥或自制 PCB。
 
 ## 为什么是这套布局 {#why-this-layout}
 

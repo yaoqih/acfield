@@ -1,5 +1,17 @@
 # Hardware and arena figures
 
+The current compact acrylic candidate has a separate DXF-based generator:
+
+```sh
+uv run --with ezdxf --with shapely python hardware_design/acrylic_95/review.py
+cp hardware_design/acrylic_95/audit_layout.png docs/public/images/acrylic-95-audit.png
+cp hardware_design/acrylic_95/exploded.png docs/public/images/acrylic-95-exploded.png
+```
+
+It produces the 95 mm audit and exploded figures plus `audit_results.json`. Plate cuts come from the committed DXFs; purchased parts are simplified, and installed dimensions are documented in `acrylic_95/dimensions.md`. Red circles mark an unresolved top-fastener/tag conflict. It does not change the V11 images below. See the compact README for physical-fit limitations.
+
+## V11 figures
+
 `scene.mjs` loads the audited `print_v11/assembly.glb` into Three.js. Printed parts use actual mesh geometry; motors, the battery, controller and connector details are simplified visual references. These appearance details do not replace supplier drawings, wiring instructions or collision envelopes in `build.py`/`audit.py`.
 
 Opaque surfaces, generated face normals and a depth buffer avoid transparent-triangle sorting artifacts. The assembled view preserves nominal positions. The exploded view offsets component groups for clarity and turns the caster over to expose its ball. It is an assembly illustration, not a dimensioned manufacturing drawing.

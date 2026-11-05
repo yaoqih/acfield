@@ -54,7 +54,7 @@ The default vision address is `http://127.0.0.1:8765`. The console saves the vis
 
 Use the console or `GET/PUT /api/config`. Settings include arena size, identities, tag IDs, body outlines, control-point/tag offsets and velocity limits. All robots must be disarmed before saving. A save stops robots and replaces the control session.
 
-On hardware-mode saves, the console synchronizes each robot's AprilTag ID, black-border size and mounting height to the vision service. Set heading correction in the control console. The reference black border is 104 mm; the full print with the white margin is 130 mm. Measure mounting height from the arena floor to the tag centre. Ensure only one control service manages shared vision configuration during an experiment.
+On hardware-mode saves, the console synchronizes each robot's AprilTag ID, black-border size and mounting height to the vision service. Set heading correction in the control console. The compact acrylic candidate uses a nominal 72 mm black square and 80 mm finished label; older V11 uses 104/130 mm. Existing defaults do not change automatically with the hardware. Measure mounting height from the arena floor to the tag centre. Ensure only one control service manages shared vision configuration during an experiment.
 
 The default body envelope is approximately 200 × 160 mm, a conservative initial value rather than a measured V11 outline. Include wheels, the tag and mounting offsets when measuring the full envelope.
 

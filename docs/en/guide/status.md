@@ -13,7 +13,7 @@
 | Firmware | Wheel-speed control, explicit arming, TTL, encoder and undervoltage faults | Per-robot calibration required; motor output disabled by default |
 | Protection | Stops for stale localization, link failure, boundaries and spacing | Conservative models; measured stopping distances still needed |
 | Recording | Configuration, poses, actions, telemetry and stop reasons in JSONL | No complete episode evaluation or replay system |
-| Reference hardware | Two-part V11 chassis, parameterized sources, nominal geometry checks | First-article assembly and physical acceptance pending |
+| Reference hardware | 95 mm acrylic candidate and V11 printed reference | First-article and physical acceptance pending; compact tag/fastener conflict unresolved |
 
 ## Recheck the software evidence {#recheck-the-software-evidence}
 

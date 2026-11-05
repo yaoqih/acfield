@@ -37,7 +37,7 @@ cd robot_server
 | 设计理念、架构与选型取舍 | [设计文档](https://yaoqih.github.io/acfield/design/philosophy) |
 | 观测、通信、保护干预与实验有效性 | [研究边界](https://yaoqih.github.io/acfield/design/research) |
 | 固件与首车调试 | [固件说明](esp32_software/firmware/README.md) |
-| V11 源文件、加工与名义检查 | [参考硬件](hardware_design/README.md) |
+| 95×80 mm 亚克力首件候选与 V11 历史参考 | [参考硬件](hardware_design/README.md) |
 | 平台贡献、版本、引用与部署 | [共同维护](https://yaoqih.github.io/acfield/community/contributing) |
 
 ## 设计上的坚持

@@ -1,0 +1,83 @@
+{
+  "status": "NOMINAL_GEOMETRY_CHECKED_PHYSICAL_FIT_UNRESOLVED",
+  "units": "mm, g, s unless explicitly stated",
+  "cut_sha256": {
+    "bottom_plate_95.1x80_flat_4mm.dxf": "c389ac733407639edf7e783c0c5201d068bf7ecade1f9f1de3a788caae96a4c6",
+    "top_plate_95x80_flat_2mm.dxf": "988d566f6266f9c851e484005cb0cb6de7c31e5cb681d97d0c2d2f78a377dd20"
+  },
+  "controller_step_sha256": "9e62a2bb2fe9c76a297ffc60236295b888437d4c276e6ffa5490c6ae981675e3",
+  "bottom_bounds_mm": [
+    -47.5,
+    -40.0,
+    47.600000016930636,
+    40.0
+  ],
+  "top_bounds_mm": [
+    -47.5,
+    -40.0,
+    47.5,
+    40.0
+  ],
+  "bottom_minimum_web_mm": 0.7999999999999989,
+  "bottom_minimum_edge_mm": 2.700000000000003,
+  "bottom_acrylic_mass_g": 30.84188550306599,
+  "top_acrylic_mass_g": 17.72559558410374,
+  "axle_x_mm": -30.5,
+  "caster_x_mm": 26.5,
+  "track_mm": 73.5,
+  "bottom_z_mm": [
+    8,
+    12
+  ],
+  "pcb_top_z_mm": 42,
+  "top_z_mm": [
+    57,
+    59
+  ],
+  "battery_xyz_mm": [
+    30,
+    55,
+    20
+  ],
+  "battery_mass_assumed_g": 90,
+  "battery_to_local_component_gap_after_1mm_strap_mm": 4.999999989072101,
+  "local_component_index": 424,
+  "highest_component_to_top_mm": 2.1000019420386113,
+  "hanger_to_component_lateral_gap_mm": 0.31963010597273156,
+  "tire_to_plate_gap_mm": 0.9999690013794311,
+  "tag_black_square_conflicting_holes_mm": [
+    [
+      -24.5,
+      -29.0
+    ],
+    [
+      -24.5,
+      29.0
+    ],
+    [
+      24.5,
+      -29.0
+    ],
+    [
+      24.5,
+      29.0
+    ]
+  ],
+  "assumed_mass_g": 271.84699814548674,
+  "assumed_cg_x_mm": -3.90626417609668,
+  "assumed_cg_z_mm": 25.91363882789396,
+  "assumed_caster_static_load_fraction": 0.4665567688404091,
+  "theoretical_rear_pitch_threshold_m_s2": 10.067461006351227,
+  "theoretical_front_pitch_threshold_m_s2": 11.510751290028324,
+  "motor_1_20_nominal_rated_speed_m_s": 0.8901179185171081,
+  "motor_1_20_nominal_no_load_speed_m_s": 1.9582594207376378,
+  "motor_1_20_two_rated_torques_wheel_force_N": 1.7294117647058822,
+  "force_div_assumed_mass_m_s2": 6.361709993134953,
+  "unresolved": [
+    "Four hanger holes inside tag black square",
+    "Caster cut web is only 0.8 mm; strength untested",
+    "Encoder diameter/shaft height may cause plate interference",
+    "Battery model, leads, plugs, strap and component clearances need physical checks",
+    "1:20 motors, loaded speed, grip, braking and thermal behavior untested"
+  ]
+}

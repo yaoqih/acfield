@@ -70,5 +70,29 @@
     "file": "tag36_11_00017.png",
     "url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00017.png",
     "sha256": "5050b33258299be15bf4670bb9f930ae64fffca83712b89eb8e70fd6b3e8eca3"
+  },
+  {
+    "id": 18,
+    "file": "tag36_11_00018.png",
+    "url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00018.png",
+    "sha256": "afa07ee1b00c97907df9179e54a4181de7a992b5f73ef7cc1e89ba903ece5645"
+  },
+  {
+    "id": 19,
+    "file": "tag36_11_00019.png",
+    "url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00019.png",
+    "sha256": "53c2b5d6bd962718222e628ad9255a3ee8433e748023765f3bf219d9260c35e7"
+  },
+  {
+    "id": 20,
+    "file": "tag36_11_00020.png",
+    "url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00020.png",
+    "sha256": "477a37f0fd967de2aed67104c5b6347cf9fdf1e13f1372f5ffeb991a6421a6c1"
+  },
+  {
+    "id": 21,
+    "file": "tag36_11_00021.png",
+    "url": "https://raw.githubusercontent.com/AprilRobotics/apriltag-imgs/master/tag36h11/tag36_11_00021.png",
+    "sha256": "41bdbd7b3d079e2ff468fc4477176a7b36b7c1c7dd3b52be31b44b59110d9a1e"
   }
 ]

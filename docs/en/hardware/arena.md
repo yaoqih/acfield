@@ -36,7 +36,7 @@ Connect the computer to the router by Ethernet. All four robots join the same ex
 
 ## Camera height and coverage {#camera-height-and-coverage}
 
-Cover the ground boundary, complete fixed-tag white margins and the robot-tag plane at approximately 64.6 mm. For an ideal downward pinhole camera, coverage in one direction is approximately:
+Cover the ground boundary, complete fixed-tag white margins and the robot-tag plane: nominally 59 mm for the compact acrylic candidate or 64.6 mm for V11; use the measured installed height. For an ideal downward pinhole camera, coverage in one direction is approximately:
 
 ```text
 coverage ≈ 2 × (H − tag-plane height) × tan(field of view / 2)

@@ -7,7 +7,7 @@
 
 ACField provides an inspectable path from localization to multi-robot velocity execution. The reference setup uses four small differential-drive robots, external AprilTag localization and a local computer. Connect your own controller through a shared state and joint-action interface; inspect execution feedback and stop reasons through the console and logs.
 
-> **Development preview.** The repository includes working software, automated checks and a V11 reference mechanical design. Physical assembly, calibration, wireless timing and stopping performance still require measurement. The demo is an interface tool, not a validated training simulator or benchmark. See [capabilities and evidence](https://yaoqih.github.io/acfield/guide/status).
+> **Development preview.** The repository includes working software, automated checks and compact acrylic and V11 mechanical candidates. Physical assembly, calibration, wireless timing and stopping performance still require measurement. The demo is an interface tool, not a validated training simulator or benchmark. See [capabilities and evidence](https://yaoqih.github.io/acfield/guide/status).
 
 ## Start without robots
 
@@ -38,7 +38,7 @@ With the server still running, execute a bounded example from the repository roo
 | Local runtime and console | State, control ownership, joint velocity validation, protective stops | [robot_server](robot_server/README.md) |
 | AprilTag localization | Camera inputs, world calibration, provenance and age reporting | [Localization guide](https://yaoqih.github.io/acfield/guide/localization) |
 | ESP32 firmware | Wheel-speed control, finite command lifetimes, arming and fault handling | [Firmware](esp32_software/firmware/README.md) |
-| Reference hardware | Two-part V11 chassis, editable sources and nominal geometry reports | [Hardware](hardware_design/README.md) |
+| Reference hardware | Compact acrylic first-article candidate and earlier V11 design | [Hardware](hardware_design/README.md) |
 | Python SDK | Independently installable typed client, joint actions and scoped ownership | [SDK](sdk/python/README.md) |
 | Examples and recording | Bounded SDK control example and JSONL event recording | [Examples](examples/README.md) |
 | Design documentation | Rationale, tradeoffs, research validity and a staged roadmap | [Design](https://yaoqih.github.io/acfield/design/philosophy) |

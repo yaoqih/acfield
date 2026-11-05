@@ -53,7 +53,7 @@ body_heading = visual_world_heading + heading_offset
 control_point = tag_centre − R(body_heading) × tag_offset
 ```
 
-The V11 tag-board centre differs from the axle midpoint, with a nominal longitudinal offset of approximately 16 mm. Check heading and offsets after assembly. Body-envelope offsets and tag offsets are separate parameters.
+The tag-board centre differs from the axle midpoint: a centred tag on the compact acrylic candidate is nominally 30.5 mm forward of the axle, compared with approximately 16 mm for V11. Check heading and offsets after assembly. Body-envelope offsets and tag offsets are separate parameters; changing tag size does not update either offset.
 
 ## Engineering modules and repositories {#engineering-modules-and-repositories}
 

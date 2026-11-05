@@ -17,7 +17,9 @@ Open the printed URL, normally **http://127.0.0.1:8765**. Synthetic images check
 
 See [arena and camera setup](../hardware/arena) for equipment layout and camera coverage.
 
-Use `tag36h11`: arena IDs 0–3 and robot IDs 10–17. All physical labels use a **104 mm black square and a 130 mm overall square including the white margin**, with no bleed. The repository provides two current PDFs, each containing the same twelve IDs in the same order:
+The compact 95 mm candidate uses `tag36h11` robot labels with a **72 mm black square, 4 mm white margin per side, and 80 mm finished size**, without bleed. Print the [12 PNG images, IDs 10–21](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/tag_images/tag36h11_80mm_white4_12ids_png.zip) at actual size, with the image top facing forward. Mounting holes and fasteners must not obscure the pattern; check recognition throughout the arena. On adoption, update vision and console settings from measured dimensions (nominal `size_m=0.072`), installed height and control-point offset. Saved runtime settings are not migrated automatically; IDs 18–21 require configuration. Configure arena markers independently from their actual sizes.
+
+The following describes the older V11 labels: `tag36h11` arena IDs 0–3 and robot IDs 10–17, each with a **104 mm black square and a 130 mm overall square including the white margin**, with no bleed. The two PDFs contain the same twelve IDs in the same order:
 
 - [A4 print edition](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_130mm_A4.pdf): one label per page, with dimensions, crop marks and a 100 mm check ruler.
 - [130 × 130 mm tag-only edition](https://github.com/yaoqih/acfield/blob/main/output/pdf/apriltag36h11_130mm_tag_only.pdf): each page is exactly one complete label, with no heading, ruler, crop marks or extra page whitespace.
@@ -30,7 +32,7 @@ Detection size means the outer black border, excluding the white margin. Each la
 
 The label fills the 130 mm cover without screw cutouts or screw avoidance. The ID uses approximately 5.7 pt type; the forward arrow and FRONT sit inside the opposite black border. Both use dark gray `#303030` close to the black background. Code cells, black-square edges and the white quiet zone remain intact. The arrow points to the canonical top edge. Align it with the robot's forward direction (+X); vision uses the same edge, so this installation uses `heading_offset_deg=0`.
 
-Public vision settings use `size_m=0.104` for both arena and robot IDs. IDs 10–13 retain the pursuit-demo roles; IDs 14–17 use a generic robot role that experiments can configure as needed. Nominal `height_m` is `0.0646` for robots and `0` for arena markers; measure installed heights. Record the server's `tag_size` as `0.104` too. Existing local settings are not migrated automatically. When replacing historical 150 mm ground tags, update sizes, measure positions and recalibrate the arena.
+Public vision settings still use the V11 defaults: `size_m=0.104` for arena and robot IDs, and `height_m=0.0646` for robots. IDs 10–13 retain the pursuit-demo roles; IDs 14–17 use a generic robot role. Configure the compact robot from its measured values above; changing arena markers also requires updated dimensions, coordinates and recalibration.
 
 The digital artwork passes 624 checks across two detection backends, covering multiple scales, four rotations, perspective with light blur and all 24 rasterized pages across both PDFs. Checks also verify black-square dimensions, page sizes and the complete quiet zone. Test installed labels under the arena camera, including paper deformation and reflections around screws.
 
@@ -51,7 +53,7 @@ The two PDFs are committed release artifacts. Individual PNGs, manifests and che
 1. Fix focal length, focus and resolution. Use an external calibration tool to obtain intrinsics/distortion and enter them in `apriltag_live.json` under `camera`.
 2. Measure ground-tag positions, black-border sizes and headings in a shared frame. Fill the configuration and set `world.configured=true`.
 3. Fix the camera and start arena extrinsic calibration in the interface. Check reprojection error, then measure arena-wide coordinate error at known positions.
-4. Enter actual robot-tag size, height and heading correction. The V11 nominal tag-surface height of approximately 64.6 mm is a design reference only.
+4. Enter actual robot-tag size, height and heading correction. Nominal height is approximately 59 mm for the compact candidate or 64.6 mm for V11; these are design references only.
 5. Set the server's tag offset relative to the axle midpoint. Verify forward heading and avoid adding the same mounting angle twice.
 6. Occlude tags, freeze frames and move the camera to check expiry and calibration invalidation.
 
