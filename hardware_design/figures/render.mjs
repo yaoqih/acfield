@@ -39,10 +39,18 @@ try {
     const info = await page.evaluate(options => window.renderFigure(options), { mode, width, height })
     const path = join(cache, mode + '.png')
     await page.locator('canvas').screenshot({ path })
-    frames[mode] = { ...info, image: 'data:image/png;base64,' + (await readFile(path)).toString('base64') }
+    // Keep document raster layers compact; annotation coordinates remain unchanged.
+    const image = await page.locator('canvas').evaluate(canvas => {
+      const preview = document.createElement('canvas')
+      preview.width = 600
+      preview.height = Math.round(canvas.height * 600 / canvas.width)
+      preview.getContext('2d').drawImage(canvas, 0, 0, preview.width, preview.height)
+      return preview.toDataURL('image/png')
+    })
+    frames[mode] = { ...info, image }
     console.log(mode, JSON.stringify(info))
   }
-  await writeFile(join(out, 'assembly.png'), await readFile(join(cache, 'assembled.png')))
+  await writeFile(join(out, 'assembly.png'), Buffer.from(frames.assembled.image.split(',')[1], 'base64'))
   await writeFile(join(root, 'hardware_design/print_v11/chassis_preview.png'), await readFile(join(cache, 'chassis.png')))
   const i = (mode, x, y, w, h) => `<image href="${frames[mode].image}" x="${x}" y="${y}" width="${w}" height="${h}"/>`
   for (const en of [false, true]) {
@@ -80,15 +88,10 @@ try {
     body += '<path d="M52 1250H1548" stroke="#d5ded5"/>' + text(52, 1286, en ? 'Purchased parts and PCB details are illustrative. Fasteners are omitted selectively for readability.' : '采购件及板上元件为外观示意；为便于阅读，部分紧固件省略。', 'note')
     await writeFile(join(out, 'exploded' + suffix + '.svg'), svg(1600, 1325, title2, body))
   }
-  // Export standalone PNGs as well as scalable originals.
-  for (const [name, height] of [['assembly', 920], ['exploded', 1325], ['arena', 1150]]) {
-    for (const suffix of ['', '-en']) {
-      await page.setViewportSize({ width: 1600, height })
-      await page.goto(origin + '/docs/public/images/' + name + suffix + '.svg')
-      await page.screenshot({ path: join(out, name + (name === 'assembly' && !suffix ? '-zh' : suffix) + '.png') })
-    }
-  }
-  await writeFile(join(root, 'hardware_design/print_v11/assembly_preview.png'), await readFile(join(out, 'assembly-en.png')))
+  // Hardware preview stays outside docs; no duplicate PNG downloads are published.
+  await page.setViewportSize({ width: 1600, height: 920 })
+  await page.goto(origin + '/docs/public/images/assembly-en.svg')
+  await page.screenshot({ path: join(root, 'hardware_design/print_v11/assembly_preview.png') })
   console.log('Wrote assembly.png, bilingual assembly/exploded SVGs and hardware previews.')
 } finally {
   if (browser) await browser.close()

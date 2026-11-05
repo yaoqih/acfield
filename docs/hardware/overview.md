@@ -2,17 +2,17 @@
 
 参考方案使用 Waveshare General Driver for Robots（SKU23730，ESP32 + TB6612）、双编码器减速电机与场外 AprilTag 定位。公开硬件整理为 **V11 参考设计**，仍需首件测量与试装；它没有被标记为已量产或已完成四车路试。
 
-[![V11 完整装配与移除顶盖后的内部结构](/images/assembly.svg)](/images/assembly.svg)
+![V11 完整装配与移除顶盖后的内部结构](/images/assembly.svg)
 
 ## 装配与爆炸图 {#assembly-and-exploded-view}
 
-[![V11 分层爆炸图：顶盖、主控、支柱、电池、电机、轮、底盘与辅助球轮](/images/exploded.svg)](/images/exploded.svg)
+![V11 分层爆炸图：顶盖、主控、支柱、电池、电机、轮、底盘与辅助球轮](/images/exploded.svg)
 
 图中包含标签顶盖、主控板、4 根 50 mm 与 4 根 25 mm 支柱、3S 电池、两台编码器电机、两只驱动轮、打印底盘和辅助球轮。爆炸图沿安装方向分离部件，并将球轮翻转以露出球面；间距不代表实际装配尺寸，部分紧固件省略。
 
 打印底盘与顶盖使用仓库 CAD 几何；采购件使用名义尺寸和简化外观，板上连接器不作为接线依据。顶盖的平整标签面朝上，加强筋朝下。原来的透明三角网格叠层预览已改为不透明表面与深度缓冲渲染。
 
-点击图可打开原尺寸。[爆炸图 PNG](/images/exploded.png)可用于演示；[装配图 PNG](/images/assembly-zh.png)用于并排查看完整装配与内部结构。公共设备的布置见[场地与相机布置](./arena)。
+公共设备的布置见[场地与相机布置](./arena)。
 
 ## 机械参考 {#mechanical-reference}
 

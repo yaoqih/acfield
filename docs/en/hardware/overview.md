@@ -2,17 +2,17 @@
 
 The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. Public hardware is organized as the **V11 reference design**, pending first-article measurement and trial assembly. It is not described as production-ready or as a validated four-robot fleet.
 
-[![V11 complete assembly and internal structure with the cover removed](/images/assembly-en.svg)](/images/assembly-en.svg)
+![V11 complete assembly and internal structure with the cover removed](/images/assembly-en.svg)
 
 ## Assembly and exploded view {#assembly-and-exploded-view}
 
-[![V11 exploded assembly: cover, controller, posts, battery, motors, wheels, chassis and ball caster](/images/exploded-en.svg)](/images/exploded-en.svg)
+![V11 exploded assembly: cover, controller, posts, battery, motors, wheels, chassis and ball caster](/images/exploded-en.svg)
 
 The view includes the tag cover, controller, four 50 mm and four 25 mm posts, 3S battery, two encoder motors, two drive wheels, printed chassis and auxiliary ball caster. Parts are separated along installation directions; the caster is inverted to reveal its ball. Separation distances are illustrative and some fasteners are omitted.
 
 The printed chassis and cover use repository CAD geometry. Purchased parts use nominal dimensions and simplified appearances; PCB connector details are not wiring instructions. The flat tag face points up and the cover ribs point down. Opaque surfaces and a depth buffer replace the previous transparent triangle-overlay preview.
 
-Click a figure for its original size. Download the [exploded PNG](/images/exploded-en.png) or [assembly PNG](/images/assembly-en.png) for presentations. Shared equipment is shown in [arena and camera setup](./arena).
+Shared equipment is shown in [arena and camera setup](./arena).
 
 ## Mechanical reference {#mechanical-reference}
 

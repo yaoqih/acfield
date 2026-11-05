@@ -16,7 +16,7 @@ npx playwright install chromium
 npm run figures:render
 ```
 
-This reads the committed GLB and parameters, uses only local assets, and writes Chinese/English assembly, exploded and arena SVG/PNG files into `docs/public/images/`. `assembly.png` is the compact language-neutral homepage view. Intermediate frame captures live in ignored `.cache/`. Set `DOCS_CHROME_PATH` to a local Chrome executable if needed. Font rendering can vary slightly across systems.
+This reads the committed GLB and parameters, uses only local assets, and writes Chinese/English assembly, exploded and arena SVG files into `docs/public/images/`. `assembly.png` is the compact language-neutral homepage view. Embedded model images and the homepage preview are limited to 600 pixels wide; docs do not publish duplicate PNG downloads. Hardware previews remain in `print_v11/`. Intermediate frame captures live in ignored `.cache/`. Set `DOCS_CHROME_PATH` to a local Chrome executable if needed. Font rendering can vary slightly across systems.
 
 After changing CAD geometry, regenerate and audit it first. The full review command also updates the 2D geometry/stability plots:
 
@@ -27,4 +27,4 @@ python hardware_design/print_v11/audit.py
 python hardware_design/print_v11/render.py
 ```
 
-Tag textures use the full-cover labels in `docs/public/images/robot-tag.png`, derived from official tag36h11 images with subtle ID/FRONT marks inside the black ring. The texture fills the 130 mm cover and FRONT points toward chassis +X. See `THIRD_PARTY_NOTICES.md`. No vendor product photographs are used. Review original-size figures and desktop/mobile docs after edits.
+Tag textures use the full-cover labels in `docs/public/images/robot-tag.png`, derived from official tag36h11 images with subtle ID/FRONT marks inside the black ring. The texture fills the 130 mm cover and FRONT points toward chassis +X. See `THIRD_PARTY_NOTICES.md`. No vendor product photographs are used. Review inline figures and desktop/mobile docs after edits.

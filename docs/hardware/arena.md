@@ -2,9 +2,9 @@
 
 参考布置采用 **3 × 3 m** 方形有效场地：在一侧边界外竖立固定杆，顶部以直角横臂延伸到场地中心，末端安装向下俯拍的摄像头。Server 电脑与路由器放在场外。
 
-[![3 × 3 m 场地空间布置、俯视尺寸及摄像头—电脑—路由器—小车连接图](/images/arena.svg)](/images/arena.svg)
+![3 × 3 m 场地空间布置、俯视尺寸及摄像头—电脑—路由器—小车连接图](/images/arena.svg)
 
-点击查看原尺寸，或下载 [PNG](/images/arena.png)；图形源文件与生成脚本位于 [hardware_design/figures](https://github.com/yaoqih/acfield/tree/main/hardware_design/figures)。
+图形源文件与生成脚本位于 [hardware_design/figures](https://github.com/yaoqih/acfield/tree/main/hardware_design/figures)。
 
 ## 尺寸与支架 {#dimensions-and-support}
 
