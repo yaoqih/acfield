@@ -22,6 +22,7 @@ SemaphoreHandle_t stateMutex;
 char bootId[33];
 uint64_t telemetrySeq = 0;
 uint32_t lastTelemetry = 0, lastBattery = 0;
+uint32_t lastDebug = 0;
 bool connected = false;
 
 void control(void*) {
@@ -91,6 +92,25 @@ void telemetry() {
     }
     ++telemetrySeq;
 }
+
+void debugStatus(uint32_t now) {
+    if (uint32_t(now - lastDebug) < 1000) return;
+    lastDebug = now;
+    xSemaphoreTake(stateMutex, portMAX_DELAY);
+    Serial.printf("[status] wifi=%s local=%s rssi=%d udp=%s state=%s fault=%s cmd=%.3f/%.3f target=%.3f/%.3f speed=%.3f/%.3f pwm=%.1f/%.1f enc=%lld/%lld voltage=%.2fV\n",
+                  WiFi.status() == WL_CONNECTED ? "connected" : "disconnected",
+                  WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString().c_str() : "-",
+                  WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0,
+                  connected ? "ready" : "off",
+                  protocol.state(), protocol.faultCode() ? protocol.faultCode() : "none",
+                  protocol.v, protocol.omega,
+                  motors.target[0], motors.target[1], motors.speed[0], motors.speed[1],
+                  motors.pwm[0], motors.pwm[1],
+                  static_cast<long long>(motors.encoder[0]),
+                  static_cast<long long>(motors.encoder[1]),
+                  battery.valid ? battery.voltage : NAN);
+    xSemaphoreGive(stateMutex);
+}
 }
 
 void setup() {
@@ -142,5 +162,6 @@ void loop() {
     if (online && uint32_t(now-lastTelemetry) >= config::telemetryMs) {
         lastTelemetry = now; telemetry();
     }
+    debugStatus(now);
     delay(1);
 }

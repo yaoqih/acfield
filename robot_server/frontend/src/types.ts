@@ -42,6 +42,7 @@ export interface Robot {
 }
 export interface Snapshot {
   mode: 'demo' | 'hardware'; session: string; estop: boolean; timestamp: number;
+  allow_unlocalized_control: boolean;
   system_fault: string | null;
   arena: {width: number; height: number}; robots: Robot[];
   camera: {connected: boolean; available?: boolean; fps: number; reason: string};

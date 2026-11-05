@@ -98,13 +98,13 @@ const blockedReason = computed(() => {
   if (selected.value.fault) return `设备故障：${selected.value.fault}`
   if (!selected.value.online) return '设备离线，请检查小车电源与网络'
   if (!selected.value.bound) return '等待车端停车绑定确认'
-  if (!selected.value.visible) return '定位不可用，请检查标签可见性与场地标定'
+  if (!selected.value.visible && !state.value?.allow_unlocalized_control) return '定位不可用，请检查标签可见性与场地标定'
   if (selected.value.control_owner && selected.value.control_owner !== controlId) return '另一页面正在控制此车，请先锁定'
   if (selected.value.arm_pending) return '等待车端解锁确认'
   if (!selected.value.armed) return '准备就绪，点击「解锁控制」后即可操作'
   return ''
 })
-const canArm = computed(() => connected.value && !state.value?.estop && !state.value?.system_fault && selected.value?.online && selected.value.visible && selected.value.bound && !selected.value.fault && !selected.value.arm_pending && (!selected.value.control_owner || selected.value.control_owner === controlId))
+const canArm = computed(() => connected.value && !state.value?.estop && !state.value?.system_fault && selected.value?.online && (state.value?.allow_unlocalized_control || selected.value.visible) && selected.value.bound && !selected.value.fault && !selected.value.arm_pending && (!selected.value.control_owner || selected.value.control_owner === controlId))
 function toast(message: string) {
   notice.value = message
   clearTimeout(noticeTimer)

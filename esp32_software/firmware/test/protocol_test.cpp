@@ -53,7 +53,7 @@ int main() {
     for (int i=0; i<9; ++i) assert(encoder.check(.1f, -.05f, .02f, .0002f) == nullptr);
     assert(!strcmp(encoder.check(.1f, -.05f, .02f, .0002f), "encoder_direction"));
     encoder.reset();
-    assert(!strcmp(encoder.check(.1f, .5f, .02f, .0002f), "wheel_overspeed"));
+    assert(!strcmp(encoder.check(.1f, 3*config::maxWheelSpeed+.1f, .02f, .0002f), "wheel_overspeed"));
     encoder.reset();
     const float turning = config::maxOmega*config::trackWidth/2;
     for (int i=0; i<39; ++i) assert(encoder.check(turning, 0, .02f, .0002f) == nullptr);

@@ -248,3 +248,37 @@ def test_vision_offset_frozen_frame_and_demo_rejection(monkeypatch):
                     await task
     asyncio.run(scenario(False))
     asyncio.run(scenario(True))
+
+
+def test_unlocalized_control_requires_explicit_opt_in(monkeypatch):
+    monkeypatch.delenv("ROBOT_ALLOW_UNLOCALIZED_CONTROL", raising=False)
+    fleet, r, now = ready_fleet()
+    r.pose_at = 0
+    assert fleet.ready(r, now) == "定位已过期"
+    assert fleet.snapshot()["allow_unlocalized_control"] is False
+
+    monkeypatch.setenv("ROBOT_ALLOW_UNLOCALIZED_CONTROL", "1")
+    fleet, r, now = ready_fleet()
+    r.x = r.y = r.theta = None
+    r.pose_at = 0
+    assert fleet.snapshot()["allow_unlocalized_control"] is True
+    fleet.arm(r, True)
+    fleet.command(r, Command(v=.05, omega=0, ttl_ms=100))
+    fleet.tick(time.monotonic() + .15)
+    assert not r.armed and r.target_v == 0
+    assert r.command_status == "expired"
+
+
+@pytest.mark.parametrize("expiry", ["owner", "heartbeat"])
+def test_unlocalized_control_preserves_liveness_checks(monkeypatch, expiry):
+    monkeypatch.setenv("ROBOT_ALLOW_UNLOCALIZED_CONTROL", "1")
+    fleet, r, now = ready_fleet()
+    r.pose_at = 0
+    fleet.arm(r, True)
+    if expiry == "owner":
+        r.owner_until = now - 1
+    else:
+        r.seen_at = now - 2
+    fleet.tick(now)
+    assert not r.armed and r.owner is None
+    assert r.target_v == r.target_omega == 0

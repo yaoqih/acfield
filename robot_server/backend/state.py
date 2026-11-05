@@ -1,5 +1,6 @@
 """Single event-loop owner for state, handshakes and motion interlocks."""
 import math
+import os
 import time
 import uuid
 from collections import deque
@@ -61,6 +62,7 @@ class Fleet:
     def __init__(self, settings: Settings, mode: str):
         self.settings = settings
         self.mode = mode
+        self.allow_unlocalized_control = os.getenv("ROBOT_ALLOW_UNLOCALIZED_CONTROL", "0") == "1"
         self.session = uuid.uuid4().hex
         self.robots = {c.id: Robot(c, bound=mode == "demo") for c in settings.robots}
         self.estop = False
@@ -97,7 +99,7 @@ class Fleet:
             return "设备离线"
         if not r.bound:
             return "等待车端停车绑定确认，请确认固件已更新"
-        if not r.pose_at or now-r.pose_at > POSE_TTL:
+        if not self.allow_unlocalized_control and (not r.pose_at or now-r.pose_at > POSE_TTL):
             return "定位已过期"
         return None
 
@@ -173,7 +175,7 @@ class Fleet:
             for ident, r in robots.items():
                 v, omega = targets[ident]
                 if v or omega:
-                    reason = safety.check(self, r, v, omega, now, targets)
+                    reason = None if self.allow_unlocalized_control else safety.check(self, r, v, omega, now, targets)
                     if reason:
                         raise ValueError(reason)
         except ValueError as exc:
@@ -235,7 +237,7 @@ class Fleet:
                 elif now >= r.owner_until:
                     reason = "控制权已过期 · 已锁定"
                 elif r.target_v or r.target_omega:
-                    reason = safety.check(self, r, r.target_v, r.target_omega, now)
+                    reason = None if self.allow_unlocalized_control else safety.check(self, r, r.target_v, r.target_omega, now)
             if r.armed and reason:
                 self.stop(r, reason)
                 if "指令超时" in reason:
@@ -350,6 +352,7 @@ class Fleet:
                 "reason": r.reason, "fault": r.fault, "stop_reason": r.stop_reason,
                 "corners": corners, "trail": list(r.trail)})
         return {"mode": self.mode, "session": self.session, "estop": self.estop,
+                "allow_unlocalized_control": self.allow_unlocalized_control,
                 "system_fault": self.runtime_fault,
                 "timestamp": time.time(), "arena": {"width": self.settings.arena_width,
                 "height": self.settings.arena_height}, "camera": self.camera,

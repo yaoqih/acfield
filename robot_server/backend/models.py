@@ -23,8 +23,8 @@ class RobotConfig(Model):
     tag_offset_x: float = Field(default=0, ge=-1, le=1)
     tag_offset_y: float = Field(default=0, ge=-1, le=1)
     heading_offset: float = Field(default=0, ge=-3.142, le=3.142)
-    max_v: float = Field(default=.10, gt=0, le=1)
-    max_omega: float = Field(default=.30, gt=0, le=6)
+    max_v: float = Field(default=1.0, gt=0, le=1)
+    max_omega: float = Field(default=3.00, gt=0, le=6)
 
 
 class Settings(Model):
