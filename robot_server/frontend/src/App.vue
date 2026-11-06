@@ -158,6 +158,39 @@ const points = (xy: number[][]) => xy.map(p => `${p[0]},${p[1]}`).join(' ')
 const clock = (t: number) => new Date(t * 1000).toLocaleTimeString('zh-CN', { hour12: false })
 const commandLabel = (r: Robot) => ({ idle: '等待指令', sent: '已发送 · 等待确认', confirmed: '设备已确认', expired: '指令已过期' }[r.command_status] ?? r.command_status)
 
+// Use the measured pack voltage for the 3S estimate; simulator percentage remains a fallback.
+const batteryCurve: [number, number][] = [[10.5, 0], [10.8, 5], [11.1, 10], [11.4, 20], [11.55, 30], [11.7, 40], [11.85, 50], [12.0, 60], [12.15, 70], [12.3, 80], [12.45, 90], [12.6, 100]]
+function batteryPercent(robot: Robot) {
+  const voltage = robot.voltage_v
+  if (voltage != null && Number.isFinite(voltage)) {
+    if (voltage <= batteryCurve[0]![0]) return 0
+    if (voltage >= batteryCurve.at(-1)![0]) return 100
+    for (let i = 1; i < batteryCurve.length; i++) {
+      const [v1, p1] = batteryCurve[i - 1]!
+      const [v2, p2] = batteryCurve[i]!
+      if (voltage <= v2) return Math.round(p1 + (voltage - v1) * (p2 - p1) / (v2 - v1))
+    }
+  }
+  return robot.battery == null ? null : Math.round(Math.max(0, Math.min(100, robot.battery)))
+}
+const batteryLabel = (robot: Robot) => {
+  if (!connected.value || !robot.online) return '电量未知'
+  const percent = batteryPercent(robot)
+  return percent == null ? '电量未知' : `3S ${percent}%`
+}
+const batteryClass = (robot: Robot) => {
+  if (!connected.value || !robot.online) return 'unknown'
+  const percent = batteryPercent(robot)
+  return percent == null ? 'unknown' : percent <= 15 ? 'danger' : percent <= 35 ? 'warn' : 'ok'
+}
+const batteryVoltageLabel = (robot: Robot) => !connected.value || !robot.online || robot.voltage_v == null ? '—' : `${robot.voltage_v.toFixed(2)} V`
+const linkLabel = (robot: Robot) => !connected.value ? '服务器断开' : robot.online ? '车辆在线' : '车辆离线'
+const linkClass = (robot: Robot) => !connected.value ? 'unknown' : robot.online ? 'ok' : 'danger'
+const poseLabel = (robot: Robot) => !connected.value ? '状态未知' : robot.visible ? '定位有效' : '定位丢失'
+const poseClass = (robot: Robot) => !connected.value ? 'unknown' : robot.visible ? 'ok' : 'warn'
+const tabLabel = (robot: Robot) => !connected.value ? '未知' : robot.online ? '在线' : '离线'
+const tabClass = (robot: Robot) => !connected.value ? 'unknown' : robot.online ? 'ok' : 'danger'
+
 async function api<T>(path: string, body?: unknown, method = 'POST', timeout = 1500): Promise<T> {
   const response = await fetch(path, { method, headers: { 'Content-Type': 'application/json', 'X-Control-ID': controlId }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(timeout) })
   if (!response.ok) {
@@ -398,14 +431,14 @@ onUnmounted(() => {
 
 <template>
   <div v-if="mobilePage" class="remote-page">
-    <header class="remote-header"><a href="/" class="remote-brand"><img src="/favicon.svg" alt="" />ACField <span>/ 控制台</span></a><span class="connection" :class="{ off: !connected }"><i></i>{{ connected ? '已连接' : '连接中断' }}</span></header>
+    <header class="remote-header"><a href="/" class="remote-brand"><img src="/favicon.svg" alt="" />ACField <span>/ 控制台</span></a><span class="connection" :class="{ off: !connected, connected }"><i></i>{{ connected ? '服务器已连接' : '服务器连接中断' }}</span></header>
     <main class="remote-main">
       <div class="remote-title"><div><span class="remote-eyebrow">REMOTE CONTROL</span><h1>小车控制</h1></div><span class="mode-tag">{{ !connected ? '离线' : state?.mode === 'hardware' ? '真实设备' : '模拟环境' }}</span></div>
       <div v-if="error" class="error-banner" role="alert">{{ error }}<button aria-label="关闭提示" @click="error = ''"><X :size="16" /></button></div>
       <div v-if="state?.estop" class="remote-estop"><span>全局停止已锁定</span><button :disabled="!connected" @click="action('/api/reset-stop')">释放全局停止</button></div>
       <label class="remote-select">选择小车<select :value="selectedId" :disabled="!state?.robots.length" @change="select(($event.target as HTMLSelectElement).value)"><option v-for="robot in state?.robots" :key="robot.config.id" :value="robot.config.id">{{ robot.config.name }} · {{ robot.config.id }}</option></select></label>
       <template v-if="selected">
-        <div class="remote-status"><span><Wifi :size="15" />{{ connected && selected.online ? '通信正常' : '通信断开' }}</span><span><Crosshair :size="15" />{{ connected && selected.visible ? '定位有效' : '定位丢失' }}</span><span><Battery :size="16" />{{ metric(selected.battery, 0) }}%</span></div>
+        <div class="remote-status"><span class="status-chip" :class="linkClass(selected)"><Wifi :size="15" />{{ linkLabel(selected) }}</span><span class="status-chip" :class="poseClass(selected)"><Crosshair :size="15" />{{ poseLabel(selected) }}</span><span class="status-chip" :class="batteryClass(selected)" title="按 3S 锂电池 10.5–12.6 V 估算"><Battery :size="16" />{{ batteryLabel(selected) }}</span></div>
         <div class="remote-control-heading"><div><h2>手动控制</h2><p role="status">{{ blockedReason || '控制已就绪' }}</p></div><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="15"/><LockKeyhole v-else :size="15" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
         <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="endHold(); action(`/api/robots/${selectedId}/command`, { v: 0, omega: 0, ttl_ms: 100 })" />
         <div class="remote-telemetry"><span>X <b>{{ metric(selected.x) }}</b> m</span><span>Y <b>{{ metric(selected.y) }}</b> m</span><span>朝向 <b>{{ deg(selected.theta) }}</b></span></div>
@@ -426,7 +459,7 @@ onUnmounted(() => {
       <header class="topbar">
         <div class="wordmark">ACField<span class="wordmark-dot">/</span></div>
         <span class="header-divider"></span><span class="workspace-name">多智能体实验室</span>
-        <div class="top-right"><span class="connection" :class="{ off: !connected }"><i></i>{{ connected ? '服务器已连接' : '正在连接服务器' }}</span><span class="mono header-time">{{ new Date(now).toLocaleTimeString('zh-CN', { hour12: false }) }}</span></div>
+        <div class="top-right"><span class="connection" :class="{ off: !connected, connected }"><i></i>{{ connected ? '服务器已连接' : '服务器连接中断' }}</span><span class="mono header-time">{{ new Date(now).toLocaleTimeString('zh-CN', { hour12: false }) }}</span></div>
       </header>
       <main>
         <section class="page-heading">
@@ -438,7 +471,7 @@ onUnmounted(() => {
         <div v-if="error" class="error-banner" role="alert">{{ error }}<button aria-label="关闭提示" @click="error = ''"><X :size="16" /></button></div>
         <div v-if="state?.estop" class="stop-banner"><LockKeyhole :size="16" /><span>全局停止已锁定。释放后，小车仍需逐车解锁。</span><button :disabled="!connected" @click="action('/api/reset-stop')">释放全局停止 →</button></div>
         <section class="stats-row">
-          <div class="stat"><span class="stat-icon green"><Radio :size="19" /></span><div><span class="stat-label">在线设备</span><div class="stat-value mono">{{ online }}<span>/ {{ state?.robots.length ?? 4 }}</span></div></div><span class="stat-note"><i :class="{ gray: !online }"></i>{{ online ? '链路正常' : '等待连接' }}</span></div>
+          <div class="stat"><span class="stat-icon green"><Radio :size="19" /></span><div><span class="stat-label">在线设备</span><div class="stat-value mono">{{ online }}<span>/ {{ state?.robots.length ?? 4 }}</span></div></div><span class="stat-note"><i :class="{ gray: !online }"></i>{{ !connected ? '服务器断开' : online ? '链路正常' : '暂无在线车' }}</span></div>
           <div class="stat"><span class="stat-icon blue"><Crosshair :size="19" /></span><div><span class="stat-label">有效定位</span><div class="stat-value mono">{{ connected ? state?.robots.filter(r => r.visible).length ?? 0 : 0 }}<span>辆小车</span></div></div><span class="stat-note">{{ state?.mode === 'demo' ? '合成定位' : 'AprilTag' }}</span></div>
           <div class="stat"><span class="stat-icon amber"><Activity :size="19" /></span><div><span class="stat-label">最近更新</span><div class="stat-value mono">{{ connected ? metric(Math.max(0, now - updated), 0) : '—' }}<span>ms 前</span></div></div><span class="stat-note">{{ connected ? '实时同步' : '已断开' }}</span></div>
           <div class="stat"><span class="stat-icon neutral"><ShieldCheck :size="19" /></span><div><span class="stat-label">控制状态</span><div class="stat-value stat-text">{{ !connected ? '不可控制' : state?.estop ? '全局锁定' : '手动控制' }}</div></div><span class="stat-note">{{ state?.robots.filter(r => r.armed).length ?? 0 }} 辆已解锁</span></div>
@@ -475,10 +508,10 @@ onUnmounted(() => {
           </section>
           <aside ref="detailPanel" class="panel detail-panel" aria-label="选中设备与手动控制">
             <div class="panel-header"><div class="panel-title">设备详情</div><span class="small-label">{{ selected ? String(state?.robots.indexOf(selected)! + 1).padStart(2, '0') : '—' }} / {{ String(state?.robots.length ?? 0).padStart(2, '0') }}</span></div>
-            <div class="robot-tabs"><button v-for="(r, i) in state?.robots" :key="r.config.id" :class="{ selected: selectedId === r.config.id }" :aria-pressed="selectedId === r.config.id" :aria-label="`选择设备 ${r.config.name}`" @click="select(r.config.id)"><i :style="{ background: r.config.color }"></i><span>{{ r.config.name }}</span><small>{{ connected && r.online ? '在线' : '离线' }}</small></button></div>
+            <div class="robot-tabs"><button v-for="(r, i) in state?.robots" :key="r.config.id" :class="{ selected: selectedId === r.config.id }" :aria-pressed="selectedId === r.config.id" :aria-label="`选择设备 ${r.config.name}`" @click="select(r.config.id)"><i :style="{ background: r.config.color }"></i><span>{{ r.config.name }}</span><small :class="`status-text-${tabClass(r)}`">{{ tabLabel(r) }}</small></button></div>
             <template v-if="selected">
-              <div class="device-identity"><div class="device-symbol" :style="{ '--robot-color': selected.config.color }"><Focus :size="27" /></div><div><h2>{{ selected.config.name }}</h2><span class="mono">{{ selected.config.id.toUpperCase() }} <span class="muted">/ TAG {{ selected.config.tag_id }}</span></span></div><span class="online-label" :class="{ offline: !selected.online || !connected }"><i></i>{{ selected.online && connected ? '在线' : '离线' }}</span></div>
-              <div class="device-status"><span><Wifi :size="13" />{{ selected.online && connected ? '通信正常' : '通信断开' }}</span><span><Crosshair :size="13" />{{ selected.visible && connected ? '定位有效' : '定位丢失' }}</span><span><Battery :size="15" />{{ metric(selected.battery, 0) }}%</span></div>
+              <div class="device-identity"><div class="device-symbol" :style="{ '--robot-color': selected.config.color }"><Focus :size="27" /></div><div><h2>{{ selected.config.name }}</h2><span class="mono">{{ selected.config.id.toUpperCase() }} <span class="muted">/ TAG {{ selected.config.tag_id }}</span></span></div><span class="online-label" :class="linkClass(selected)"><i></i>{{ linkLabel(selected) }}</span></div>
+              <div class="device-status"><span class="status-chip" :class="linkClass(selected)"><Wifi :size="13" />{{ linkLabel(selected) }}</span><span class="status-chip" :class="poseClass(selected)"><Crosshair :size="13" />{{ poseLabel(selected) }}</span><span class="status-chip" :class="batteryClass(selected)" title="按 3S 锂电池 10.5–12.6 V 估算"><Battery :size="15" />{{ batteryLabel(selected) }}</span></div>
               <div class="position-summary"><span>X <b class="mono">{{ metric(selected.x, 2) }}</b> m</span><span>Y <b class="mono">{{ metric(selected.y, 2) }}</b> m</span><span><b class="mono">{{ deg(selected.theta) }}</b></span></div>
               <div class="control-heading"><h3>手动控制</h3><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" :title="blockedReason" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="12"/><LockKeyhole v-else :size="12" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
               <p v-if="blockedReason" class="control-explanation" role="status">{{ blockedReason }}</p><div v-else class="control-explanation ready">控制已就绪</div>
@@ -487,7 +520,7 @@ onUnmounted(() => {
               <div class="command-state"><span class="command-dot" :class="{ on: selected.armed }"></span><span>{{ !connected ? '连接中断 · 暂停控制' : selected.reason }}</span><span class="mono">#{{ String(selected.seq).padStart(4, '0') }}</span></div><div class="ack-status">{{ commandLabel(selected) }} · 有效期 300 ms</div>
               <details class="telemetry-section"><summary>定位与速度详情<ChevronDown :size="14" /></summary>              <div class="telemetry-grid"><div><label>X 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.x, 3) }}</strong></div><div><label>Y 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.y, 3) }}</strong></div><div><label>车体朝向</label><strong class="mono">{{ deg(selected.theta) }}</strong></div><div><label>距上次定位 <span>ms</span></label><strong class="mono">{{ metric(selected.pose_age_ms, 0) }}</strong></div></div>
               <div class="velocity-row"><span>实测线速度<strong class="mono">{{ metric(selected.measured_v) }}<small> m/s</small></strong></span><span>视觉估计<strong class="mono">{{ metric(selected.estimated_v) }}<small> m/s</small></strong></span></div>
-              <div class="extra-telemetry"><span>左 / 右编码计数 <b class="mono">{{ selected.encoder_left ?? '—' }} / {{ selected.encoder_right ?? '—' }}</b></span><span>电池电压 <b class="mono">{{ metric(selected.voltage_v, 2) }} V</b></span><span>实测角速度 <b class="mono">{{ metric(selected.measured_omega) }} rad/s</b></span><span>估计加速度 <b class="mono">{{ metric(selected.acceleration) }} m/s²</b></span></div>
+              <div class="extra-telemetry"><span>左 / 右编码计数 <b class="mono">{{ selected.encoder_left ?? '—' }} / {{ selected.encoder_right ?? '—' }}</b></span><span>电池电压 · 3S <b class="mono">{{ batteryVoltageLabel(selected) }}</b></span><span>实测角速度 <b class="mono">{{ metric(selected.measured_omega) }} rad/s</b></span><span>估计加速度 <b class="mono">{{ metric(selected.acceleration) }} m/s²</b></span></div>
 </details>
             </template><div v-else class="waiting-device">等待设备状态…</div>
           </aside>
