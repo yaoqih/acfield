@@ -32,7 +32,7 @@ Detection size means the outer black border, excluding the white margin. Each la
 
 The label fills the 130 mm cover without screw cutouts or screw avoidance. The ID uses approximately 5.7 pt type; the forward arrow and FRONT sit inside the opposite black border. Both use dark gray `#303030` close to the black background. Code cells, black-square edges and the white quiet zone remain intact. The arrow points to the canonical top edge. Align it with the robot's forward direction (+X); vision uses the same edge, so this installation uses `heading_offset_deg=0`.
 
-Public vision settings still use the V11 defaults: `size_m=0.104` for arena and robot IDs, and `height_m=0.0646` for robots. IDs 10–13 retain the pursuit-demo roles; IDs 14–17 use a generic robot role. Configure the compact robot from its measured values above; changing arena markers also requires updated dimensions, coordinates and recalibration.
+Public vision settings still use the V11 defaults: `size_m=0.104` for arena and robot IDs, and `height_m=0.0646` for robots. IDs 10–17 default to generic robot identities; experiments can assign roles for formation, pursuit, coverage or other tasks. Configure the compact robot from its measured values above; changing arena markers also requires updated dimensions, coordinates and recalibration.
 
 The digital artwork passes 624 checks across two detection backends, covering multiple scales, four rotations, perspective with light blur and all 24 rasterized pages across both PDFs. Checks also verify black-square dimensions, page sizes and the complete quiet zone. Test installed labels under the arena camera, including paper deformation and reflections around screws.
 

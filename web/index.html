@@ -51,7 +51,7 @@
     </aside>
     <section class="panel map-panel">
       <div class="panel-title"><h2>场地与运动轨迹</h2><span id="map-mode" class="pill">等待标定</span></div>
-      <div class="map-layout"><div class="map-canvas-wrap"><canvas id="map" width="700" height="440" aria-label="标签位置与运动轨迹"></canvas></div><div class="map-info"><h3>围捕观测</h3><dl id="pursuit-details"></dl><p class="hint">几何包围仅表示逃逸标签中心位于三追捕标签的凸包内；不等同于成功捕获。</p><div class="calibration-actions"><button id="calibrate-world" class="primary">锁定四角外参</button><button id="reset-world">清除场地标定</button><button id="clear-tracks">清空轨迹统计</button></div><p class="hint">实物模式：先填相机内参、四角实测坐标及车顶高度。输出位置是标签中心。</p><span id="world-rms" class="muted"></span></div></div>
+      <div class="map-layout"><div class="map-canvas-wrap"><canvas id="map" width="700" height="440" aria-label="标签位置与运动轨迹"></canvas></div><div class="map-info"><h3>小车观测</h3><dl id="fleet-details"></dl><p class="hint">这里展示当前可见小车和车间距离；编队、围堵、覆盖等算法由实验配置和控制端定义。</p><div class="calibration-actions"><button id="calibrate-world" class="primary">锁定四角外参</button><button id="reset-world">清除场地标定</button><button id="clear-tracks">清空轨迹统计</button></div><p class="hint">实物模式：先填相机内参、四角实测坐标及车顶高度。输出位置是标签中心。</p><span id="world-rms" class="muted"></span></div></div>
     </section>
     <section class="panel table-panel">
       <div class="panel-title"><h2>多标签状态表</h2><span class="muted">点击一行检查 · 丢失数据保留最后观测并标记</span></div>

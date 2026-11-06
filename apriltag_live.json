@@ -10,13 +10,13 @@
     "1": {"name": "场地 X 角", "role": "fixed", "size_m": 0.104, "height_m": 0, "world_xyz_m": [3, 0, 0]},
     "2": {"name": "场地对角", "role": "fixed", "size_m": 0.104, "height_m": 0, "world_xyz_m": [3, 3, 0]},
     "3": {"name": "场地 Y 角", "role": "fixed", "size_m": 0.104, "height_m": 0, "world_xyz_m": [0, 3, 0]},
-    "10": {"name": "追捕车 A", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "11": {"name": "追捕车 B", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "12": {"name": "追捕车 C", "role": "pursuer", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "13": {"name": "逃逸车", "role": "evader", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "14": {"name": "小车 E", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "15": {"name": "小车 F", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "16": {"name": "小车 G", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
-    "17": {"name": "小车 H", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0}
+    "10": {"name": "小车 1", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "11": {"name": "小车 2", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "12": {"name": "小车 3", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "13": {"name": "小车 4", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "14": {"name": "小车 5", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "15": {"name": "小车 6", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "16": {"name": "小车 7", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0},
+    "17": {"name": "小车 8", "role": "robot", "size_m": 0.104, "height_m": 0.0646, "heading_offset_deg": 0}
   }
 }

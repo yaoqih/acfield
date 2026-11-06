@@ -23,8 +23,9 @@ class RobotConfig(Model):
     tag_offset_x: float = Field(default=0, ge=-1, le=1)
     tag_offset_y: float = Field(default=0, ge=-1, le=1)
     heading_offset: float = Field(default=0, ge=-3.142, le=3.142)
-    max_v: float = Field(default=1.0, gt=0, le=1)
-    max_omega: float = Field(default=3.00, gt=0, le=6)
+    # Conservative platform defaults; experiments can raise these after measuring the vehicle.
+    max_v: float = Field(default=.10, gt=0, le=1)
+    max_omega: float = Field(default=.30, gt=0, le=6)
 
 
 class Settings(Model):
@@ -84,5 +85,5 @@ class Telemetry(Model):
 def default_settings():
     return Settings(robots=[RobotConfig(id=f"car-{i+1:02}", name=name, tag_id=10+i, color=color)
         for i, (name, color) in enumerate([
-            ("追捕车 A", "#28786b"), ("追捕车 B", "#427dc2"),
-            ("追捕车 C", "#ac7b35"), ("逃逸车 D", "#ba6070")])])
+            ("小车 1", "#28786b"), ("小车 2", "#427dc2"),
+            ("小车 3", "#ac7b35"), ("小车 4", "#ba6070")])])

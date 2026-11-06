@@ -237,8 +237,8 @@ class DemoSource:
             for i, name, role, size, height in [
                 (0, '场地原点', 'fixed', .15, 0), (1, '场地 X 角', 'fixed', .15, 0),
                 (2, '场地对角', 'fixed', .15, 0), (3, '场地 Y 角', 'fixed', .15, 0),
-                (10, '追捕车 A', 'pursuer', .12, .12), (11, '追捕车 B', 'pursuer', .12, .12),
-                (12, '追捕车 C', 'pursuer', .12, .12), (13, '逃逸车', 'evader', .12, .12)]}
+                (10, '小车 1', 'robot', .12, .12), (11, '小车 2', 'robot', .12, .12),
+                (12, '小车 3', 'robot', .12, .12), (13, '小车 4', 'robot', .12, .12)]}
         self.config['camera'] = {'image_width': self.width, 'image_height': self.height,
                                  'camera_matrix': self.k.tolist(), 'dist_coeffs': [0.] * 5}
         self.config['world'] = {'configured': True, 'boundary_xy_m': [[0, 0], [3, 0], [3, 3], [0, 3]]}

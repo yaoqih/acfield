@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const fmt = (v, n=1) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(n);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const roles = {fixed:'固定角点',pursuer:'追捕车',evader:'逃逸车',robot:'小车',unknown:'未配置标签'};
+const roles = {fixed:'固定角点',pursuer:'小车',evader:'小车',robot:'小车',unknown:'未配置标签'};
 const colors = ['#18a87b','#e4a125','#438de0','#b87acb'];
 let selected=10, state=null, familiesKey='', toastTimer, lastEvent='', sourceInitialized=false;
 function toast(message, error=false){$('toast').textContent=message;$('toast').className=error?'error':'';$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
@@ -51,7 +51,7 @@ function render(s){
   if(select.dataset.key!==key){select.innerHTML=tags.map(t=>`<option value="${t.id}">ID ${t.id}</option>`).join('');select.dataset.key=key;}select.value=selected;
   $('tag-table').innerHTML=tags.map(t=>{const live=t.status==='visible'&&healthy;return `<tr data-id="${t.id}" class="${t.id===selected?'selected ':''}${live?'':'dim'}"><td><strong>${t.id}</strong> · ${esc(t.name)}</td><td><i class="status-dot ${live?'':t.status==='stale'?'stale':'lost'}"></i>${statusText(t)}<small>${t.age_ms==null?'等待首次识别':fmt(t.age_ms,0)+' ms 前'}</small></td><td>${t.center_px?vec(t.center_px,1):'—'}</td><td>${fmt(t.heading_image_deg)}</td><td>${fmt(t.pose?.range_m,3)}</td><td>${t.world_xyz_m?vec(t.world_xyz_m.slice(0,2),3):'未标定'}</td><td>${t.speed_m_s!=null?fmt(t.speed_m_s,3)+' m/s':t.speed_px_s!=null?fmt(t.speed_px_s,1)+' px/s':'—'}</td><td>${fmt(t.decision_margin)} / ${fmt(t.hamming,0)}</td><td>${fmt(t.min_edge_px)}</td><td>${t.seen_ratio==null?'—':fmt(t.seen_ratio*100,1)+'%'}</td></tr>`;}).join('');
   $('tag-table').querySelectorAll('tr').forEach(row=>row.onclick=()=>{selected=Number(row.dataset.id);render(s);});
-  renderDetails(tags.find(t=>t.id===selected),s);drawMap(s,healthy);renderPursuit(s,healthy);
+  renderDetails(tags.find(t=>t.id===selected),s);drawMap(s,healthy);renderFleetMetrics(s,healthy);
   $('world-rms').textContent=s.world_info?`四角 RMS ${fmt(s.world_info.rms_px,3)} px · 相机高度 ${fmt(s.world_info.camera_world_xyz_m[2],2)} m`:'';
   $('map-mode').textContent=s.world_calibrated?'米制俯视图':'图像平面 · px';$('map-mode').className='pill '+(s.world_calibrated?'good':'warn');
   $('events').innerHTML=(s.events||[]).slice(0,10).map(e=>`<div class="event ${e.level==='error'?'error':''}"><time>${esc(e.time)}</time><span>${esc(e.text)}</span></div>`).join('')||'<div class="muted">等待实验事件</div>';
@@ -79,26 +79,22 @@ function drawMap(s,healthy){
   for(let i=0;i<=steps;i++){const x=x0+(x1-x0)*i/steps,y=y0+(y1-y0)*i/steps;path([[x,y0],[x,y1]]);ctx.stroke();path([[x0,y],[x1,y]]);ctx.stroke();ctx.fillStyle='#91a1b0';ctx.font='11px system-ui';const q=xy([x,y0]);ctx.fillText(fmt(x,metric?1:0),q[0]-8,metric?q[1]+20:q[1]-12);}
   path(metric?bounds:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]],true);ctx.strokeStyle='#bdcbd8';ctx.stroke();
   const tags=(s.tags||[]).filter(t=>metric?t.world_xyz_m:t.center_px);
-  const active=tags.filter(t=>t.status==='visible'&&healthy);const pursuers=active.filter(t=>t.role==='pursuer');
-  if(pursuers.length===3){path(pursuers.map(t=>metric?t.world_xyz_m:t.center_px),true);ctx.fillStyle='#378bd00d';ctx.strokeStyle='#84b4da';ctx.setLineDash([5,5]);ctx.fill();ctx.stroke();ctx.setLineDash([]);}
   for(const t of tags){const p=metric?t.world_xyz_m:t.center_px,q=xy(p),live=t.status==='visible'&&healthy;const color=live?colors[t.id%4]:'#acbac6';ctx.strokeStyle=color;ctx.lineWidth=1.5;
     const history=(t.history||[]).map(a=>metric?a.world:a.pixel).filter(Boolean);if(history.length>1&&t.role!=='fixed'){path(history);ctx.globalAlpha=.5;ctx.stroke();ctx.globalAlpha=1;}
     if(t.id===selected){ctx.beginPath();ctx.arc(...q,13,0,Math.PI*2);ctx.fillStyle='#1d75c51a';ctx.fill();ctx.strokeStyle='#a2c7e5';ctx.stroke();}
-    ctx.fillStyle=color;if(t.role==='fixed')ctx.fillRect(q[0]-4,q[1]-4,8,8);else{ctx.beginPath();ctx.arc(...q,t.role==='evader'?7:5.5,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle=color;if(t.role==='fixed')ctx.fillRect(q[0]-4,q[1]-4,8,8);else{ctx.beginPath();ctx.arc(...q,5.5,0,Math.PI*2);ctx.fill();}
     const angle=metric?t.heading_world_deg:t.heading_image_deg;if(angle!=null){const a=-angle*Math.PI/180;ctx.strokeStyle=color;ctx.beginPath();ctx.moveTo(...q);ctx.lineTo(q[0]+19*Math.cos(a),q[1]+19*Math.sin(a));ctx.stroke();}
     ctx.fillStyle=live?'#38536b':'#a0afbb';ctx.font=t.id===selected?'bold 12px system-ui':'11px system-ui';ctx.fillText(`ID ${t.id}${live?'':' · 旧'}`,q[0]+10,q[1]-10);
   }
   ctx.fillStyle='#8b9dad';ctx.font='11px system-ui';ctx.fillText(metric?'WORLD X →  /  Y ↑ · m':'IMAGE u →  /  v ↓ · px',18,h-12);
   if(!metric){ctx.fillStyle='#8a9dad';ctx.font='12px system-ui';ctx.fillText('未标定：显示图像平面位置，透视会压缩距离',30,23);}
 }
-function renderPursuit(s,healthy){
-  const metric=s.world_calibrated;const tags=(s.tags||[]).filter(t=>t.status==='visible'&&healthy&&(metric?t.world_xyz_m:t.center_px));const ps=tags.filter(t=>t.role==='pursuer'),e=tags.find(t=>t.role==='evader');
-  const point=t=>metric?t.world_xyz_m:t.center_px,unit=metric?'m':'px';let inside='数据不足';
-  if(ps.length===3&&e){const pp=ps.map(point),ep=point(e);const cross=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);const area=Math.abs(cross(pp[0],pp[1],pp[2]));if(area<1e-8)inside='追捕点共线';else{const cs=pp.map((p,i)=>cross(p,pp[(i+1)%3],ep));inside=(cs.every(x=>x>0)||cs.every(x=>x<0))?'在凸包内':'在凸包外 / 边界';}}
-  const pairs=[['追捕 / 逃逸可见',`${ps.length} / ${e?'1':'0'}`],['几何包围',inside]];
-  if(e)for(const p of ps){const a=point(p),b=point(e);pairs.push([`ID ${p.id} → ${e.id}`,`${fmt(Math.hypot(a[0]-b[0],a[1]-b[1]),metric?3:0)} ${unit}`]);}
-  const robots=tags.filter(t=>['pursuer','evader','robot'].includes(t.role));let minimum=Infinity;for(let i=0;i<robots.length;i++)for(let j=i+1;j<robots.length;j++){const a=point(robots[i]),b=point(robots[j]);minimum=Math.min(minimum,Math.hypot(a[0]-b[0],a[1]-b[1]));}
-  pairs.push(['车间最小中心距',Number.isFinite(minimum)?fmt(minimum,metric?3:0)+' '+unit:'—']);dl('pursuit-details',pairs);
+function renderFleetMetrics(s,healthy){
+  const metric=s.world_calibrated;const tags=(s.tags||[]).filter(t=>t.status==='visible'&&healthy&&(metric?t.world_xyz_m:t.center_px));
+  const robots=tags.filter(t=>t.role!=='fixed');const point=t=>metric?t.world_xyz_m:t.center_px,unit=metric?'m':'px';let minimum=Infinity;
+  for(let i=0;i<robots.length;i++)for(let j=i+1;j<robots.length;j++){const a=point(robots[i]),b=point(robots[j]);minimum=Math.min(minimum,Math.hypot(a[0]-b[0],a[1]-b[1]));}
+  const pairs=[['可见小车',`${robots.length}`],['车间最小中心距',Number.isFinite(minimum)?fmt(minimum,metric?3:0)+' '+unit:'—']];
+  dl('fleet-details',pairs);
 }
 async function poll(){
   try{const response=await fetch('/api/state',{cache:'no-store'});if(!response.ok)throw Error('状态服务暂不可用');render(await response.json());}
