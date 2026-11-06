@@ -15,6 +15,44 @@ Keep the CAD assumptions separate from hardware samples. The compact CAD and dyn
 
 DXF files, label images, the bill of materials and open checks are in the [95 mm candidate](https://github.com/yaoqih/acfield/tree/main/hardware_design/acrylic_95). **The PCB mounting holes lie inside the tag's black square and the current drawing does not resolve the fastener conflict.** Trial assembly must resolve it, along with encoder-to-plate clearance, the thin caster web and battery/connector clearance.
 
+## Reference purchasing and design boundaries {#reference-purchases}
+
+The following is a reusable selection example. Prices are a discounted November 2026 snapshot for rough budgeting, not fixed procurement costs or a supplier requirement. Equivalent parts may be substituted after checking voltage, current, pinout, mounting holes, dimensions and clearance.
+
+| Part | Reference specification | Price reference | Design use and checks |
+| --- | --- | ---: | --- |
+| Controller | ESP32 + TB6612 class controller; software reference is Waveshare SKU23730 | CNY 135.91 | Reads encoders and drives two motors. Verify the actual IC, input voltage, PWM/direction/encoder pins and 3.3 V levels. |
+| Geared encoder motors | A12, 12 V, three-wire encoder, brackets, 1:100 x2 | CNY 66.32 per pair | Current validation sample. Verify ratio, encoder type, bracket holes, shaft height and pinout; 1:20 is the faster CAD candidate. |
+| Drive wheels | N20 D-shaft rubber wheels, 34 mm x2 | CNY 4.74 per pair | Differential drive contact. Measure diameter, width, bore, shaft engagement and effective track. |
+| Ball caster | CY-12B nylon ball caster x1 | CNY 1.50 | Supports the body but is not the kinematic reference point. Measure holes, working height and rolling resistance. |
+| 3S battery | 11.1 V, 2200 mAh, XT60 x1 | CNY 47.15 | Check fit in the 55 x 30 x 20 mm assumed space, mass, 12.6 V full charge and peak current. |
+| Charger | B4 charger and adapter, 2–4S | CNY 65.49 | Match both the main and balance connectors of the selected 3S pack. |
+
+Use assembled adapter cables where possible. ZH1.5-to-PH2.0 6P cables are signal/encoder candidates (CNY 4.20 for two); XT60-to-DC5525 (CNY 8.80) and DC5525-to-XH2.54 2P (CNY 6.80) are power candidates only when polarity, wire gauge and board ratings match. Connector names do not define pinout. Loose terminals and crimping tools are workshop equipment, not the robot BOM.
+
+## Relationship between robot, arena and control chain {#system-hardware-relationship}
+
+```text
+Robot AprilTag ── overhead camera ── USB ── server computer ── Ethernet ── router/AP
+       │                                                               │
+       └─ chassis, ESP32, encoder motors, battery ── Wi-Fi / UDP ───────┘
+```
+
+1. **Robot layer:** two encoder motors and 34 mm wheels form the differential drive; the CY-12B only supports the body. Verify battery polarity, current capacity and retention before power-up.
+2. **Control layer:** the ESP32 reads encoders, closes the wheel-speed loop and exchanges UDP telemetry and commands with the server. Any substitute controller needs an explicit pin, power and driver check.
+3. **Vision layer:** the fixed camera observes robot and ground tags, and the vision service converts pixels to arena coordinates. Configure measured black-border size, tag height and heading.
+4. **Arena layer:** the 3 x 3 m area is the active workspace. Tube supports and cables stay outside the robot envelope; the server and access point stay outside the arena.
+
+The software uses the drive-axle midpoint as the differential-drive reference point. The tag offset, body envelope and motor ratio must be measured on the assembled first robot rather than inferred from a product title.
+
+## Design principles for reuse {#design-principles}
+
+1. **Define interfaces before choosing parts:** motors, batteries, cameras and connectors can change, but voltage, current, pinout, mounting geometry and data semantics must remain compatible.
+2. **Turn assumptions into measurements:** wheel diameter, track, encoder counts, tag size, tag height, control-point offset and camera calibration belong in configuration or acceptance evidence.
+3. **Validate robot and arena separately:** finish one robot's electrical, mechanical and wheel-loop checks before calibrating the camera, then expand from one to multiple robots.
+4. **Centralize shared equipment:** the camera, server and access point are arena equipment; each robot should carry only the real-time controller and feedback hardware.
+5. **Keep public documentation reusable:** prices can provide a cost estimate, while interfaces, constraints, drawings and validation steps carry the reference value. Supplier logistics and one-time discounts should not be design dependencies.
+
 ## Assembly and exploded view {#assembly-and-exploded-view}
 
 ![95 mm candidate: actual DXF cuts, installed height, assumed centre of mass and tag/hole conflicts; Chinese annotations](/images/acrylic-95-audit.png)

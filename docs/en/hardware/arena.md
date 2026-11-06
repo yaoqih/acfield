@@ -20,6 +20,23 @@ Editable figure sources are in [hardware_design/figures](https://github.com/yaoq
 
 Robot icons are enlarged for readability. The spatial and plan views explain the arrangement; select boom sections, anchors and load capacity for the actual equipment. Allow room for cable routing and resist support movement. Calibrate after final mounting.
 
+## Arena reference materials {#arena-reference-materials}
+
+Prices are one discounted purchasing snapshot, not fixed procurement costs. Tube quantities and connectors are design inputs; determine the final structure from a support drawing and the camera coverage calculation.
+
+| Part | Reference specification | Reference quantity and price | Notes |
+| --- | --- | ---: | --- |
+| Camera | H200S, 1080p, 60 fps, 3 mm, advertised 110-degree wide angle | 1, CNY 167.13 | Verify actual resolution, distortion, frame rate and USB cable length before choosing the height. |
+| Camera mount | U-shaped gimbal clamp for an approximately 30 mm cylinder | 1, CNY 8.78 | Candidate for the boom or tube; check anti-slip, anti-rotation and vibration resistance. |
+| Tube | 15 x 15 x 0.9 mm square tube, 1.2 m x3 | 3.6 m total, CNY 4.61 each | Light support candidate; assign it to a mast, boom or brace only after the layout is fixed. |
+| Tube | 20 x 20 x 1.1 mm square tube, 1.2 m x3 and 0.5 m x2 | 4.6 m total, CNY 5.29 / 1.69 each | Main support candidate; complete the span, height and base drawing before cutting. |
+| Tube connectors | 20 mm straight, three-way and four-way connectors | 1 each, CNY 2.08 / 2.43 / 2.43 | Match the tube wall thickness, locking method and required stiffness. |
+| AprilTag cards | 80 x 80 mm custom cards, 12 pieces | CNY 7.00 per batch | Printing carrier candidate; verify `tag36h11`, 72 mm black border, white margin and 100% scale. |
+
+The reference tube quantity totals about 8.2 m, but it does not define a stable mast and boom by itself. Confirm the camera optical axis, boom deflection, base footprint, cable routing and vehicle clearance before assembly.
+
+Twelve 80 mm cards cover candidate robot IDs 10–21. The four ground reference tags, IDs 0–3, need separate production, measurement and mounting. A generic square card cannot replace the required tag pattern.
+
 ## Image and network connections {#image-and-network-connections}
 
 ```text
@@ -35,6 +52,8 @@ Overhead camera ── USB / wired video ── Server computer
 The camera is wired to the computer, with the cable secured along the boom and mast before leaving the arena. The diagram uses a USB camera as an example; select the actual cable type and length for the camera interface. `apriltag_live.py`, `robot_server` and policy scripts can run on the same computer.
 
 Connect the computer to the router by Ethernet. All four robots join the same experiment Wi-Fi, which carries local control and telemetry traffic. Configure the vision service URL and robot bindings on the computer; SDK clients on other machines use the server computer’s LAN IP. See [configuration](../guide/configuration).
+
+Route the camera cable along the boom and mast to the computer, connect the computer to the access point by Ethernet, and keep the robots on Wi-Fi. Keep battery wiring away from encoder wires and wheels, label polarity at every adapter, and never run camera, network or charging cables temporarily across the active area.
 
 ## Camera height and coverage {#camera-height-and-coverage}
 
