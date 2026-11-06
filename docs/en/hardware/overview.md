@@ -2,10 +2,12 @@
 
 The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. The **current compact first-article candidate** is a 95 × 80 mm acrylic robot, pending assembly and measurements; it is not a validated four-robot fleet.
 
+Keep the CAD assumptions separate from hardware samples. The compact CAD and dynamics notes use a 1:20 motor as a fast candidate; the current validation sample is the same A12 family at 1:100. Do not carry speed limits, wiring or clearances from one ratio to the other without measurement.
+
 | Item | Compact candidate |
 | --- | --- |
 | Bottom / top | 95.1 × 80 × 4 mm / 95 × 80 × 2 mm acrylic |
-| Motors / wheels | Two A12 12 V 1:20 quadrature encoder motors and 34 mm wheels; test one pair first |
+| Motors / wheels | Two A12 12 V 1:20 quadrature encoder motors and 34 mm wheels; CAD candidate, with a 1:100 validation sample |
 | Support / posts | One CY-12B ball caster; four each M3 nylon posts, 45 and 15 mm |
 | Battery | 3S, layout assumes 55 × 30 × 20 mm; actual model, capacity and mass unconfirmed |
 | Robot tag | tag36h11, 72 mm black square, 4 mm white margin per side, 80 mm finished size, no bleed |
@@ -23,7 +25,7 @@ The audit image now shows **only the 95 mm version**. Both plates use the actual
 
 The [detailed design notes, in Chinese](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/dimensions.md) cover hole coordinates, height chains, controller clearance, mass assumptions and acceptance. The [BOM](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/bom.csv) lists quantities for one and four robots. Acrylic mass is approximately 48.6 g. The estimated 272 g total and 25.9 mm centre-of-mass height assume a 90 g battery and other nominal inputs. The caster carries approximately 46.7% of static load, so measure its rolling resistance.
 
-With 34 mm wheels, the 1:20 motor's supplied 500 rpm rated point corresponds to 0.89 m/s; its no-load point is 1.96 m/s. Two rated torques imply a theoretical 1.73 N wheel-edge force. Test one pair from 0.2 m/s upward; 1:30 is a fallback. Loaded speed, turning, low voltage and temperature determine useful limits.
+With 34 mm wheels, the 1:20 motor's supplied 500 rpm rated point corresponds to 0.89 m/s, while the nominal 1:100 point is about 0.23 m/s. Two rated torques imply a theoretical 1.73 N wheel-edge force for the 1:20 data sheet. Use the measured motor ratio, loaded speed, turning, low voltage and temperature to set limits; these nominal values are not a floor-speed or stopping guarantee.
 
 The differential-drive/unicycle reference point is the axle midpoint. A centred tag lies approximately **30.5 mm forward** of it, requiring offset compensation. The front plate extends approximately 78.1 mm ahead of the axle, so the body envelope also needs an offset. Existing runtime defaults remain V11; measure tag size, height, offsets, wheel diameter, track and encoder counts after assembly.
 
@@ -79,7 +81,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 | Tag | tag36h11, 104 mm black border | 1 |
 | Shared equipment | Camera/lens/mount, router, computer, charging equipment | Per arena |
 
-Older CSV files retain V11 material, print-order and wiring references; use the separate BOM above for the 95 mm candidate. Personal shopping carts and historical quotations remain in Git history. The lists omit some manufacturing, shipping, shared equipment and missing parts. Verify actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
+Older CSV files retain V11 material, print-order and wiring references; use the separate BOM above for the 95 mm candidate. The lists intentionally omit supplier-specific quotations, shipping and missing parts; verify the actual motor, harness and battery revisions. The platform does not require the historical STM32/serial bridge or custom PCB.
 
 ## Why this layout {#why-this-layout}
 

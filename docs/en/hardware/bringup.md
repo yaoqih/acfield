@@ -1,6 +1,8 @@
 # Firmware and bring-up
 
-Measure one complete control loop before replicating robots. Firmware currently defaults to `motorsEnabled=false` and zero encoder counts per turn, so devices are not ready for immediate floor operation.
+Measure one complete control loop before replicating robots. Firmware currently allows motor output (`motorsEnabled=true`), but encoder counts per turn, direction, PI gains and useful limits are still uncalibrated; the first power-up must be with the wheels lifted, not on the floor.
+
+The current validation sample uses two A12, 12 V, 1:100, three-wire encoder motors. The CAD candidate and some dynamics notes use 1:20, whose nominal speed is much higher; re-enter the measured ratio, counts and limits during bring-up.
 
 ## Configure and build {#configure-and-build}
 

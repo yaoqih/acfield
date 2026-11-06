@@ -2,6 +2,8 @@
 
 The reference layout uses a **3 × 3 m** square active arena. A fixed mast stands outside one side; a right-angle horizontal boom reaches the centre and supports a downward-facing camera. The server computer and router stay outside the arena.
 
+Treat the arena as three separate elements: the 3 × 3 m motion area, the camera support, and the server/network equipment outside it. Candidate tube lengths and connectors are design inputs, not a final structural drawing; choose the boom span, mast height, base and cable routing from measured camera coverage and site loads.
+
 ![3 by 3 metre arena: spatial layout, plan dimensions and camera–computer–router–robot connections](/images/arena-en.svg)
 
 Editable figure sources are in [hardware_design/figures](https://github.com/yaoqih/acfield/tree/main/hardware_design/figures).
@@ -43,5 +45,7 @@ coverage ≈ 2 × (H − tag-plane height) × tan(field of view / 2)
 ```
 
 Check horizontal and vertical field of view at the actual capture resolution independently. A lens’s advertised diagonal angle is insufficient. Leave a margin and inspect corner distortion and the most distant tags; raising the camera expands coverage while reducing tag pixels.
+
+The advertised 110° value for a wide-angle USB camera is not automatically its horizontal or vertical field of view. Test the actual resolution, distortion, frame rate, tag pixels and motion blur after mounting; moving the camera or changing the lens requires recalibration.
 
 Ground IDs 0–3 illustrate placement only. Measure final tag centres, headings and dimensions before updating configuration. Validate arena-wide position error, frame age and invalidation after camera movement using the [localization and calibration](../guide/localization) procedure.
