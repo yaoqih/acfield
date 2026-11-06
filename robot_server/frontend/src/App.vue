@@ -4,6 +4,8 @@ import { Activity, Battery, Camera, Check, ChevronDown, CircleHelp, Crosshair, E
 import type { Robot, RobotConfig, Settings, Snapshot, VisionProfile, VisionResponse, VisionStatus } from './types'
 import CameraSettings from './CameraSettings.vue'
 import TouchJoystick from './TouchJoystick.vue'
+import { bodyVelocity, elapsedMs } from './control'
+import { ServerClock } from './timeSync'
 
 const state = ref<Snapshot | null>(null)
 const mobilePage = location.pathname === '/mobile' || location.pathname === '/mobile/'
@@ -95,6 +97,7 @@ const blockedReason = computed(() => {
   if (state.value?.system_fault) return '控制服务故障，请重启服务'
   if (state.value?.estop) return '全局停止已锁定，请先释放全局停止'
   if (!selected.value) return '请先选择一辆小车'
+  if (state.value?.mode === 'hardware' && (!selected.value.clock_synced || !serverClock.ready(monotonicNow.value))) return '等待控制端与车端时间同步'
   if (selected.value.fault) return `设备故障：${selected.value.fault}`
   if (!selected.value.online) return '设备离线，请检查小车电源与网络'
   if (!selected.value.bound) return '等待车端停车绑定确认'
@@ -139,16 +142,21 @@ const joystick = ref({ x: 0, y: 0 })
 const stopping = ref(false)
 const now = ref(Date.now())
 const updated = ref(0)
+const monotonicNow = ref(performance.now())
+const updateAgeMs = computed(() => elapsedMs(monotonicNow.value, updated.value))
 let socket: WebSocket | null = null
 let reconnect: ReturnType<typeof setTimeout> | undefined
-let holdTimer: ReturnType<typeof setInterval> | undefined
+let holdTimer: ReturnType<typeof setTimeout> | undefined
 let clockTimer: ReturnType<typeof setInterval> | undefined
 let visionTimer: ReturnType<typeof setInterval> | undefined
 let visionPollPending = false
 let disposed = false
 let generation = 0
-let commandPending = false
-let pendingRequest: Promise<unknown> = Promise.resolve()
+let controlSeq = 0
+let syncTimer: ReturnType<typeof setInterval> | undefined
+let serverClock = new ServerClock()
+let syncProbe = -1
+let lastControlAck = 0
 let detailObserver: IntersectionObserver | undefined
 const controlReady = computed(() => !blockedReason.value && !settingsOpen.value && !help.value && !modePending.value && !stopping.value)
 const arena = computed(() => state.value?.arena ?? { width: 3, height: 3 })
@@ -207,56 +215,98 @@ async function action(path: string, body?: unknown) {
 }
 function connect() {
   socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`)
+  socket.onopen = () => {
+    serverClock = new ServerClock()
+    lastControlAck = performance.now()
+    const probe = () => {
+      if (socket?.readyState === WebSocket.OPEN && socket.bufferedAmount < 4096) {
+        syncProbe = performance.now()
+        socket.send(JSON.stringify({ type: 'time_sync', t1: syncProbe }))
+      }
+    }
+    probe()
+    clearInterval(syncTimer)
+    syncTimer = setInterval(probe, 1000)
+  }
   socket.onmessage = event => {
-    state.value = JSON.parse(event.data)
-    updated.value = Date.now()
+    const message = JSON.parse(event.data)
+    if (message.type === 'time_sync') {
+      const t4 = performance.now()
+      if (message.t1 === syncProbe) serverClock.observe(message.t1, message.t2, message.t3, t4)
+      return
+    }
+    if (message.type === 'control_ack') { lastControlAck = performance.now(); return }
+    if (message.type === 'control_error') { error.value = message.message; endHold(); return }
+    state.value = message
+    updated.value = performance.now()
     connected.value = true
     if (!state.value?.robots.some(r => r.config.id === selectedId.value)) selectedId.value = state.value?.robots[0]?.config.id ?? ''
   }
   socket.onclose = () => {
     connected.value = false
+    clearInterval(syncTimer)
     endHold()
     if (!disposed) reconnect = setTimeout(connect, 1500)
   }
   socket.onerror = () => socket?.close()
 }
-async function beginHold(direction: string) {
+function sendControl(id: string, v: number, omega: number) {
+  if (!socket || socket.readyState !== WebSocket.OPEN || socket.bufferedAmount > 4096) {
+    throw new Error('控制通道拥塞或已断开')
+  }
+  const mono = performance.now()
+  const command: { v: number; omega: number; ttl_ms: number; execute_at_ms?: number } = { v, omega, ttl_ms: 300 }
+  // Budget includes browser -> server -> device. Stops always bypass the buffer.
+  if (v || omega) {
+    if (state.value?.mode === 'hardware' && (!serverClock.ready(mono) || !selected.value?.clock_synced)) {
+      throw new Error('等待控制端与车端时间同步')
+    }
+    if (serverClock.ready(mono)) command.execute_at_ms = serverClock.now(mono)+100
+  }
+  socket.send(JSON.stringify({ type: 'control', owner: controlId, seq: ++controlSeq, robot_id: id, command }))
+}
+function beginHold(direction: string) {
   if (!controlReady.value || active.value) return
   const id = selectedId.value
   const token = ++generation
   active.value = direction
-  const send = async () => {
-    if (commandPending || token !== generation || !controlReady.value) return
-    commandPending = true
+  lastControlAck = performance.now()
+  let nextSend = performance.now()
+  const send = () => {
+    if (token !== generation || !controlReady.value) return
     try {
-      pendingRequest = api(`/api/robots/${id}/command`, {
-        v: joystick.value.y * (selected.value?.effective_max_v ?? 0),
-        omega: -joystick.value.x * (selected.value?.effective_max_omega ?? 0),
-        ttl_ms: 300,
-      })
-      await pendingRequest
+      if (performance.now()-lastControlAck > 250) throw new Error('控制确认超时')
+      const velocity = bodyVelocity(joystick.value, selected.value?.effective_max_v ?? 0, selected.value?.effective_max_omega ?? 0)
+      sendControl(id, velocity.v, velocity.omega)
     } catch (e) { error.value = (e as Error).message; endHold() }
-    finally { commandPending = false }
+    if (active.value === direction && token === generation) {
+      nextSend += 25
+      if (nextSend < performance.now()) nextSend = performance.now()+25
+      holdTimer = setTimeout(send, Math.max(0, nextSend-performance.now()))
+    }
   }
-  await send()
-  if (active.value === direction && token === generation) holdTimer = setInterval(send, 90)
+  send()
 }
 function endHold() {
-  if (holdTimer) clearInterval(holdTimer)
+  if (holdTimer) clearTimeout(holdTimer)
   holdTimer = undefined
   const wasActive = active.value
   active.value = null
+  joystick.value = { x: 0, y: 0 }
   generation++
   if (wasActive) {
-    const id = selectedId.value
-    stopping.value = true
-    // Send stop after any in-flight movement request, preserving command order.
-    void pendingRequest.catch(() => {}).then(() => action(`/api/robots/${id}/command`, { v: 0, omega: 0, ttl_ms: 100 })).finally(() => stopping.value = false)
+    try { sendControl(selectedId.value, 0, 0) }
+    catch {
+      // A separate HTTP zero can be overtaken by buffered WebSocket motion.
+      // Disarming also rejects those messages when they eventually arrive.
+      stopping.value = true
+      void action(`/api/robots/${selectedId.value}/arm`, { enabled: false }).finally(() => stopping.value = false)
+    }
   }
 }
 function moveJoystick(x: number, y: number) {
   joystick.value = { x, y }
-  if (!active.value) void beginHold('joystick')
+  if (!active.value) beginHold('joystick')
 }
 async function setMode(mode: 'demo' | 'hardware') {
   if (modePending.value || !connected.value || mode === state.value?.mode) return
@@ -268,6 +318,10 @@ async function setMode(mode: 'demo' | 'hardware') {
     toast('模式已切换，全车保持锁定')
   } catch (e) { error.value = (e as Error).message }
   finally { modePending.value = false }
+}
+async function emergencyStop() {
+  endHold()
+  await action(`/api/robots/${selectedId.value}/arm`, { enabled: false })
 }
 async function stopAll() { endHold(); await action('/api/stop') }
 function select(id: string) { endHold(); selectedId.value = id }
@@ -412,9 +466,10 @@ onMounted(() => {
   if (detailPanel.value) detailObserver.observe(detailPanel.value)
   visionTimer = setInterval(pollVision, 1500)
   clockTimer = setInterval(() => {
-    now.value = Date.now()
-    if (updated.value && now.value - updated.value > 1500) { connected.value = false; endHold(); socket?.close() }
-  }, 250)
+    monotonicNow.value = performance.now()
+    now.value = serverClock.ready(monotonicNow.value) ? serverClock.now(monotonicNow.value) : Date.now()
+    if (updated.value && performance.now() - updated.value > 1500) { connected.value = false; endHold(); socket?.close() }
+  }, 50)
   window.addEventListener('pointerup', endHold)
   window.addEventListener('pointercancel', endHold)
   window.addEventListener('blur', endHold)
@@ -422,7 +477,8 @@ onMounted(() => {
   document.addEventListener('visibilitychange', pageHidden)
 })
 onUnmounted(() => {
-  disposed = true; document.body.style.overflow = ''; clearTimeout(noticeTimer); endHold(); clearTimeout(reconnect); clearInterval(clockTimer); clearInterval(visionTimer); socket?.close(); detailObserver?.disconnect()
+  disposed = true; document.body.style.overflow = ''; clearTimeout(noticeTimer); endHold(); clearTimeout(reconnect); clearInterval(syncTimer)
+  clearInterval(clockTimer); clearInterval(visionTimer); socket?.close(); detailObserver?.disconnect()
   window.removeEventListener('pointerup', endHold); window.removeEventListener('pointercancel', endHold)
   window.removeEventListener('blur', endHold); window.removeEventListener('keydown', keydown)
   document.removeEventListener('visibilitychange', pageHidden)
@@ -440,7 +496,7 @@ onUnmounted(() => {
       <template v-if="selected">
         <div class="remote-status"><span class="status-chip" :class="linkClass(selected)"><Wifi :size="15" />{{ linkLabel(selected) }}</span><span class="status-chip" :class="poseClass(selected)"><Crosshair :size="15" />{{ poseLabel(selected) }}</span><span class="status-chip" :class="batteryClass(selected)" title="按 3S 锂电池 10.5–12.6 V 估算"><Battery :size="16" />{{ batteryLabel(selected) }}</span></div>
         <div class="remote-control-heading"><div><h2>手动控制</h2><p role="status">{{ blockedReason || '控制已就绪' }}</p></div><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="15"/><LockKeyhole v-else :size="15" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
-        <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="endHold(); action(`/api/robots/${selectedId}/command`, { v: 0, omega: 0, ttl_ms: 100 })" />
+        <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="emergencyStop" />
         <div class="remote-telemetry"><span>X <b>{{ metric(selected.x) }}</b> m</span><span>Y <b>{{ metric(selected.y) }}</b> m</span><span>朝向 <b>{{ deg(selected.theta) }}</b></span></div>
       </template>
       <p v-else class="remote-empty">{{ connected ? '没有可用的小车' : '正在连接服务器…' }}</p>
@@ -473,7 +529,7 @@ onUnmounted(() => {
         <section class="stats-row">
           <div class="stat"><span class="stat-icon green"><Radio :size="19" /></span><div><span class="stat-label">在线设备</span><div class="stat-value mono">{{ online }}<span>/ {{ state?.robots.length ?? 4 }}</span></div></div><span class="stat-note"><i :class="{ gray: !online }"></i>{{ !connected ? '服务器断开' : online ? '链路正常' : '暂无在线车' }}</span></div>
           <div class="stat"><span class="stat-icon blue"><Crosshair :size="19" /></span><div><span class="stat-label">有效定位</span><div class="stat-value mono">{{ connected ? state?.robots.filter(r => r.visible).length ?? 0 : 0 }}<span>辆小车</span></div></div><span class="stat-note">{{ state?.mode === 'demo' ? '合成定位' : 'AprilTag' }}</span></div>
-          <div class="stat"><span class="stat-icon amber"><Activity :size="19" /></span><div><span class="stat-label">最近更新</span><div class="stat-value mono">{{ connected ? metric(Math.max(0, now - updated), 0) : '—' }}<span>ms 前</span></div></div><span class="stat-note">{{ connected ? '实时同步' : '已断开' }}</span></div>
+          <div class="stat"><span class="stat-icon amber"><Activity :size="19" /></span><div><span class="stat-label">最近更新</span><div class="stat-value mono" data-testid="update-age">{{ connected ? metric(updateAgeMs, 0) : '—' }}<span>ms 前</span></div></div><span class="stat-note">{{ connected ? '服务器推送' : '已断开' }}</span></div>
           <div class="stat"><span class="stat-icon neutral"><ShieldCheck :size="19" /></span><div><span class="stat-label">控制状态</span><div class="stat-value stat-text">{{ !connected ? '不可控制' : state?.estop ? '全局锁定' : '手动控制' }}</div></div><span class="stat-note">{{ state?.robots.filter(r => r.armed).length ?? 0 }} 辆已解锁</span></div>
         </section>
         <div class="main-grid" :class="{ expanded }">
@@ -515,7 +571,7 @@ onUnmounted(() => {
               <div class="position-summary"><span>X <b class="mono">{{ metric(selected.x, 2) }}</b> m</span><span>Y <b class="mono">{{ metric(selected.y, 2) }}</b> m</span><span><b class="mono">{{ deg(selected.theta) }}</b></span></div>
               <div class="control-heading"><h3>手动控制</h3><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" :title="blockedReason" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="12"/><LockKeyhole v-else :size="12" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
               <p v-if="blockedReason" class="control-explanation" role="status">{{ blockedReason }}</p><div v-else class="control-explanation ready">控制已就绪</div>
-              <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="endHold(); action(`/api/robots/${selectedId}/command`, { v: 0, omega: 0, ttl_ms: 100 })" />
+              <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="emergencyStop" />
               <p class="control-hint">{{ selected.armed ? '松开控制即停车' : '解锁后可以控制小车' }}</p>
               <div class="command-state"><span class="command-dot" :class="{ on: selected.armed }"></span><span>{{ !connected ? '连接中断 · 暂停控制' : selected.reason }}</span><span class="mono">#{{ String(selected.seq).padStart(4, '0') }}</span></div><div class="ack-status">{{ commandLabel(selected) }} · 有效期 300 ms</div>
               <details class="telemetry-section"><summary>定位与速度详情<ChevronDown :size="14" /></summary>              <div class="telemetry-grid"><div><label>X 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.x, 3) }}</strong></div><div><label>Y 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.y, 3) }}</strong></div><div><label>车体朝向</label><strong class="mono">{{ deg(selected.theta) }}</strong></div><div><label>距上次定位 <span>ms</span></label><strong class="mono">{{ metric(selected.pose_age_ms, 0) }}</strong></div></div>
@@ -567,6 +623,6 @@ onUnmounted(() => {
         </form>
       </section>
     </div>
-    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>拖动摇杆控制移动和转向，松开后停车。电脑可用 Tab 聚焦摇杆并按住方向键操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
+    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，点击「解锁」。</li><li>摇杆相对车头：上前进、下后退、左右原地转向，斜向同时移动和转向；松开停车。电脑可用 Tab 聚焦摇杆并按住方向键操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障或指令超时后需重新解锁。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
   </div>
 </template>

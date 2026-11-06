@@ -21,10 +21,10 @@ public:
         stamp.seq = seq; stamp.time = now; stamp.valid = true;
         lastSent_ = seq;
     }
-    bool accept(const Command& c, uint32_t now) {
+    bool accept(const Command& c, uint32_t now, uint32_t age = 0) {
         if (c.session.empty() || c.session.size() > 64 ||
             !std::isfinite(c.v) || !std::isfinite(c.omega) ||
-            c.ttl < 100 || c.ttl > 500) return false;
+            c.ttl < 100 || c.ttl > 500 || age >= c.ttl) return false;
         const bool zero = c.v == 0 && c.omega == 0;
         if (c.stop != zero) return false;
         if (c.action != Action::Drive && !zero) return false;
@@ -55,7 +55,7 @@ public:
             reason = zero ? "idle" : "driving";
         }
         ackSeq = c.seq; hasAck = true;
-        received_ = now; ttl_ = c.ttl;
+        received_ = now-age; ttl_ = c.ttl;
         return true;
     }
     void tick(uint32_t now) {
@@ -80,7 +80,7 @@ public:
     float v = 0, omega = 0;
 private:
     struct Stamp { uint64_t seq = 0; uint32_t time = 0; bool valid = false; };
-    std::array<Stamp, 8> history_{};
+    std::array<Stamp, 64> history_{};
     bool fresh(uint64_t seq, uint32_t now) const {
         for (const auto& h : history_)
             if (h.valid && h.seq == seq && uint32_t(now-h.time) <= 200) return true;

@@ -101,9 +101,9 @@ int main() {
 
     WheelControl wheel;
     float output = wheel.update(.1f, 0, .02f);
-    assert(output > 0 && wheel.target <= .0061f); // acceleration bound
+    assert(output > 0 && wheel.target == .1f); // already ramped by the paired controller
     for (int i=0; i<100; ++i) wheel.update(.1f, 0, .02f);
-    wheel.update(-.1f, 0, .02f);
-    assert(wheel.target > 0); // no immediate full reverse
+    wheel.update(.05f, 0, .02f);
+    assert(wheel.target == .05f);
     wheel.reset(); assert(wheel.target == 0);
 }

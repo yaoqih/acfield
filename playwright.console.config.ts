@@ -15,6 +15,7 @@ export default defineConfig({
       ROBOT_MODE: 'demo', ROBOT_HOST: '127.0.0.1', ROBOT_PORT: '18125',
       ROBOT_DB: join(tmpdir(), `acfield-console-test-${randomUUID()}.sqlite3`),
       ROBOT_DEFAULT_VISION_URL: '', ROBOT_VISION_URL: '',
+      ROBOT_NTP_SERVER: '',
     },
   },
 })

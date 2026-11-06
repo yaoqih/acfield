@@ -3,9 +3,12 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_task_wdt.h>
+#include <esp_timer.h>
+#include "time_sync.h"
 #include "battery.h"
 #include "motors.h"
 #include "command_wire.h"
+#include "command_scheduler.h"
 #if __has_include("secrets.h")
 #include "secrets.h"
 #else
@@ -21,9 +24,27 @@ Protocol protocol(config::maxV, config::maxOmega);
 SemaphoreHandle_t stateMutex;
 char bootId[33];
 uint64_t telemetrySeq = 0;
-uint32_t lastTelemetry = 0, lastBattery = 0;
+uint32_t lastTelemetry = 0;
 uint32_t lastDebug = 0;
 bool connected = false;
+TimeSync clockSync;
+uint32_t syncId = 0, lastSync = 0;
+double syncT1 = 0;
+bool syncPending = false;
+CommandScheduler scheduled;
+uint64_t appliedSeq = 0;
+bool urgentTelemetry = false;
+double monoMs() { return esp_timer_get_time()/1000.; }
+
+void requestTime(uint32_t now) {
+    if (uint32_t(now-lastSync) < 1000) return;
+    lastSync = now;
+    syncT1 = floor(monoMs()); ++syncId; syncPending = true;
+    StaticJsonDocument<192> doc;
+    doc["type"] = "time_sync"; doc["id"] = syncId; doc["t1"] = uint64_t(syncT1);
+    char buffer[192]; size_t n = serializeJson(doc, buffer, sizeof(buffer));
+    if (udp.beginPacket(server, config::serverPort)) { udp.write((const uint8_t*)buffer, n); udp.endPacket(); }
+}
 
 void control(void*) {
     ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
@@ -37,9 +58,24 @@ void control(void*) {
         previous = now;
         xSemaphoreTake(stateMutex, portMAX_DELAY);
         protocol.tick(now);
+        if (scheduled.apply(protocol, now)) urgentTelemetry = true;
         if (protocol.v == 0 && protocol.omega == 0) motors.stop();
         motors.update(protocol.v, protocol.omega, dt);
+        if (protocol.hasAck) appliedSeq = protocol.ackSeq;
         if (motors.fault) { protocol.fault(motors.fault); motors.stop(); }
+        xSemaphoreGive(stateMutex);
+    }
+}
+
+void sampleBattery(void*) {
+    Battery sampler;
+    TickType_t wake = xTaskGetTickCount();
+    while (true) {
+        vTaskDelayUntil(&wake, pdMS_TO_TICKS(config::batteryMs));
+        const char* fault = sampler.sample(millis());
+        xSemaphoreTake(stateMutex, portMAX_DELAY);
+        battery.valid = sampler.valid; battery.voltage = sampler.voltage;
+        if (fault) { protocol.fault(fault); motors.stop(); urgentTelemetry = true; }
         xSemaphoreGive(stateMutex);
     }
 }
@@ -52,10 +88,38 @@ void receive() {
     }
     char buffer[1024];
     int n = udp.read(buffer, sizeof(buffer));
+    if (n != size) return;
+    StaticJsonDocument<1536> envelope;
+    if (deserializeJson(envelope, buffer, n)) return;
+    if (envelope["type"] == "time_sync") {
+        const double t4 = monoMs();
+        if (syncPending && envelope["id"].is<uint32_t>() && envelope["id"].as<uint32_t>() == syncId &&
+            fabs(envelope["t1"].as<double>()-syncT1) < .01 && envelope["t2"].is<double>() && envelope["t3"].is<double>()) {
+            syncPending = false;
+            clockSync.observe(syncT1, envelope["t2"], envelope["t3"], t4);
+        }
+        return;
+    }
     Protocol::Command command;
     if (n != size || !decodeCommand(buffer, n, config::robotId, bootId, command)) return;
+    if (!envelope["execute_at_ms"].isNull() && command.action == Protocol::Action::Drive &&
+        (command.v != 0 || command.omega != 0)) {
+        if (!envelope["execute_at_ms"].is<double>()) return;
+        const double mono = monoMs();
+        const double wait = envelope["execute_at_ms"].as<double>()-clockSync.now(mono);
+        if (!clockSync.ready(mono) || !std::isfinite(wait) || wait < 0 || wait > 150 || wait >= command.ttl) return;
+        xSemaphoreTake(stateMutex, portMAX_DELAY);
+        scheduled.enqueue(command, millis(), uint32_t(ceil(wait)), protocol);
+        xSemaphoreGive(stateMutex);
+        return;
+    }
     xSemaphoreTake(stateMutex, portMAX_DELAY);
-    if (protocol.accept(command, millis()) && protocol.v == 0 && protocol.omega == 0) motors.stop();
+    // Only an accepted immediate command can invalidate scheduled motion.
+    if (protocol.accept(command, millis())) {
+        scheduled.clear();
+        urgentTelemetry = true;
+        if (protocol.v == 0 && protocol.omega == 0) motors.stop();
+    }
     xSemaphoreGive(stateMutex);
 }
 
@@ -65,14 +129,27 @@ void telemetry() {
     doc["robot_id"] = config::robotId; doc["boot_id"] = bootId;
     doc["seq"] = telemetrySeq; doc["firmware"] = config::firmware;
     doc["battery"] = nullptr;
+    const double mono = monoMs();
+    const double utc = clockSync.now(mono); // keep slewing even while uncertainty blocks motion
+    doc["clock_synced"] = clockSync.ready(mono);
+    if (clockSync.ready(mono)) {
+        // ArduinoJson's floating-point serializer keeps only ~10 significant digits.
+        // Integer epoch milliseconds preserve millisecond precision at today's dates.
+        doc["sampled_at_ms"] = uint64_t(llround(utc));
+        doc["clock_uncertainty_ms"] = clockSync.uncertainty(mono);
+    }
+    xSemaphoreTake(stateMutex, portMAX_DELAY);
     if (battery.valid) doc["voltage_v"] = battery.voltage;
     else doc["voltage_v"] = nullptr;
+    xSemaphoreGive(stateMutex);
     doc["limits"]["max_v"] = config::maxV; doc["limits"]["max_omega"] = config::maxOmega;
     xSemaphoreTake(stateMutex, portMAX_DELAY);
     if (config::calibrated()) {
         doc["measured_v"] = motors.measuredV; doc["measured_omega"] = motors.measuredOmega;
         doc["wheel_left"] = motors.speed[0]; doc["wheel_right"] = motors.speed[1];
     }
+    doc["applied_seq"] = appliedSeq;
+    urgentTelemetry = false;
     doc["encoder_left"] = motors.encoder[0]; doc["encoder_right"] = motors.encoder[1];
     doc["device_state"] = protocol.state(); doc["stop_reason"] = protocol.reason;
     doc["fault"] = protocol.faultCode();
@@ -96,11 +173,13 @@ void telemetry() {
 void debugStatus(uint32_t now) {
     if (uint32_t(now - lastDebug) < 1000) return;
     lastDebug = now;
+    const bool wifiConnected = WiFi.status() == WL_CONNECTED;
+    const String localIP = wifiConnected ? WiFi.localIP().toString() : "-";
+    const int rssi = wifiConnected ? WiFi.RSSI() : 0;
     xSemaphoreTake(stateMutex, portMAX_DELAY);
-    Serial.printf("[status] wifi=%s local=%s rssi=%d udp=%s state=%s fault=%s cmd=%.3f/%.3f target=%.3f/%.3f speed=%.3f/%.3f pwm=%.1f/%.1f enc=%lld/%lld voltage=%.2fV\n",
-                  WiFi.status() == WL_CONNECTED ? "connected" : "disconnected",
-                  WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString().c_str() : "-",
-                  WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0,
+    char line[512];
+    snprintf(line, sizeof(line), "[status] wifi=%s local=%s rssi=%d udp=%s state=%s fault=%s cmd=%.3f/%.3f target=%.3f/%.3f speed=%.3f/%.3f pwm=%.1f/%.1f enc=%lld/%lld voltage=%.2fV\n",
+                  wifiConnected ? "connected" : "disconnected", localIP.c_str(), rssi,
                   connected ? "ready" : "off",
                   protocol.state(), protocol.faultCode() ? protocol.faultCode() : "none",
                   protocol.v, protocol.omega,
@@ -110,6 +189,7 @@ void debugStatus(uint32_t now) {
                   static_cast<long long>(motors.encoder[1]),
                   battery.valid ? battery.voltage : NAN);
     xSemaphoreGive(stateMutex);
+    Serial.print(line);
 }
 }
 
@@ -134,6 +214,7 @@ void setup() {
         while (true) { motors.stop(); esp_task_wdt_reset(); delay(100); }
     }
     if (xTaskCreatePinnedToCore(control, "motor-control", 4096, nullptr, 3, nullptr, 1) != pdPASS) abort();
+    if (xTaskCreatePinnedToCore(sampleBattery, "battery", 3072, nullptr, 1, nullptr, 0) != pdPASS) abort();
     WiFi.setAutoReconnect(true); WiFi.begin(wifiSsid, wifiPassword);
     Serial.printf("Robot %s, firmware %s, boot %s\n", config::robotId, config::firmware, bootId);
 }
@@ -145,21 +226,23 @@ void loop() {
     if (online != connected) {
         xSemaphoreTake(stateMutex, portMAX_DELAY);
         protocol.linkLost(); motors.stop();
+        scheduled.clear();
+        clockSync.reset(); syncPending = false;
         xSemaphoreGive(stateMutex);
         udp.stop();
         if (online && !udp.begin(config::localPort)) online = false;
         connected = online;
     }
-    if (uint32_t(now-lastBattery) >= config::batteryMs) {
-        lastBattery = now;
-        if (const char* fault = battery.sample(now)) {
-            xSemaphoreTake(stateMutex, portMAX_DELAY);
-            protocol.fault(fault); motors.stop();
-            xSemaphoreGive(stateMutex);
-        }
+    if (online) {
+        // Bounded draining prevents stale datagrams from accumulating indefinitely.
+        for (unsigned i = 0; i < 8; ++i) receive();
+        requestTime(now);
     }
-    if (online) receive();
-    if (online && uint32_t(now-lastTelemetry) >= config::telemetryMs) {
+    bool urgent;
+    xSemaphoreTake(stateMutex, portMAX_DELAY);
+    urgent = urgentTelemetry;
+    xSemaphoreGive(stateMutex);
+    if (online && (urgent || uint32_t(now-lastTelemetry) >= config::telemetryMs)) {
         lastTelemetry = now; telemetry();
     }
     debugStatus(now);

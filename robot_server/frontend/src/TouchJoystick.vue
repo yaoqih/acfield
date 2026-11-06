@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Square } from 'lucide-vue-next'
+import { stickVector } from './control'
 
 const props = defineProps<{ disabled: boolean; active: boolean; connected: boolean }>()
 const emit = defineEmits<{ move: [x: number, y: number]; stop: []; emergency: [] }>()
@@ -14,12 +15,11 @@ function move(event: PointerEvent) {
   if (event.pointerId !== pointer || !stick.value) return
   const rect = stick.value.getBoundingClientRect()
   const radius = Math.min(rect.width, rect.height) * .36
-  let dx = (event.clientX - rect.left - rect.width / 2) / radius
-  let dy = (event.clientY - rect.top - rect.height / 2) / radius
-  const length = Math.hypot(dx, dy)
-  if (length > 1) { dx /= length; dy /= length }
-  x.value = dx; y.value = dy
-  emit('move', length < .12 ? 0 : dx, length < .12 ? 0 : -dy)
+  const right = (event.clientX - rect.left - rect.width / 2) / radius
+  const forward = (rect.top + rect.height / 2 - event.clientY) / radius
+  const vector = stickVector(right, forward)
+  x.value = vector.x; y.value = -vector.y
+  emit('move', vector.x, vector.y)
 }
 function start(event: PointerEvent) {
   if (props.disabled || pointer !== null || keys.size) return
@@ -30,14 +30,16 @@ function start(event: PointerEvent) {
 function stop(event?: PointerEvent) {
   if (event && event.pointerId !== pointer) return
   if (pointer === null) return
+  const previous = pointer
   pointer = null; x.value = 0; y.value = 0
+  if (stick.value?.hasPointerCapture(previous)) stick.value.releasePointerCapture(previous)
   emit('stop')
 }
 function updateKeys() {
   const dx = Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'))
   const dy = Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'))
-  const length = Math.max(1, Math.hypot(dx, dy))
-  x.value = dx / length; y.value = dy / length
+  const vector = stickVector(dx, -dy, 0)
+  x.value = vector.x; y.value = -vector.y
   emit('move', x.value, -y.value)
 }
 function keyMove(event: KeyboardEvent) {
@@ -59,7 +61,11 @@ function keyStop(event?: KeyboardEvent) {
   emit('stop')
 }
 watch(() => [props.disabled, props.active], ([disabled, active]) => {
-  if (disabled || !active) { pointer = null; keys.clear(); x.value = 0; y.value = 0 }
+  if (disabled || !active) {
+    const previous = pointer
+    pointer = null; keys.clear(); x.value = 0; y.value = 0
+    if (previous !== null && stick.value?.hasPointerCapture(previous)) stick.value.releasePointerCapture(previous)
+  }
 })
 </script>
 

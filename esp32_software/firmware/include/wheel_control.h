@@ -7,7 +7,8 @@ inline float clamp(float x, float low, float high) { return fmaxf(low, fminf(hig
 class WheelControl {
 public:
     float update(float goal, float measured, float dt) {
-        target += clamp(goal-target, -config::acceleration*dt, config::acceleration*dt);
+        // Acceleration is coordinated across both wheels by DifferentialDrive.
+        target = goal;
         float error = target-measured;
         float candidate = clamp(integral_+error*dt, -.5f, .5f);
         float base = config::feedForward*target+config::kp*error;

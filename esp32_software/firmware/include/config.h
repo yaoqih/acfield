@@ -17,7 +17,7 @@ constexpr int motorSign[2] = {1, 1}, encoderSign[2] = {1, 1};
 constexpr float maxV = 1.00f, maxOmega = 3.00f, maxWheelSpeed = 1.05f;
 constexpr float acceleration = 0.30f;
 constexpr float feedForward = 350, kp = 180, ki = 120;
-constexpr unsigned controlMs = 20, telemetryMs = 50, batteryMs = 100;
+constexpr unsigned controlMs = 10, telemetryMs = 25, batteryMs = 100;
 constexpr float batteryStopV = 10.5f; // conservative initial 3S total; verify under load
 constexpr unsigned batteryLowMs = 1000, encoderQuietMs = 800;
 constexpr bool motorsEnabled = true;

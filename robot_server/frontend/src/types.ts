@@ -38,6 +38,8 @@ export interface Robot {
   estimated_v: number | null; acceleration: number | null;
   target_v: number; target_omega: number; seq: number; ack_seq: number;
   command_status: string; reason: string; fault: string | null;
+  clock_synced: boolean; clock_uncertainty_ms: number | null;
+  sampled_at_ms: number | null; applied_seq: number | null;
   corners: number[][]; trail: number[][];
 }
 export interface Snapshot {

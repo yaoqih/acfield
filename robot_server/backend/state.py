@@ -7,6 +7,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from .models import Command, DeviceLimits, RobotConfig, Settings, Telemetry
 from . import safety
+from .clock import clock
 
 POSE_TTL = .2
 HEARTBEAT_TTL = 1.
@@ -54,6 +55,10 @@ class Robot:
     telemetry_seq: int = -1
     retired_boots: set = field(default_factory=set)
     fault: str | None = None
+    applied_seq: int | None = None
+    sampled_at_ms: float | None = None
+    clock_synced: bool = False
+    clock_uncertainty_ms: float | None = None
     reason: str = "等待解锁"
     trail: deque = field(default_factory=lambda: deque(maxlen=180))
 
@@ -78,7 +83,7 @@ class Fleet:
         self.event("系统启动 · " + ("四车模拟" if mode == "demo" else "真实设备"))
 
     def event(self, message):
-        self.events.appendleft({"time": time.time(), "message": message})
+        self.events.appendleft({"time": clock.now_ms()/1000, "message": message})
         self.record("event", {"message": message})
 
     def robot(self, ident):
@@ -131,12 +136,14 @@ class Fleet:
         self.stop(r, "控制源已释放 · 已锁定")
         return True
 
-    def packet(self, r, v, omega, ttl_ms, action="drive"):
+    def packet(self, r, v, omega, ttl_ms, action="drive", execute_at_ms=None):
         r.seq += 1
         packet = {"version": 1, "type": "command", "session": self.session,
                   "robot_id": r.config.id, "boot_id": r.boot_id, "telemetry_seq": r.telemetry_seq,
                   "seq": r.seq, "v": v, "omega": omega, "action": action,
                   "ttl_ms": ttl_ms, "stop": v == 0 and omega == 0}
+        if r.clock_synced and action == "drive" and (v or omega):
+            packet["execute_at_ms"] = execute_at_ms if execute_at_ms is not None else clock.now_ms()+60
         self.record("command", packet.copy())
         if self.mode == "demo":
             r.ack_seq, r.command_status = r.seq, "confirmed"
@@ -164,6 +171,10 @@ class Fleet:
             for ident, r in robots.items():
                 cmd = commands[ident]
                 if cmd.v or cmd.omega:
+                    if cmd.execute_at_ms is not None and self.mode == "hardware" and not r.clock_synced:
+                        raise ValueError("等待车端时钟同步")
+                    if cmd.execute_at_ms is not None and not 15 <= cmd.execute_at_ms-clock.now_ms() <= 150:
+                        raise ValueError("控制指令执行时间已过期或超出缓冲窗口")
                     reason = self.ready(r, now)
                     if reason or not r.armed:
                         raise ValueError(reason or "请先解锁小车")
@@ -197,7 +208,7 @@ class Fleet:
             if r.owner == owner:
                 r.owner_until = now+OWNER_TTL
             r.reason = "速度控制" if v or omega else "已停车"
-            packets[ident] = self.packet(r, v, omega, cmd.ttl_ms)
+            packets[ident] = self.packet(r, v, omega, cmd.ttl_ms, execute_at_ms=cmd.execute_at_ms)
         self.record("control", {"owner": owner, "requested": request, "accepted": True,
                                 "applied": {ident: {"v": v, "omega": w} for ident, (v, w) in targets.items()}})
         return packets
@@ -276,6 +287,9 @@ class Fleet:
         r.encoder_left, r.encoder_right = msg.encoder_left, msg.encoder_right
         r.device_state, r.firmware, r.stop_reason = msg.device_state, msg.firmware, msg.stop_reason
         r.limits, r.fault = msg.limits, msg.fault
+        r.applied_seq, r.sampled_at_ms = msg.applied_seq, msg.sampled_at_ms
+        r.clock_synced = msg.clock_synced
+        r.clock_uncertainty_ms = msg.clock_uncertainty_ms
         self.record("telemetry", msg.model_dump())
         if new_boot or reconnect or endpoint_changed:
             r.bound = False
@@ -348,12 +362,14 @@ class Fleet:
                 "estimated_v": r.estimated_v if visible else None,
                 "acceleration": r.acceleration if visible else None,
                 "target_v": r.target_v, "target_omega": r.target_omega,
+                "clock_synced": r.clock_synced, "clock_uncertainty_ms": r.clock_uncertainty_ms,
+                "applied_seq": r.applied_seq, "sampled_at_ms": r.sampled_at_ms,
                 "seq": r.seq, "ack_seq": r.ack_seq, "command_status": r.command_status,
                 "reason": r.reason, "fault": r.fault, "stop_reason": r.stop_reason,
                 "corners": corners, "trail": list(r.trail)})
         return {"mode": self.mode, "session": self.session, "estop": self.estop,
                 "allow_unlocalized_control": self.allow_unlocalized_control,
                 "system_fault": self.runtime_fault,
-                "timestamp": time.time(), "arena": {"width": self.settings.arena_width,
+                "timestamp": clock.now_ms()/1000, "clock": clock.status(), "arena": {"width": self.settings.arena_width,
                 "height": self.settings.arena_height}, "camera": self.camera,
                 "robots": robots, "events": list(self.events)}

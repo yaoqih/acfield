@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "wheel_control.h"
 #include "encoder_guard.h"
+#include "differential_drive.h"
 
 class Motors {
 public:
@@ -12,6 +13,7 @@ public:
     int64_t encoder[2] = {};
     const char* fault = nullptr;
 private:
+    DifferentialDrive drive_;
     WheelControl controller_[2];
     EncoderGuard guard_[2];
     void write(unsigned side, float pwm);

@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict
 
 from .models import Command, Settings
+from .clock import clock
 from .recording import Recorder
 from .simulator import Simulator
 from .state import Fleet
@@ -51,6 +52,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
 
     async def clockwork(fleet):
         simulator, simulator_mode = None, None
+        deadline = time.monotonic()
         while True:
             now = time.monotonic()
             if fleet.mode != simulator_mode:
@@ -60,7 +62,10 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
             fleet.tick(now)
             if simulator:
                 simulator.step(now)
-            await asyncio.sleep(.025)
+            deadline += .025
+            if deadline < time.monotonic():
+                deadline = time.monotonic()
+            await asyncio.sleep(max(0, deadline-time.monotonic()))
 
     @asynccontextmanager
     async def lifespan(app):
@@ -100,6 +105,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                     lambda: DeviceProtocol(fleet), local_addr=(udp_host or os.getenv("ROBOT_UDP_HOST", "127.0.0.1"),
                     udp_port if udp_port is not None else int(os.getenv("ROBOT_UDP_PORT", "9999"))))
                 app.state.udp = protocol
+            tasks["time"] = asyncio.create_task(clock.run())
             tasks["control"] = asyncio.create_task(supervise("control", clockwork(fleet)))
             if mode == "hardware":
                 tasks["vision"] = asyncio.create_task(supervise("vision", watch(fleet, lambda: fleet.settings.vision_url)))
@@ -353,16 +359,64 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         app.state.fleet.event("全局停止已释放 · 小车仍需逐车解锁")
         return {"estop": False}
 
+    @app.get("/api/time")
+    async def server_time():
+        return {"server_time_ms": clock.now_ms(), **clock.status()}
+
     @app.websocket("/ws")
     async def websocket(ws: WebSocket):
         await ws.accept()
+        send_lock = asyncio.Lock()
+
+        async def send(payload):
+            async with send_lock:
+                if payload.get("type") == "time_sync":
+                    payload["t3"] = clock.now_ms()
+                await asyncio.wait_for(ws.send_json(payload), timeout=1.)
+
+        async def snapshots():
+            deadline = time.monotonic()
+            while True:
+                payload = app.state.fleet.snapshot()
+                payload["server_time_ms"] = clock.now_ms()
+                await send(payload)
+                deadline += .025
+                if deadline < time.monotonic():
+                    deadline = time.monotonic()
+                await asyncio.sleep(max(0, deadline-time.monotonic()))
+
+        task = asyncio.create_task(snapshots())
+        owner = None
+        last_seq = -1
         try:
             while True:
-                # No queues: slow clients get the next current snapshot, never a backlog.
-                await asyncio.wait_for(ws.send_json(app.state.fleet.snapshot()), timeout=1.)
-                await asyncio.sleep(.1)
-        except (WebSocketDisconnect, asyncio.TimeoutError, RuntimeError):
-            with contextlib.suppress(RuntimeError):
+                msg = await ws.receive_json()
+                if msg.get("type") == "time_sync":
+                    t2 = clock.now_ms()
+                    await send({"type": "time_sync", "t1": msg.get("t1"), "t2": t2})
+                elif msg.get("type") == "control":
+                    seq, ident, control_owner = msg.get("seq"), msg.get("robot_id"), msg.get("owner")
+                    if (not isinstance(seq, int) or isinstance(seq, bool) or seq <= last_seq
+                            or not isinstance(control_owner, str) or not 1 <= len(control_owner) <= 64
+                            or (owner is not None and owner != control_owner)):
+                        raise ValueError("Invalid control sequence or owner")
+                    owner, last_seq = control_owner, seq
+                    try:
+                        packet = app.state.fleet.command(app.state.fleet.robot(ident),
+                            Command.model_validate(msg.get("command")), owner)
+                        await send({"type": "control_ack", "seq": seq, "packet": packet})
+                    except (ValueError, KeyError) as exc:
+                        await send({"type": "control_error", "seq": seq, "message": str(exc)})
+        except (WebSocketDisconnect, asyncio.TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):
+            pass
+        finally:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, RuntimeError, asyncio.TimeoutError, WebSocketDisconnect):
+                await task
+            if owner:
+                for r in app.state.fleet.robots.values():
+                    app.state.fleet.release(r, owner)
+            with contextlib.suppress(RuntimeError, WebSocketDisconnect):
                 await ws.close()
 
     @app.get("/api/camera/stream")

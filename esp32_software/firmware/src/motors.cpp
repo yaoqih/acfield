@@ -38,6 +38,7 @@ void Motors::write(unsigned i, float pwm) {
     ledcWrite(i, abs(duty));
 }
 void Motors::stop() {
+    drive_.reset();
     for (unsigned i = 0; i < 2; ++i) { controller_[i].reset(); guard_[i].reset(); target[i] = 0; write(i, 0); }
 }
 void Motors::update(float v, float omega, float dt) {
@@ -50,11 +51,8 @@ void Motors::update(float v, float omega, float dt) {
         if (config::calibrated()) fault = "control_overrun";
         stop(); return;
     }
-    target[0] = v-omega*config::trackWidth/2;
-    target[1] = v+omega*config::trackWidth/2;
-    float peak = fmaxf(fabsf(target[0]), fabsf(target[1]));
-    if (peak > config::maxWheelSpeed)
-        for (auto& t : target) t *= config::maxWheelSpeed/peak;
+    drive_.update(v, omega, config::trackWidth, config::maxWheelSpeed, config::acceleration, dt);
+    for (unsigned i = 0; i < 2; ++i) target[i] = drive_.wheel[i];
     for (unsigned i = 0; i < 2; ++i) {
         speed[i] = count[i]*config::encoderSign[i]*PI*config::wheelDiameter/config::pulsesPerTurn[i]/dt;
         float output = 0;

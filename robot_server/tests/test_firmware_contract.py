@@ -14,6 +14,17 @@ ROOT = Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT/"esp32_software/firmware"
 
 
+@pytest.mark.parametrize("name", ["protocol", "motion", "scheduler", "time_sync"])
+def test_firmware_host_regressions(name, tmp_path):
+    compiler = shutil.which("clang++") or shutil.which("g++")
+    if not compiler:
+        pytest.skip("Host C++ compiler is unavailable")
+    binary = tmp_path/name
+    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-I", str(FIRMWARE/"include"),
+                    str(FIRMWARE/f"test/{name}_test.cpp"), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+
+
 @pytest.fixture
 def peer(tmp_path):
     compiler = shutil.which("clang++") or shutil.which("g++")

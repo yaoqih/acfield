@@ -47,7 +47,7 @@ the address reachable on your experiment network, especially when using a VPN.
 ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ./run.sh
 ```
 
-Use one process and one worker. This local/LAN service has no account authentication or authenticated UDP transport. The `X-Control-ID` header manages ownership only. Device arming and finite command lifetimes remain required. Set `ROBOT_ALLOW_UNLOCALIZED_CONTROL=1` before launch only for manual operation without localization: it skips pose freshness, arena boundary and inter-robot distance checks, while binding, telemetry freshness, command expiry and ownership expiry still apply. The default is `0`. Restart after changing it. Server robot speed defaults are 1 m/s and 3 rad/s, capped by device-reported limits; stored robot configurations retain their existing limits.
+Use one process and one worker. This local/LAN service has no account authentication or authenticated UDP transport. The `X-Control-ID` header manages ownership only. Device arming and finite command lifetimes remain required. The launch scripts default `ROBOT_ALLOW_UNLOCALIZED_CONTROL=1` for manual operation without localization; this skips pose freshness, arena boundary and inter-robot distance checks, while binding, telemetry freshness, command expiry and ownership expiry still apply. Set `ROBOT_ALLOW_UNLOCALIZED_CONTROL=0` before launch to require localization. Restart after changing it. Server robot speed defaults are 0.10 m/s and 0.30 rad/s, capped by device-reported limits; stored robot configurations retain their existing limits.
 
 ## Development
 

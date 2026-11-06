@@ -52,6 +52,7 @@ class Command(Model):
     v: float = Field(ge=-1, le=1)
     omega: float = Field(ge=-6, le=6)
     ttl_ms: int = Field(default=300, ge=100, le=500)
+    execute_at_ms: float | None = None
 
 
 class DeviceLimits(Model):
@@ -80,6 +81,10 @@ class Telemetry(Model):
     encoder_left: int | None = None
     encoder_right: int | None = None
     limits: DeviceLimits | None = None
+    clock_synced: bool = False
+    clock_uncertainty_ms: float | None = Field(default=None, ge=0)
+    sampled_at_ms: float | None = None
+    applied_seq: int | None = Field(default=None, ge=0)
 
 
 def default_settings():

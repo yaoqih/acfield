@@ -4,6 +4,7 @@ import json
 import logging
 from pydantic import ValidationError
 from .models import Telemetry
+from .clock import clock
 
 log = logging.getLogger(__name__)
 
@@ -23,9 +24,17 @@ class DeviceProtocol(asyncio.DatagramProtocol):
             self.rejected += 1
             return
         try:
-            msg = Telemetry.model_validate_json(data)
+            obj = json.loads(data)
+            if obj.get("type") == "time_sync":
+                if (not isinstance(obj.get("id"), int) or isinstance(obj["id"], bool)
+                        or not isinstance(obj.get("t1"), (float, int))):
+                    raise ValueError("Invalid time probe")
+                self.send({"type": "time_sync", "id": obj["id"], "t1": obj["t1"],
+                           "t2": clock.now_ms(), "t3": clock.now_ms()}, addr)
+                return
+            msg = Telemetry.model_validate(obj)
             self.fleet.telemetry(msg, addr)
-        except (ValidationError, ValueError, KeyError):
+        except (ValidationError, ValueError, KeyError, TypeError, AttributeError):
             self.rejected += 1
 
     def send(self, packet, endpoint):

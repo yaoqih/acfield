@@ -6,6 +6,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
+from .clock import clock
 
 
 class Recorder:
@@ -22,7 +23,7 @@ class Recorder:
         self.thread.start()
 
     def record(self, kind, data):
-        row = {"time": time.time(), "monotonic": time.monotonic(), "kind": kind, "data": data}
+        row = {"time": clock.now_ms()/1000, "monotonic": time.monotonic(), "kind": kind, "data": data}
         try:
             self.queue.put_nowait(row)
         except queue.Full:
