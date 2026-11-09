@@ -11,6 +11,27 @@ async function control(action, extra={}){
   catch(e){toast(e.message,true);}
 }
 $('connect').onclick=()=>control('source',{source:$('source').value});
+const cameraControls=['brightness','contrast','saturation','exposure','gain'];
+const cameraNames={brightness:'亮度',contrast:'对比度',saturation:'饱和度',exposure:'曝光',gain:'增益'};
+async function loadCameraSettings(){
+  try{const r=await fetch('/api/config');const {config}=await r.json();
+    for(const k of ['width','height','fps'])$('camera-'+k).value=config[k];
+    for(const k of cameraControls)$('camera-'+k).value=config.camera_controls?.[k]??'';
+  }catch(e){toast('无法读取相机设置',true);}
+}
+loadCameraSettings();
+fetch('/api/preview').then(r=>r.json()).then(v=>{$('preview-width').value=String(v.width);$('preview-fps').value=v.fps;}).catch(()=>{});
+$('preview-form').onsubmit=async e=>{e.preventDefault();try{const r=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({width:Number($('preview-width').value),fps:Number($('preview-fps').value)})});const v=await r.json();if(!r.ok)throw Error(v.error);toast('预览设置已应用');}catch(err){toast(err.message,true);}};
+$('camera-form').onsubmit=async e=>{
+  e.preventDefault();const button=e.currentTarget.querySelector('button');button.disabled=true;
+  try{const current=await fetch('/api/config');const {config}=await current.json();
+    const source=$('source').value;if(!/^\d+$/.test(source))throw Error('请选择相机输入源');
+    Object.assign(config,{source,enabled:true,width:Number($('camera-width').value),height:Number($('camera-height').value),fps:Number($('camera-fps').value)});
+    config.camera_controls={};for(const k of cameraControls){const v=$('camera-'+k).value;if(v!=='')config.camera_controls[k]=Number(v);}
+    const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(config)});const result=await r.json();if(!r.ok)throw Error(result.error||r.status);
+    toast('相机设置已应用');$('camera-result').textContent='等待相机反馈';
+  }catch(err){toast(err.message,true);}finally{button.disabled=false;}
+};
 $('apply-detector').onclick=()=>control('detector',{family:$('family').value,decimate:Number($('decimate').value)});
 $('record').onclick=()=>control('record');
 $('calibrate-world').onclick=()=>control('calibrate');
@@ -35,6 +56,7 @@ function render(s){
   $('fleet-count').textContent=`已配置 ${s.known_count??12} 个身份`;
   $('detect-time').textContent=fmt(s.detection_ms);$('frame-age').textContent=fmt(s.frame_age_ms??s.state_age_ms,0);
   $('resolution').textContent=s.width?`${s.width} × ${s.height}`:'—';
+  if(s.camera_control_results){const results=Object.entries(s.camera_control_results);$('camera-result').textContent=results.length?results.map(([k,v])=>`${cameraNames[k]}: ${v.accepted?'驱动接受'+(v.actual!=null?'（读回 '+fmt(v.actual,2)+'）':''):'不支持或被拒绝'}`).join(' · '):'未指定图像参数';}
   $('image-quality').textContent=`亮度 ${fmt(s.mean_brightness,0)} / 255 · 清晰度 ${fmt(s.laplacian_variance,0)}`;
   $('calibration').textContent=s.world_calibrated?'场地已标定':s.calibrated?'内参已标定':'像素观测';
   $('calibration-detail').textContent=s.demo?'演示参数 · 不代表实机精度':s.world_calibrated?'已补偿标签安装高度':'内参与场地外参分别配置';

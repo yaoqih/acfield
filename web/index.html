@@ -22,6 +22,44 @@
     <a class="button" href="/api/snapshot.jpg" download>保存画面</a>
     <details class="download-menu"><summary>导出数据 ▾</summary><div><a href="/api/export.csv" download>当前标签 CSV</a><a href="/api/export.json" download>完整状态 JSON</a></div></details>
   </div>
+  <details class="camera-settings">
+    <summary>相机设置</summary>
+    <form id="camera-form" class="camera-form">
+      <label>宽度 <input id="camera-width" type="number" min="16" max="8192" value="1920" required><small>输入范围 16–8192</small></label>
+      <label>高度 <input id="camera-height" type="number" min="16" max="8192" value="1080" required><small>输入范围 16–8192</small></label>
+      <label>目标 FPS <input id="camera-fps" type="number" min="1" max="120" step="any" value="60" required><small>输入范围 1–120</small></label>
+      <label>亮度 <input id="camera-brightness" type="number" min="-10000" max="10000" step="any" placeholder="设备默认"></label>
+      <label>对比度 <input id="camera-contrast" type="number" min="-10000" max="10000" step="any" placeholder="设备默认"></label>
+      <label>饱和度 <input id="camera-saturation" type="number" min="-10000" max="10000" step="any" placeholder="设备默认"></label>
+      <label>曝光 <input id="camera-exposure" type="number" min="-10000" max="10000" step="any" placeholder="设备默认"></label>
+      <label>增益 <input id="camera-gain" type="number" min="-10000" max="10000" step="any" placeholder="设备默认"></label>
+      <button type="submit">应用相机设置</button>
+      <span id="camera-result" class="muted" role="status"></span>
+    </form>
+    <div class="uvc-reference">
+      <div class="uvc-heading"><strong>H200S 图像参数</strong><span class="muted">USB CAMERA · 10bb:2b08 · 实测 UVC 原始值</span></div>
+      <p class="muted">以下范围来自 H200S，其他相机可能不同。上方输入由 OpenCV 后端处理，单位可能不同；曝光原始值不能直接填入。</p>
+      <div class="uvc-grid">
+        <div><span>亮度</span><strong>−64 ～ 64</strong><small>步长 1 · 默认 0</small></div>
+        <div><span>对比度</span><strong>0 ～ 100</strong><small>步长 1 · 默认 37</small></div>
+        <div><span>饱和度</span><strong>0 ～ 128</strong><small>步长 1 · 默认 64</small></div>
+        <div><span>色调</span><strong>−180 ～ 180</strong><small>步长 1 · 默认 0</small></div>
+        <div><span>清晰度</span><strong>0 ～ 100</strong><small>步长 1 · 默认 90</small></div>
+        <div><span>伽马</span><strong>100 ～ 500</strong><small>步长 1 · 默认 300</small></div>
+        <div><span>增益</span><strong>0 ～ 128</strong><small>步长 1 · 默认 64</small></div>
+        <div><span>白平衡</span><strong>2800 ～ 6500 K</strong><small>步长 10 K · 自动模式锁定</small></div>
+        <div><span>曝光时间</span><strong>0.1 ～ 1000 ms</strong><small>步长 0.1 ms · 自动模式锁定</small></div>
+        <div><span>逆光补偿</span><strong>0 ～ 2</strong><small>步长 1 · 默认 1</small></div>
+        <div><span>防闪烁</span><strong>关闭 / 50 / 60 Hz</strong><small>默认 50 Hz</small></div>
+      </div>
+      <p class="muted">视频模式：1920 × 1080 · MJPEG 30 / 60 FPS；YUY2 5 FPS。</p>
+    </div>
+  </details>
+  <form id="preview-form" class="camera-form preview-form">
+    <label>预览宽度 <select id="preview-width"><option value="0">原始分辨率</option><option value="1920">最大 1920</option><option value="1280">最大 1280</option><option value="960">最大 960</option></select></label>
+    <label>预览 FPS <input id="preview-fps" type="number" min="1" max="120" value="30" required></label>
+    <button type="submit">应用预览设置</button>
+  </form>
   <div id="notice" class="notice" role="status">正在启动 AprilTag 检测器…</div>
   <section class="stats" aria-label="实时指标">
     <div class="stat"><span>处理帧率</span><strong id="fps">—</strong><small>FPS · 含采集与识别</small></div>

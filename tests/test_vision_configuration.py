@@ -29,6 +29,8 @@ def engine(tmp_path, monkeypatch):
             return self.open
         def set(self, *args):
             return True
+        def get(self, prop):
+            return 42
         def read(self):
             return self.open, image.copy() if self.open else None
         def release(self):
@@ -64,6 +66,27 @@ def test_camera_config_persistence_scan_disconnect_and_failure(engine):
     result = client.post('/api/config', json={**profile, 'enabled': False})
     assert result.status_code == 200 and engine.capture is None
     assert not json.loads(engine.runtime_path.read_text())['profile']['enabled']
+
+
+def test_camera_controls_are_applied_and_persisted(engine):
+    client = create_app(engine).test_client()
+    profile = client.get('/api/config').json['config']
+    profile.update(source='0', enabled=True, width=1280, height=720,
+                   camera_controls={'brightness': 30, 'exposure': -4})
+    response = client.post('/api/config', json=profile)
+    assert response.status_code == 200, response.json
+    state = wait_until(lambda: engine.snapshot() if engine.snapshot().get('camera_control_results') else None)
+    assert state['camera_control_results']['brightness'] == {'accepted': True, 'actual': 42}
+    saved = json.loads(engine.runtime_path.read_text())['profile']
+    assert saved['camera_controls'] == {'brightness': 30, 'exposure': -4}
+    assert (saved['width'], saved['height']) == (1280, 720)
+
+
+def test_preview_settings_validate_and_apply(engine):
+    client = create_app(engine).test_client()
+    assert client.get('/api/preview').json == {'width': 0, 'fps': 30}
+    assert client.post('/api/preview', json={'width': 1280, 'fps': 60}).json == {'width': 1280, 'fps': 60}
+    assert client.post('/api/preview', json={'width': -1, 'fps': 60}).status_code == 400
 
 
 def test_calibration_roundtrip_requires_current_fixed_tags_and_resets_on_config(engine):

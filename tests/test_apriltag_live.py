@@ -32,6 +32,13 @@ for _ in range(20):
     assert result.returncode == 0, result.stderr
 
 
+def test_native_detector_preserves_fractional_decode_sharpening():
+    pytest.importorskip('pupil_apriltags')
+    from native_apriltag import Detector as NativeDetector
+    detector = NativeDetector(decode_sharpening=0.25)
+    assert detector.tag_detector_ptr.contents.decode_sharpening == pytest.approx(0.25)
+
+
 @pytest.fixture(scope='module')
 def scene():
     source = DemoSource(load_settings(ROOT/'apriltag_live.json'))

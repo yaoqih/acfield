@@ -16,6 +16,7 @@ class CameraProfile(Model):
     fps: float = Field(ge=1, le=120)
     family: Literal['tag36h11'] = 'tag36h11'
     decimate: float = Field(default=1, ge=1, le=4)
+    camera_controls: dict[str, float] = Field(default_factory=dict)
     camera: dict | None = None
     tags: dict[str, dict] = Field(min_length=4, max_length=128)
     world: dict

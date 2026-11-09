@@ -34,6 +34,10 @@ def validate_profile(payload):
     if profile.get('family') != 'tag36h11':
         raise ValueError('小车控制当前仅支持 tag36h11')
     profile['decimate'] = number(profile.get('decimate'), '检测降采样', 1, 4)
+    controls = profile.get('camera_controls', {})
+    if not isinstance(controls, dict) or any(k not in ('brightness', 'contrast', 'saturation', 'exposure', 'gain') for k in controls):
+        raise ValueError('相机参数无效')
+    profile['camera_controls'] = {k: number(v, k, -10000, 10000) for k, v in controls.items() if v is not None}
     camera = profile.get('camera')
     if camera is not None:
         try:
@@ -71,7 +75,7 @@ def validate_profile(payload):
     if boundary.shape != (4, 2) or not np.isfinite(boundary).all() or type(world.get('configured')) is not bool:
         raise ValueError('场地边界和坐标确认状态无效')
     return {key: profile[key] for key in ('source', 'enabled', 'width', 'height', 'fps',
-                                         'family', 'decimate', 'camera', 'tags', 'world')}
+                                         'family', 'decimate', 'camera', 'tags', 'world', 'camera_controls')}
 
 
 def save_runtime(path, data):

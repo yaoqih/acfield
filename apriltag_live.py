@@ -27,6 +27,9 @@ ROOT = Path(__file__).resolve().parent
 NATIVE_FAMILIES = ['tag36h11', 'tag16h5', 'tag25h9', 'tagStandard41h12',
                    'tagStandard52h13', 'tagCircle21h7', 'tagCircle49h12', 'tagCustom48h12']
 COLORS = [(65, 207, 128), (76, 190, 250), (227, 155, 93), (195, 132, 234)]
+CAMERA_CONTROLS = {'brightness': cv2.CAP_PROP_BRIGHTNESS, 'contrast': cv2.CAP_PROP_CONTRAST,
+                   'saturation': cv2.CAP_PROP_SATURATION, 'exposure': cv2.CAP_PROP_EXPOSURE,
+                   'gain': cv2.CAP_PROP_GAIN}
 
 
 def finite_number(value, name, low, high):
@@ -74,7 +77,7 @@ class Detector:
                 from native_apriltag import Detector as NativeDetector
                 if family not in NATIVE_FAMILIES:
                     raise ValueError(f'Unsupported native family: {family}')
-                self.native = NativeDetector(families=family, nthreads=2,
+                self.native = NativeDetector(families=family, nthreads=12,
                                              quad_decimate=decimate, refine_edges=1)
             except ImportError:
                 if backend == 'native':
@@ -383,12 +386,14 @@ class Tracker:
 
 
 class LiveEngine:
-    def __init__(self, settings, source='demo', backend='auto', family='tag36h11', width=1280, height=720,
-                 fps=30, runtime_path=None):
+    def __init__(self, settings, source='demo', backend='auto', family='tag36h11', width=1920, height=1080,
+                 fps=60, runtime_path=None):
         self.settings = settings
         self.backend = backend
         self.width, self.height = width, height
         self.fps = fps
+        self.camera_controls = {}
+        self.camera_control_results = {}
         self.runtime_path = runtime_path
         self.saved_world = None
         self.camera_id = str(source) if str(source).isdecimal() else '0'
@@ -415,6 +420,16 @@ class LiveEngine:
         self.events = deque(maxlen=50)
         self.record = None
         self.thread = None
+        self.capture_thread = None
+        self.preview_thread = None
+        self.latest_frame = None
+        self.latest_frame_time = None
+        self.preview_pending = None
+        self.preview_id = 0
+        self.preview_width = 0
+        self.preview_fps = 30
+        self.source_generation = 0
+        self.capture_lock = threading.Lock()
 
     def event(self, text, level='info'):
         self.events.appendleft({'time': datetime.now().strftime('%H:%M:%S'), 'text': text, 'level': level})
@@ -446,6 +461,11 @@ class LiveEngine:
                 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
                 capture.set(cv2.CAP_PROP_FPS, self.fps)
                 capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                self.camera_control_results = {}
+                for name, value in self.camera_controls.items():
+                    accepted = bool(capture.set(CAMERA_CONTROLS[name], value))
+                    actual = capture.get(CAMERA_CONTROLS[name]) if accepted else None
+                    self.camera_control_results[name] = {'accepted': accepted, 'actual': actual if actual is not None and math.isfinite(actual) else None}
                 # Verify a real frame before announcing a successful connection.
                 frame = None
                 for _ in range(10):
@@ -457,9 +477,16 @@ class LiveEngine:
                     capture.release()
                     raise ValueError('相机已打开但没有图像；请检查权限、占用或采集模式')
             active = copy.deepcopy(self.settings)
-        if self.capture is not None:
-            self.capture.release()
-        self.capture, self.active = capture, active
+        with self.capture_lock:
+            if self.capture is not None:
+                self.capture.release()
+            self.capture = capture
+            with self.condition:
+                self.latest_frame = None
+                self.preview_pending = None
+                self.source_generation += 1
+            self.source_name = source
+        self.active = active
         self.source_name = source
         if source.isdecimal():
             self.camera_id = source
@@ -480,7 +507,7 @@ class LiveEngine:
             return copy.deepcopy({
                 'source': self.camera_id, 'enabled': self.source_name.isdecimal() and self.capture is not None,
                 'width': self.width, 'height': self.height, 'fps': self.fps,
-                'family': self.family, 'decimate': self.decimate,
+                'family': self.family, 'decimate': self.decimate, 'camera_controls': self.camera_controls,
                 'camera': self.settings.get('camera'), 'tags': self.settings['tags'],
                 'world': self.settings.get('world', {'configured': False}),
                 'saved_world': self.saved_world is not None,
@@ -492,16 +519,18 @@ class LiveEngine:
     def configure(self, profile):
         profile = validate_profile(profile)
         detector = Detector(profile['family'], profile['decimate'], self.backend)
-        old = (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector)
+        old = (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector, self.camera_controls)
         old_profile, old_world, old_source = self.configuration(), self.saved_world, self.source_name
         self.settings = {key: copy.deepcopy(profile[key]) for key in ('camera', 'tags', 'world', 'family')}
         self.width, self.height, self.fps = profile['width'], profile['height'], profile['fps']
         self.family, self.decimate, self.detector = profile['family'], profile['decimate'], detector
+        self.camera_controls = profile['camera_controls']
         try:
             # Drivers commonly reject opening an already occupied camera. Release it first.
             if self.capture is not None and self.source_name == profile['source']:
-                self.capture.release()
-                self.capture = None
+                with self.capture_lock:
+                    self.capture.release()
+                    self.capture = None
             self.open_source(profile['source'] if profile['enabled'] else 'disconnected')
             self.camera_id = profile['source']
             # Disconnect/reconnect of an identical profile retains a manually loadable calibration.
@@ -510,7 +539,7 @@ class LiveEngine:
                 self.saved_world = None
             self.persist_configuration()
         except (ValueError, RuntimeError, OSError, cv2.error):
-            (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector) = old
+            (self.settings, self.width, self.height, self.fps, self.family, self.decimate, self.detector, self.camera_controls) = old
             self.saved_world, self.camera_id = old_world, old_profile['source']
             try:
                 self.open_source(old_source)
@@ -698,6 +727,10 @@ class LiveEngine:
         return frame
 
     def run(self):
+        self.capture_thread = threading.Thread(target=self._capture_loop, daemon=True, name='apriltag-capture-reader')
+        self.capture_thread.start()
+        self.preview_thread = threading.Thread(target=self._preview_loop, daemon=True, name='apriltag-preview')
+        self.preview_thread.start()
         try:
             self.open_source(self.source_name)
         except (ValueError, OSError, cv2.error) as error:
@@ -710,8 +743,17 @@ class LiveEngine:
             try:
                 if self.capture is None:
                     raise ValueError('相机未连接，请选择相机并连接')
-                ok, frame = self.capture.read()
-                acquired = time.monotonic()
+                if self.source_name.isdecimal():
+                    with self.condition:
+                        self.condition.wait_for(lambda: self.latest_frame is not None or not self.running, timeout=.5)
+                        if not self.running:
+                            break
+                        frame, acquired = self.latest_frame, self.latest_frame_time
+                        self.latest_frame = None
+                    ok = frame is not None
+                else:
+                    ok, frame = self.capture.read()
+                    acquired = time.monotonic()
                 if not ok or frame is None:
                     raise ValueError('输入源没有新帧（相机断开或视频结束）；请重新连接')
                 self.latest_acquired = acquired
@@ -782,6 +824,7 @@ class LiveEngine:
                                     'camera' if self.source_name.isdecimal() else 'file'),
                     'family': self.family, 'backend': self.detector.name, 'families': self.detector.families,
                     'decimate': self.decimate, 'width': w, 'height': h, 'fps': fps,
+                    'camera_control_results': self.camera_control_results,
                     'detection_ms': detection_ms, 'processing_ms': (now - acquired)*1000,
                     'mean_brightness': float(np.mean(thumbnail)),
                     'laplacian_variance': float(cv2.Laplacian(thumbnail, cv2.CV_64F).var()),
@@ -790,14 +833,10 @@ class LiveEngine:
                     'world_info': self.world_info, 'boundary_xy_m': self.active.get('world', {}).get('boundary_xy_m'),
                     'tags': tags, 'configured_tags': self.tag_specs(), 'warnings': warnings,
                     'acquired_monotonic': acquired, 'tag_age_reference_monotonic': acquired}
-                annotated = self.overlay(frame, tags)
-                success, encoded = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
-                if not success:
-                    raise ValueError('JPEG编码失败')
                 state['processing_ms'] = (time.monotonic() - acquired) * 1000
                 with self.condition:
                     self.frame_id += 1
-                    self.jpeg = encoded.tobytes()
+                    self.preview_pending = (frame.copy(), copy.deepcopy(tags), self.frame_id, self.source_generation)
                     state['events'] = list(self.events)
                     state['recording'] = self.record is not None
                     state['record_path'] = str(self.record['folder'].relative_to(ROOT)) if self.record else None
@@ -830,11 +869,58 @@ class LiveEngine:
                 if self.record:
                     self.stop_recording()
                 time.sleep(.2)
-            # A bounded rate prevents a video file/demo from consuming a whole CPU core.
-            time.sleep(max(0, 1/25 - (time.monotonic() - began)))
+            if not self.source_name.isdecimal():
+                time.sleep(max(0, 1/25 - (time.monotonic() - began)))
         self.stop_recording()
-        if self.capture is not None:
-            self.capture.release()
+        with self.capture_lock:
+            if self.capture is not None:
+                self.capture.release()
+
+    def _capture_loop(self):
+        while self.running:
+            if not self.source_name.isdecimal() or self.capture is None:
+                time.sleep(.05)
+                continue
+            with self.capture_lock:
+                capture = self.capture
+                if capture is None or not self.source_name.isdecimal():
+                    continue
+                ok, frame = capture.read()
+                if ok and frame is not None:
+                    with self.condition:
+                        self.latest_frame = frame
+                        self.latest_frame_time = time.monotonic()
+                        self.condition.notify_all()
+            if not ok or frame is None:
+                time.sleep(.01)
+
+    def _preview_loop(self):
+        last_preview = 0.
+        while self.running:
+            delay = 1 / self.preview_fps - (time.monotonic() - last_preview)
+            if delay > 0:
+                time.sleep(delay)
+            with self.condition:
+                self.condition.wait_for(lambda: self.preview_pending is not None or not self.running, timeout=.2)
+                if not self.running:
+                    return
+                item = self.preview_pending
+                self.preview_pending = None
+            if item is None:
+                continue
+            frame, tags, frame_id, generation = item
+            annotated = self.overlay(frame, tags)
+            width = self.preview_width
+            if width and annotated.shape[1] > width:
+                annotated = cv2.resize(annotated, (width, round(annotated.shape[0] * width / annotated.shape[1])), interpolation=cv2.INTER_AREA)
+            success, encoded = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            last_preview = time.monotonic()
+            if success:
+                with self.condition:
+                    if generation == self.source_generation:
+                        self.jpeg = encoded.tobytes()
+                        self.preview_id = frame_id
+                        self.condition.notify_all()
 
     def start(self):
         self.thread = threading.Thread(target=self.run, daemon=True, name='apriltag-capture')
@@ -846,6 +932,9 @@ class LiveEngine:
             self.condition.notify_all()
         if self.thread:
             self.thread.join(timeout=3)
+        for worker in (self.capture_thread, self.preview_thread):
+            if worker:
+                worker.join(timeout=1)
 
     def snapshot(self):
         with self.lock:
@@ -901,6 +990,20 @@ def create_app(engine):
     def configuration():
         return jsonify(config=engine.configuration(), state=engine.snapshot())
 
+    @app.route('/api/preview', methods=['GET', 'POST'])
+    def preview_settings():
+        if request.method == 'POST':
+            try:
+                payload = request.get_json(silent=True) or {}
+                width = finite_number(payload.get('width'), '预览宽度', 0, 8192)
+                fps = finite_number(payload.get('fps'), '预览帧率', 1, 120)
+                if int(width) != width:
+                    raise ValueError('预览宽度必须是整数')
+                engine.preview_width, engine.preview_fps = int(width), fps
+            except (ValueError, TypeError) as error:
+                return jsonify(error=str(error)), 400
+        return jsonify(width=engine.preview_width, fps=engine.preview_fps)
+
     def execute_camera(payload):
         try:
             result = engine.execute(payload)
@@ -939,10 +1042,10 @@ def create_app(engine):
             last = -1
             while engine.running:
                 with engine.condition:
-                    engine.condition.wait_for(lambda: engine.frame_id != last or not engine.running, timeout=1)
+                    engine.condition.wait_for(lambda: engine.preview_id != last or not engine.running, timeout=1)
                     if not engine.running:
                         break
-                    frame_id, data = engine.frame_id, engine.jpeg
+                    frame_id, data = engine.preview_id, engine.jpeg
                 if data is None or frame_id == last:
                     continue
                 last = frame_id
@@ -1012,9 +1115,10 @@ def main():
     source = args.source if args.source is not None else (
         profile['source'] if profile.get('enabled') else 'disconnected' if profile else args.initial_source)
     engine = LiveEngine(settings, source, args.backend, args.family,
-                        args.width or profile.get('width', 1280), args.height or profile.get('height', 720),
-                        args.fps or profile.get('fps', 30), args.runtime_config)
+                        args.width or profile.get('width', 1920), args.height or profile.get('height', 1080),
+                        args.fps or profile.get('fps', 60), args.runtime_config)
     engine.camera_id = profile.get('source', engine.camera_id)
+    engine.camera_controls = profile.get('camera_controls', {})
     engine.decimate = profile.get('decimate', 1)
     engine.detector = Detector(engine.family, engine.decimate, engine.backend)
     engine.saved_world = saved_world

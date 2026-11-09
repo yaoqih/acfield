@@ -8,6 +8,11 @@ from pupil_apriltags import Detector as PupilDetector
 
 
 class Detector(PupilDetector):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # pupil-apriltags 1.0.4 truncates this floating-point parameter to int.
+        self.tag_detector_ptr.contents.decode_sharpening = float(self.params['decode_sharpening'])
+
     def __del__(self):
         detector = getattr(self, "tag_detector_ptr", None)
         if detector is None:
