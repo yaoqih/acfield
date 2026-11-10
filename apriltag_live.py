@@ -218,6 +218,39 @@ def calibrate_world(detections, tags, camera):
                                     'fixed_ids': [i for i, _ in specs]}
 
 
+def charuco_board_from_spec(data):
+    cols = finite_number(data.get('cols'), '横向方格数', 3, 30)
+    rows = finite_number(data.get('rows'), '纵向方格数', 3, 30)
+    if int(cols) != cols or int(rows) != rows:
+        raise ValueError('方格数量必须是整数')
+    cols, rows = int(cols), int(rows)
+    square = finite_number(data.get('square_mm'), '方格边长', 1, 200) / 1000
+    marker = finite_number(data.get('marker_mm'), '标记边长', 1, 200) / 1000
+    dictionary = data.get('dictionary')
+    if dictionary not in ('DICT_5X5_50', 'DICT_5X5_100', 'DICT_5X5_250', 'DICT_5X5_1000'):
+        raise ValueError('请选择有效的 5x5 ArUco 字典')
+    if marker >= square:
+        raise ValueError('标记边长必须小于方格边长')
+    if not hasattr(cv2.aruco, 'CharucoDetector'):
+        raise ValueError('请安装支持 CharucoDetector 的 opencv-contrib-python')
+    aruco_dictionary = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dictionary))
+    board = cv2.aruco.CharucoBoard((cols, rows), square, marker, aruco_dictionary)
+    return (cols, rows, square, marker, dictionary), board
+
+
+def solve_charuco_calibration(samples, image_size):
+    if len(samples) < 8:
+        raise ValueError('至少采集 8 张不同位置、距离和倾斜角度的图片，建议 15–25 张')
+    rms, matrix, distortion, rotations, translations = cv2.calibrateCamera(
+        [sample[0] for sample in samples], [sample[1] for sample in samples], image_size, None, None)
+    if (not math.isfinite(rms) or not np.isfinite(matrix).all() or not np.isfinite(distortion).all()
+            or matrix[0, 0] <= 0 or matrix[1, 1] <= 0):
+        raise ValueError('无法求得有效内参，请重新采样')
+    camera = {'image_width': image_size[0], 'image_height': image_size[1],
+              'camera_matrix': matrix.tolist(), 'dist_coeffs': distortion.reshape(-1).tolist()}
+    return camera, float(rms)
+
+
 class DemoSource:
     """Oblique pinhole scene; no detection results are fabricated."""
     def __init__(self, settings):
@@ -430,11 +463,20 @@ class LiveEngine:
         self.preview_fps = 30
         self.source_generation = 0
         self.capture_lock = threading.Lock()
+        self.calibration_frame = None
+        self.calibration_frame_time = None
+        self.calibration_session = {'samples': [], 'spec': None, 'solution': None,
+                                    'last_frame_id': None}
+        self.calibration_lock = threading.Lock()
+        self.calibration_frame_id = 0
 
     def event(self, text, level='info'):
         self.events.appendleft({'time': datetime.now().strftime('%H:%M:%S'), 'text': text, 'level': level})
 
     def open_source(self, source):
+        with self.lock:
+            self.calibration_frame = None
+            self.calibration_frame_time = None
         if source == 'disconnected':
             capture, active = None, copy.deepcopy(self.settings)
         elif source == 'demo':
@@ -565,7 +607,7 @@ class LiveEngine:
             raise ValueError('Expected a JSON object')
         action = payload.get('action')
         if action not in ('source', 'detector', 'calibrate', 'reset_world', 'clear_tracks', 'record',
-                          'configure', 'scan_cameras', 'load_world'):
+                          'configure', 'scan_cameras', 'load_world', 'calibration_apply'):
             raise ValueError('Unknown action')
         if action == 'source':
             source = payload.get('source', '')
@@ -579,6 +621,8 @@ class LiveEngine:
             decimate = finite_number(payload.get('decimate', 1), 'decimate', 1, 4)
             payload = {'action': action, 'family': family, 'decimate': decimate}
         if action == 'configure':
+            payload = {'action': action, 'profile': validate_profile(payload.get('profile'))}
+        if action == 'calibration_apply':
             payload = {'action': action, 'profile': validate_profile(payload.get('profile'))}
         payload = dict(payload)
         if completion is not None:
@@ -605,10 +649,31 @@ class LiveEngine:
                     completion['started'] = True
             try:
                 action = p['action']
-                if action in ('source', 'detector', 'calibrate', 'reset_world', 'configure', 'load_world') and self.record:
+                if action in ('source', 'detector', 'calibrate', 'reset_world', 'configure', 'load_world', 'calibration_apply') and self.record:
                     self.stop_recording()
                 if action == 'configure':
                     self.configure(p['profile'])
+                elif action == 'calibration_apply':
+                    profile = p['profile']
+                    current = self.configuration()
+                    if not current['enabled'] or self.latest_acquired is None or time.monotonic() - self.latest_acquired > .5:
+                        raise ValueError('请先连接有新鲜画面的实物相机')
+                    if any(profile[k] != current[k] for k in ('source', 'enabled', 'width', 'height', 'fps', 'family', 'decimate', 'camera_controls')):
+                        raise ValueError('相机配置已改变，请刷新标定页面后重试')
+                    if self.source_name == 'demo':
+                        raise ValueError('演示画面不能保存实物标定')
+                    if profile['camera'] != current['camera']:
+                        with self.calibration_lock:
+                            spec = self.calibration_spec
+                            if (profile['camera'] != self.calibration_solution or spec is None
+                                    or self.source_name != spec[5] or self.source_generation != spec[6]):
+                                raise ValueError('内参与当前采样或相机不一致，请重新计算')
+                    self.settings.update({k: copy.deepcopy(profile[k]) for k in ('camera', 'tags', 'world')})
+                    self.active.update({k: copy.deepcopy(profile[k]) for k in ('camera', 'tags', 'world')})
+                    self.extrinsic, self.world_info, self.saved_world = None, None, None
+                    self.tracker = Tracker()
+                    self.persist_configuration()
+                    self.event('标定配置已保存，请重新锁定场地外参')
                 elif action == 'scan_cameras':
                     devices = discover_cameras(self.source_name, self.capture)
                     if completion is not None:
@@ -758,6 +823,10 @@ class LiveEngine:
                     raise ValueError('输入源没有新帧（相机断开或视频结束）；请重新连接')
                 self.latest_acquired = acquired
                 h, w = frame.shape[:2]
+                with self.lock:
+                    self.calibration_frame = frame
+                    self.calibration_frame_time = acquired
+                    self.calibration_frame_id = self.frame_id + 1
                 calibration_error = None
                 try:
                     self.camera = camera_at_size(self.active['camera'], w, h)
@@ -981,6 +1050,75 @@ def create_app(engine):
     @app.get('/')
     def index():
         return send_file(ROOT/'web/index.html')
+
+    @app.get('/calibration')
+    def calibration_page():
+        return send_file(ROOT/'web/calibration.html')
+
+    @app.get('/calibration/board.pdf')
+    def calibration_board():
+        return send_file(ROOT/'web/charuco_8x11_20mm_5x5_100.pdf', mimetype='application/pdf')
+
+    @app.post('/api/calibration')
+    def intrinsic_calibration():
+        try:
+            data = request.get_json(silent=True) or {}
+            action = data.get('action')
+            with engine.calibration_lock:
+                if action == 'reset':
+                    engine.calibration_session = {'samples': [], 'spec': None, 'solution': None,
+                                                  'last_frame_id': None}
+                    return jsonify(count=0)
+                if action == 'capture':
+                    board_spec, board = charuco_board_from_spec(data)
+                    cols, rows, square, marker, dictionary = board_spec
+                    with engine.lock:
+                        frame = engine.calibration_frame
+                        acquired = engine.calibration_frame_time
+                        frame_id = engine.calibration_frame_id
+                        source, generation = engine.source_name, engine.source_generation
+                        frame = None if frame is None else frame.copy()
+                    if not source.isdecimal() or frame is None or acquired is None or time.monotonic() - acquired > .5:
+                        raise ValueError('需要已连接且图像新鲜的实物相机')
+                    h, w = frame.shape[:2]
+                    spec = (cols, rows, square, marker, dictionary, source, generation, w, h)
+                    session = engine.calibration_session
+                    if session['spec'] is not None and spec != session['spec']:
+                        raise ValueError('标定板、相机或分辨率已变化，请先清空采样')
+                    if session['last_frame_id'] == frame_id:
+                        raise ValueError('请等待一帧新画面后再采集')
+                    corners, ids, _, _ = cv2.aruco.CharucoDetector(board).detectBoard(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+                    if ids is None or len(ids) < 8:
+                        raise ValueError('有效角点不足 8 个：请检查字典、尺寸、画面清晰度和光照')
+                    objects, pixels = board.matchImagePoints(corners, ids)
+                    if len(session['samples']) >= 40:
+                        raise ValueError('最多采集 40 张，请先计算或清空')
+                    session['spec'] = spec
+                    session['samples'].append((objects, pixels, acquired))
+                    session['solution'] = None
+                    session['last_frame_id'] = frame_id
+                    return jsonify(count=len(session['samples']), corners=len(ids), width=w, height=h,
+                                   frame_id=frame_id)
+                if action == 'solve':
+                    session = engine.calibration_session
+                    samples, spec = session['samples'], session['spec']
+                    if spec is None or len(samples) < 8:
+                        raise ValueError('至少采集 8 张不同位置、距离和倾斜角度的图片，建议 15–25 张')
+                    if (data.get('cols'), data.get('rows'), data.get('square_mm'), data.get('marker_mm'), data.get('dictionary')) != (spec[0], spec[1], spec[2] * 1000, spec[3] * 1000, spec[4]):
+                        raise ValueError('标定板参数与采样不一致，请恢复参数或清空采样')
+                    with engine.lock:
+                        if engine.source_name != spec[5] or engine.source_generation != spec[6]:
+                            raise ValueError('相机已改变，请清空采样后重新标定')
+                    camera, rms = solve_charuco_calibration(samples, (spec[7], spec[8]))
+                    session['solution'] = camera
+                    return jsonify(camera=camera, rms=float(rms), count=len(samples))
+                raise ValueError('不支持的标定操作')
+        except (ValueError, TypeError, cv2.error) as error:
+            return jsonify(error=str(error)), 400
+
+    @app.post('/api/calibration/apply')
+    def calibration_apply():
+        return execute_camera({'action': 'calibration_apply', 'profile': request.get_json(silent=True)})
 
     @app.get('/api/state')
     def state():

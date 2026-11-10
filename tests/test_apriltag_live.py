@@ -39,6 +39,37 @@ def test_native_detector_preserves_fractional_decode_sharpening():
     assert detector.tag_detector_ptr.contents.decode_sharpening == pytest.approx(0.25)
 
 
+def test_charuco_calibration_capture_and_solve():
+    engine = LiveEngine(load_settings(ROOT/'apriltag_live.json'), source='0')
+    client = create_app(engine).test_client()
+    board = cv2.aruco.CharucoBoard((8, 11), .02, .015,
+                                  cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100))
+    pattern = board.generateImage((480, 660))
+    request = {'cols': 8, 'rows': 11, 'square_mm': 20, 'marker_mm': 15,
+               'dictionary': 'DICT_5X5_100'}
+    assert client.post('/api/calibration', json={'action': 'solve', **request}).status_code == 400
+    src = np.float32([[0, 0], [479, 0], [479, 659], [0, 659]])
+    for i in range(8):
+        dst = np.float32([[90+i*4, 55+i*2], [570-i*7, 75+i*3],
+                          [585-i*3, 710-i*7], [70+i*9, 700-i*4]])
+        matrix = cv2.getPerspectiveTransform(src, dst)
+        image = cv2.warpPerspective(pattern, matrix, (700, 800), borderValue=255)
+        engine.calibration_frame = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        engine.calibration_frame_time = time.monotonic()
+        engine.calibration_frame_id = i + 1
+        response = client.post('/api/calibration', json={'action': 'capture', **request})
+        assert response.status_code == 200, response.json
+        if i == 0:
+            duplicate = client.post('/api/calibration', json={'action': 'capture', **request})
+            assert duplicate.status_code == 400
+            assert '新画面' in duplicate.json['error']
+    assert client.post('/api/calibration', json={'action': 'solve', **{**request, 'cols': 9}}).status_code == 400
+    result = client.post('/api/calibration', json={'action': 'solve', **request})
+    assert result.status_code == 200, result.json
+    assert math.isfinite(result.json['rms'])
+    assert result.json['camera']['image_width'] == 700
+
+
 @pytest.fixture(scope='module')
 def scene():
     source = DemoSource(load_settings(ROOT/'apriltag_live.json'))

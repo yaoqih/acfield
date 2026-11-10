@@ -9,6 +9,7 @@
     "docs:preview": "vitepress preview docs --host 127.0.0.1",
     "docs:test": "playwright test",
     "console:test": "playwright test --config playwright.console.config.ts",
+    "vision:test": "playwright test --config playwright.vision.config.ts",
     "figures:render": "node hardware_design/figures/render.mjs"
   },
   "devDependencies": {
