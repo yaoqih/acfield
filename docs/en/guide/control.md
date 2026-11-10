@@ -23,7 +23,7 @@ Hardware mode is refused unless `--hardware` is explicit after calibration and a
 
 `GET /api/state` returns the arena, robots, events and camera state. Identity is `robots[i].config.id` and pose is `x/y/theta`. Also inspect arming, online status and localization. The runtime API and actual responses define the fields.
 
-`GET /api/health` reports `ready` for all configured robots meeting binding, online and localization prerequisites. This does not mean they are armed or physically accepted.
+`GET /api/health` reports `ready` for all configured robots meeting binding, online and fault prerequisites; `allow_unlocalized_control` determines whether fresh localization is required. This does not mean they are armed or physically accepted.
 
 ## Joint actions {#joint-actions}
 

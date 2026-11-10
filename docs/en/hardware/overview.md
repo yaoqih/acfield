@@ -112,7 +112,7 @@ STLs, parameters and build/audit sources are in [hardware_design/print_v11](http
 | Category | V11 reference | Per robot |
 | --- | --- | --- |
 | Control | General Driver for Robots | 1 |
-| Drive | A12 12 V 1:150 encoder motors and brackets | 2 |
+| Drive | A12 12 V 1:150 encoder motors and brackets (historical V11 nominal reference) | 2 |
 | Ground contact | 34 mm wheels, CY12B ball caster | 2 + 1 |
 | Power | 3S battery, fused harness, power switch | Per wiring plan |
 | Structure | Two prints, 25/50 mm M3 standoffs and fasteners | See manufacturing list |

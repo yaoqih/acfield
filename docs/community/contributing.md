@@ -15,10 +15,10 @@ npm run docs:build
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 
-# 后端
-cd robot_server
+# Python 与后端检查（从仓库根目录）
 uv sync --python 3.12 --extra test
-uv run pytest -q
+uv run --python 3.12 --extra test pytest -q
+uv run --python 3.12 --extra test pytest sdk/python/tests -q
 ```
 
 定位、固件和跨端依赖见[故障排查](../guide/troubleshooting)。CI 要求真实固件解析器测试实际执行。实车验证仍需物理测量，不能以绿色构建替代。

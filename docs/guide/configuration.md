@@ -1,77 +1,87 @@
 # 运行与配置
 
-主控服务默认本机监听、演示模式。真实设备模式需要明确指定，且不会同时运行内置模拟器。
+启动方式决定初值：`./run.sh` / `.\run.bat` 默认使用局域网实车模式，并允许无定位手动控制；直接运行 `python -m backend.app` 默认是本机演示。无硬件运行请使用[快速开始](./quickstart)中的显式变量。
 
-网页顶部可在模拟数据与真实设备之间切换。切换会停车并锁定全车；真实模式仍需设备绑定和有效的实景定位。该选择只影响当前运行，重启后由 `ROBOT_MODE` 决定。手机与服务器接入同一网络后，可使用局域网地址打开控制台，通过触控摇杆控制选中的小车；松手停车。
+网页顶部可切换模拟数据与真实设备。切换会停车、全局停止并重建会话；释放全局停止后仍须重新解锁。选择只影响当前运行，重启由 `ROBOT_MODE` 决定。手机遥控入口为 `http://服务器局域网IP:8000/mobile`。
 
 ## 主控环境变量 {#server-environment-variables}
 
-| 变量 | 默认 | 用途 |
+下表区分直接启动后端与启动脚本的默认值；已有环境变量优先。
+
+| 变量 | 直接启动后端 / 启动脚本默认 | 用途 |
 | --- | --- | --- |
-| `ROBOT_MODE` | `demo` | `demo` 或 `hardware` |
-| `ROBOT_HOST` | `127.0.0.1` | HTTP 监听地址 |
-| `ROBOT_PORT` | `8000` | HTTP 端口 |
-| `ROBOT_UDP_HOST` | `127.0.0.1` | 设备监听地址，局域网接入常设为 `0.0.0.0` |
-| `ROBOT_UDP_PORT` | `9999` | UDP 端口 |
-| `ROBOT_VISION_URL` | 未设置 | 显式覆盖保存的视觉服务 URL |
-| `ROBOT_START_VISION` | `1` | 设为 `0` 时不启动本地视觉服务 |
-| `ROBOT_VISION_PORT` | `8765` | 脚本启动的本地视觉服务端口 |
-| `ROBOT_VISION_RUNTIME_CONFIG` | `output/vision-settings.json` | 脚本启动的视觉服务配置文件 |
+| `ROBOT_MODE` | `demo` / `hardware` | `demo` 不打开设备 UDP，`hardware` 不运行模拟器 |
+| `ROBOT_HOST` | `127.0.0.1` / `0.0.0.0` | 控制 HTTP 监听地址 |
+| `ROBOT_PORT` | `8000` | 控制 HTTP 端口 |
+| `ROBOT_UDP_HOST` | `127.0.0.1` / `0.0.0.0` | 设备 UDP 监听地址 |
+| `ROBOT_UDP_PORT` | `9999` | 设备 UDP 端口 |
+| `ROBOT_ALLOW_UNLOCALIZED_CONTROL` | `0` / `1` | `1` 跳过定位新鲜度、场地边界与车距检查；修改后需重启 |
+| `ROBOT_VISION_URL` | 未设置 | 显式覆盖数据库中保存的视觉服务 URL |
+| `ROBOT_DEFAULT_VISION_URL` | 未设置 / `http://127.0.0.1:8765` | 没有保存地址时的后备值；脚本随视觉端口调整 |
+| `ROBOT_START_VISION` | 仅脚本使用，`1` | `0` 不启动本地视觉服务 |
+| `ROBOT_VISION_PORT` | 仅脚本使用，`8765` | 本地视觉端口 |
+| `ROBOT_VISION_RUNTIME_CONFIG` | 仅脚本使用，未设置 | 覆盖视觉配置路径；默认文件位于仓库根目录 `output/vision-settings.json` |
+| `ROBOT_NTP_SERVER` | `pool.ntp.org` | 每 300 s 尝试校时；空字符串禁用；离线沿用本机时间映射 |
 | `ROBOT_DB` | `robot_server/data/config.sqlite3` | 持久配置 |
-| `ROBOT_LOG_DIR` | 数据库旁的 `runs/` | 运行日志目录 |
+| `ROBOT_LOG_DIR` | 数据库旁的 `runs/` | 主控运行日志 |
+
+无定位模式仍要求设备绑定、心跳新鲜、无故障、显式解锁、控制权及有限指令期限。它会关闭依赖位置的保护，不能据此判断场地定位链路已经可用。需要定位保护的实验显式设 `ROBOT_ALLOW_UNLOCALIZED_CONTROL=0`；当前值可在 `/api/state` 的 `allow_unlocalized_control` 查看。
 
 ## 启动地址与局域网访问 {#startup-addresses-and-lan-access}
 
-通过 `./run.sh` 或 `python -m backend.app` 启动时，终端会显示控制台地址、API 文档地址和检测到的主机 IPv4。默认只监听本机；另一台电脑需要连接 SDK 时，在 `robot_server/` 运行：
+在 `robot_server/` 启动时，终端会显示控制台、API 和检测到的主机 IPv4。脚本默认已监听局域网；若只需让其他电脑访问演示服务，可运行：
 
 ```bash
-ROBOT_HOST=0.0.0.0 ./run.sh
+ROBOT_MODE=demo ROBOT_HOST=0.0.0.0 ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-然后把输出的 `LAN / SDK` 地址传给 `Client("http://主机IP:8000")`。IPv4 来自主机名解析和路由表检测，可能包含 VPN 地址；选择客户端实际可达的实验网络地址。打印检测 IP 不会自动修改监听地址。
+把可达的 `LAN / SDK` 地址传给 `Client("http://主机IP:8000")`，手机在该地址后加 `/mobile`。IPv4 来自主机名解析和路由表，可能包含 VPN 地址。打印检测 IP 不会修改监听地址。直接启动后端时，`ROBOT_HOST=0.0.0.0` 才会开放控制 HTTP 的局域网监听。
 
 ## 相机视觉服务 {#camera-vision-service}
 
-在 `robot_server/` 运行 `./run.sh` 会同时启动主控和本机视觉服务，并在退出时关闭该脚本启动的视觉进程。首次启动默认不连接相机；保存配置后，重启会恢复上次的连接状态。模拟模式下也可以配置真实相机，但车辆位置仍来自模拟器。视觉端口被占用时可设置 `ROBOT_VISION_PORT`；使用独立或远程视觉服务时设置 `ROBOT_START_VISION=0`，并在网页填写其地址。
+`./run.sh` / `.\run.bat` 同时启动主控和本机视觉服务，退出时关闭其启动的视觉进程；`python -m backend.app` 不启动视觉。首次启动不连接相机，之后恢复已保存的连接状态。演示模式可以配置实物相机，但小车位置仍来自模拟器。
 
-在主控「实验配置 → 相机与视觉」中读取服务配置，刷新设备列表并选择相机。主控和视觉服务可以在不同电脑上运行；填写的是主控服务器可访问的视觉服务地址，摄像头 ID 则属于视觉服务所在的电脑。采集分辨率和帧率是请求值，应对照页面显示的实际图像尺寸和帧率调整。
+在主控「实验配置 → 相机与视觉」中读取配置、刷新设备并选择相机。摄像头 ID 属于运行视觉服务的电脑。采集分辨率与帧率是请求值，应核对实际图像尺寸与采集帧率。内参与场地外参按[视觉定位与标定](./localization#calibration-order)操作；独立标定页提供 ChArUco 内参采集与求解。
 
-内参必须来自当前相机和分辨率的实测标定。标签边长取 AprilTag 黑色外框实测尺寸，安装高度取场地地面到标签中心的实测高度。按场地原点填写四个固定标签的 ID 和坐标，确认测量后保存并连接相机；全部固定标签同时可见时，执行「标定并保存」。切换相机或修改内参、尺寸和坐标后需重新标定。重启后应核验已保存的场地标定。
+修改 `ROBOT_VISION_PORT` 可避开占用。使用独立服务时设 `ROBOT_START_VISION=0`，并保存其 URL。原版 `apriltag_live.py` 只监听 `127.0.0.1`；跨电脑使用需要另行设置受控转发或部署方式，修改 `ROBOT_HOST` 不会开放视觉服务。
 
-视觉相机配置保存在仓库根目录 `output/vision-settings.json`；主控配置存于 `robot_server/data/config.sqlite3`。旧的 `apriltag_live.json` 仍用于初始默认值，界面运行配置不会覆盖它。请备份相机内参和固定标签实测坐标。
+视觉配置默认保存在仓库根目录 `output/vision-settings.json`；自定义相对路径按视觉进程工作目录解析（启动脚本为 `robot_server/`）。`apriltag_live.json` 提供初始默认值，运行界面不会覆盖它。预览宽度/帧率只影响 MJPEG 显示，重启恢复默认，不改变采集与检测配置。
+
+独立标定前锁定所有小车；标定后在主控重新读取相机配置再保存，避免用旧草稿覆盖新内参。备份运行配置中的内参、实测坐标与标签尺寸；重启后使用「核验并加载」重新验证场地外参。
 
 ## 真实模式示例 {#hardware-mode-example}
 
-完成硬件与相机标定后，在 `robot_server/` 运行：
+完成硬件验收与相机标定后，在 `robot_server/` 运行定位保护模式：
 
 ```bash
-ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ./run.sh
+ROBOT_MODE=hardware ROBOT_HOST=0.0.0.0 ROBOT_UDP_HOST=0.0.0.0 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-默认视觉服务地址为 `http://127.0.0.1:8765`。网页填写的服务地址将保存在主控配置中；显式设置 `ROBOT_VISION_URL` 会在启动时覆盖该地址。
+`./run_hardware.sh` / `.\run_hardware.bat` 显式选择实车模式，但仍继承主脚本的无定位默认值；需要定位保护时也必须设置该变量为 `0`。Windows 在运行脚本前用 `$env:ROBOT_ALLOW_UNLOCALIZED_CONTROL = "0"` 设置。
 
 ## 车辆与场地配置 {#robot-and-arena-configuration}
 
-通过控制台修改，或使用 `GET/PUT /api/config`。配置包括场地大小、车辆身份、标签 ID、车体轮廓、控制点/标签偏移和速度限制。保存前所有车必须锁定；保存会停车并重建会话。
+通过控制台或 `GET/PUT /api/config` 配置场地、车辆身份、标签 ID、车体轮廓、控制点/标签偏移和速度限制。保存前所有车必须锁定；保存会停车并重建会话。
 
-真实模式保存时，控制台把小车的 AprilTag ID、黑框边长和安装高度同步到视觉服务。航向修正在主控端填写。黑框边长不包括白色边缘；95 mm 亚克力候选标签名义黑框为 72 mm、成品 80 mm，旧 V11 为 104/130 mm。现有默认配置不会随硬件方案自动更改。安装高度从场地地面量至标签中心并实测填写。不同相机或视觉服务共享同一配置时，请确保实验期间只有主控服务管理该视觉配置。
+真实模式保存时，控制台把小车的 AprilTag ID、黑框边长和安装高度同步到视觉服务。航向修正在主控端填写。95 mm 亚克力候选标签名义黑框 72 mm、成品 80 mm，旧 V11 为 104/130 mm。安装高度从地面量到标签中心。现有配置不会随硬件方案自动迁移；共享视觉服务时确保只有一个主控管理其配置。
 
-默认车体包络约 200 × 160 mm，是保守初值，并非 V11 的实测外廓。不要只按打印底盘大小缩小包络，应把轮、标签板及安装偏移一起测量。
+新建车辆的主控限速为 `0.10 m/s`、`0.30 rad/s`，实际取车辆配置与设备报告限制的较小值；已有数据库保留原值。默认约 200 × 160 mm 的车体包络是保守初值，需测量包含轮、标签板与安装偏移的实际外廓。
 
 ## 控制权与网络 {#ownership-and-networking}
 
-解锁和非零动作使用同一 `X-Control-ID`。它用于控制权互斥，不是用户身份认证。不同页面或策略不能覆盖同车正在执行的非零命令，但可以请求停车。
+HTTP 解锁和非零动作使用同一 `X-Control-ID`，WebSocket 控制的 `owner` 也须与其一致。其他页面或策略不能覆盖同车的非零运动，但可以请求停车。控制 ID 只用于互斥。
 
-初版面向本机和可信实验局域网，没有账号鉴权或 UDP 身份认证。GitHub Pages 只发布静态文档，不托管控制服务，也不会通过网站直接控制实验室小车。
+系统面向本机和可信实验局域网，没有账号鉴权或 UDP 身份认证。GitHub Pages 只发布静态文档。
 
 ## 开发模式 {#development-mode}
 
-```bash
-# 后端，robot_server/ 内
-uv run --python 3.12 --extra test pytest -q
+以下均在仓库根目录执行：
 
-# 前端，仓库根目录
+```bash
+uv run --python 3.12 --extra test pytest -q
+uv run --python 3.12 --extra test pytest sdk/python/tests -q
 npm --prefix robot_server/frontend run dev
 ```
 
-前端开发服务器代理 API 到本机 8000。使用单进程、单 worker；重计算策略放到外部进程。
+前端开发服务器代理 API 到本机 8000。已有 `frontend/dist/index.html` 时启动脚本不会自动重建；修改源码后运行 `npm --prefix robot_server/frontend run build`。后端使用单进程、单 worker，重计算策略放到外部进程。

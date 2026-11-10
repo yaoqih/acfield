@@ -1,77 +1,87 @@
 # Configuration
 
-The server defaults to a local listener and demo mode. Hardware mode must be selected explicitly and does not run the built-in simulator.
+Startup defaults depend on the entry point. `./run.sh` / `.\run.bat` select LAN hardware mode and allow manual control without localization. Direct `python -m backend.app` selects a local demo. For hardware-free use, follow the explicit overrides in [quick start](./quickstart).
 
-Use the console's mode selector to switch the current session between simulated data and hardware. Switching stops and locks all robots; hardware still requires device binding and valid live localization. A restart uses `ROBOT_MODE`. On a phone on the same network, open the console's LAN address and use the touch joystick to control the selected robot; releasing it stops the robot.
+The console can switch between demo and hardware for the current process. Switching stops robots, activates global stop and replaces the session. Release global stop and arm again before motion. A restart uses `ROBOT_MODE`. The phone remote is at `http://SERVER_LAN_IP:8000/mobile`.
 
 ## Server environment variables {#server-environment-variables}
 
-| Variable | Default | Purpose |
+Defaults below distinguish direct backend startup from the launch scripts. Existing environment values take precedence.
+
+| Variable | Direct backend / launch-script default | Purpose |
 | --- | --- | --- |
-| `ROBOT_MODE` | `demo` | `demo` or `hardware` |
-| `ROBOT_HOST` | `127.0.0.1` | HTTP bind address |
-| `ROBOT_PORT` | `8000` | HTTP port |
-| `ROBOT_UDP_HOST` | `127.0.0.1` | Device bind address; often `0.0.0.0` for LAN devices |
+| `ROBOT_MODE` | `demo` / `hardware` | Demo opens no device UDP; hardware runs no simulator |
+| `ROBOT_HOST` | `127.0.0.1` / `0.0.0.0` | Control HTTP bind address |
+| `ROBOT_PORT` | `8000` | Control HTTP port |
+| `ROBOT_UDP_HOST` | `127.0.0.1` / `0.0.0.0` | Device UDP bind address |
 | `ROBOT_UDP_PORT` | `9999` | Device UDP port |
-| `ROBOT_VISION_URL` | Unset | Explicitly overrides the saved vision service URL |
-| `ROBOT_START_VISION` | `1` | Set to `0` to skip starting local vision |
-| `ROBOT_VISION_PORT` | `8765` | Local vision service port started by the script |
-| `ROBOT_VISION_RUNTIME_CONFIG` | `output/vision-settings.json` | Vision settings file used by the script |
+| `ROBOT_ALLOW_UNLOCALIZED_CONTROL` | `0` / `1` | `1` skips pose freshness, arena boundary and robot-spacing checks; restart after changing |
+| `ROBOT_VISION_URL` | Unset | Explicit override of the saved vision URL |
+| `ROBOT_DEFAULT_VISION_URL` | Unset / `http://127.0.0.1:8765` | Fallback only without a saved URL; scripts follow the vision port |
+| `ROBOT_START_VISION` | Script only, `1` | `0` skips starting local vision |
+| `ROBOT_VISION_PORT` | Script only, `8765` | Local vision port |
+| `ROBOT_VISION_RUNTIME_CONFIG` | Script only, unset | Override the vision profile path; default is repository-root `output/vision-settings.json` |
+| `ROBOT_NTP_SERVER` | `pool.ntp.org` | Attempt synchronization every 300 s; empty disables it; offline operation retains the local-time mapping |
 | `ROBOT_DB` | `robot_server/data/config.sqlite3` | Persistent configuration |
-| `ROBOT_LOG_DIR` | `runs/` beside the database | Runtime logs |
+| `ROBOT_LOG_DIR` | `runs/` beside the database | Control-server logs |
+
+Unlocalized control still requires binding, fresh telemetry, no fault, explicit arming, ownership and finite command lifetimes. Position-based protection is disabled; operation in this mode does not validate localization. Set `ROBOT_ALLOW_UNLOCALIZED_CONTROL=0` for experiments that require it. Inspect `allow_unlocalized_control` in `/api/state` for the active value.
 
 ## Startup addresses and LAN access {#startup-addresses-and-lan-access}
 
-`./run.sh` and `python -m backend.app` print console/API URLs and detected host IPv4 addresses. The default listener is local only. To connect an SDK on another computer, run inside `robot_server/`:
+Startup inside `robot_server/` prints console/API URLs and detected host IPv4 addresses. Scripts already bind to the LAN by default. To share only a demo server with another computer, run:
 
 ```bash
-ROBOT_HOST=0.0.0.0 ./run.sh
+ROBOT_MODE=demo ROBOT_HOST=0.0.0.0 ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-Pass a printed `LAN / SDK` URL to `Client("http://HOST_IP:8000")`. Addresses come from hostname resolution and the routing table and may include VPN interfaces. Select an address reachable from the client network. Printing an address does not change the listener.
+Pass a reachable `LAN / SDK` URL to `Client("http://HOST_IP:8000")`; append `/mobile` for the phone remote. Hostname and routing-table detection may include VPN interfaces. Printing an address does not change the listener. For direct backend startup, set `ROBOT_HOST=0.0.0.0` to enable LAN control HTTP access.
 
 ## Camera vision service {#camera-vision-service}
 
-Run `./run.sh` in `robot_server/` to start the control and local vision services together; the script stops its vision process on exit. The camera is disconnected on the first start, and subsequent starts restore its saved connection state. Demo mode can configure a real camera while robot positions remain simulated. Set `ROBOT_VISION_PORT` if the port is in use. To use an independent or remote vision service, set `ROBOT_START_VISION=0` and enter its address in the console.
+`./run.sh` / `.\run.bat` start both services and close their vision process on exit. `python -m backend.app` does not start vision. The first launch leaves the camera disconnected; later launches restore the saved connection state. A demo server can configure a physical camera while robot positions remain simulated.
 
-In the control console, open **Experiment settings → Camera and vision**, read the service profile, refresh devices and select a camera. The two services may run on separate computers: enter an address reachable from the control server, while the camera index belongs to the computer running vision. Capture width and frame rate are requests; check the reported image dimensions and actual frame rate.
+Under **Experiment settings → Camera and vision**, read the profile, refresh devices and select a camera. Camera IDs belong to the vision computer. Capture resolution and frame rate are requests; inspect actual image dimensions and capture rate. Follow [localization and calibration](./localization#calibration-order) for intrinsics and world extrinsics. The separate calibration page provides ChArUco capture and solving.
 
-Use measured intrinsics for the current camera and resolution. Measure tag side length at the black border and mounting height from the arena floor to the tag centre. Enter the IDs and coordinates of four fixed tags relative to the arena origin. Save and connect the camera, then choose **Calibrate and save** when all configured fixed tags are visible. Switching cameras or editing intrinsics, dimensions or coordinates requires recalibration. Verify the saved world calibration after restarting.
+Change `ROBOT_VISION_PORT` if occupied. For an independent service, set `ROBOT_START_VISION=0` and save its URL. The stock `apriltag_live.py` binds only to `127.0.0.1`; using it across computers requires controlled forwarding or a separate deployment arrangement. `ROBOT_HOST` affects the control service only.
 
-Vision configuration is stored in the repository root at `output/vision-settings.json`; control settings are stored in `robot_server/data/config.sqlite3`. `apriltag_live.json` remains a source of initial defaults and is not overwritten by runtime edits. Back up physical intrinsics and measured tag coordinates.
+The default profile is repository-root `output/vision-settings.json`. A custom relative path is resolved from the vision process working directory (`robot_server/` for the scripts). `apriltag_live.json` supplies initial defaults and is not overwritten by runtime edits. Preview width/rate affect MJPEG display only, reset on restart and do not change capture or detection settings.
+
+Disarm all robots before direct calibration. Afterwards, reload the camera profile in the control console before saving so an old draft cannot overwrite new intrinsics. Back up measured intrinsics, coordinates and tag sizes. Use **Verify and load** after restarting to validate world extrinsics again.
 
 ## Hardware-mode example {#hardware-mode-example}
 
-After hardware and camera calibration, run inside `robot_server/`:
+After hardware acceptance and camera calibration, start inside `robot_server/` with localization protection enabled:
 
 ```bash
-ROBOT_MODE=hardware ROBOT_UDP_HOST=0.0.0.0 ./run.sh
+ROBOT_MODE=hardware ROBOT_HOST=0.0.0.0 ROBOT_UDP_HOST=0.0.0.0 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-The default vision address is `http://127.0.0.1:8765`. The console saves the vision service address; setting `ROBOT_VISION_URL` explicitly overrides it at startup.
+`./run_hardware.sh` / `.\run_hardware.bat` select hardware explicitly but inherit the main script's unlocalized default; also set the variable to `0` when localization protection is required. In Windows PowerShell, set `$env:ROBOT_ALLOW_UNLOCALIZED_CONTROL = "0"` before launching.
 
 ## Robot and arena configuration {#robot-and-arena-configuration}
 
-Use the console or `GET/PUT /api/config`. Settings include arena size, identities, tag IDs, body outlines, control-point/tag offsets and velocity limits. All robots must be disarmed before saving. A save stops robots and replaces the control session.
+Use the console or `GET/PUT /api/config` for arena size, identities, tag IDs, body outlines, control-point/tag offsets and velocity limits. All robots must be disarmed before saving. Saving stops robots and replaces the session.
 
-On hardware-mode saves, the console synchronizes each robot's AprilTag ID, black-border size and mounting height to the vision service. Set heading correction in the control console. The compact acrylic candidate uses a nominal 72 mm black square and 80 mm finished label; older V11 uses 104/130 mm. Existing defaults do not change automatically with the hardware. Measure mounting height from the arena floor to the tag centre. Ensure only one control service manages shared vision configuration during an experiment.
+Hardware saves synchronize robot tag IDs, black-border sizes and mounting heights to vision. Set heading correction in the control server. The compact acrylic candidate uses nominal 72 mm black borders and 80 mm finished labels; V11 uses 104/130 mm. Measure height from the floor to the tag centre. Saved settings do not migrate with hardware changes. Let only one control server manage a shared vision profile.
 
-The default body envelope is approximately 200 × 160 mm, a conservative initial value rather than a measured V11 outline. Include wheels, the tag and mounting offsets when measuring the full envelope.
+New robot configurations default to `0.10 m/s` and `0.30 rad/s`. Effective limits are the lower of configuration and device reports; existing databases retain saved values. The approximately 200 × 160 mm body envelope is a conservative initial value. Measure the full outline including wheels, tag board and mounting offsets.
 
 ## Ownership and networking {#ownership-and-networking}
 
-Use the same `X-Control-ID` for arming and nonzero commands. It provides exclusive control, not identity authentication. Another page or policy cannot override a robot's nonzero motion but may request a stop.
+Use one `X-Control-ID` for HTTP arming and nonzero commands, and the same value for WebSocket `owner`. Other pages or policies cannot overwrite nonzero motion but may stop a robot. Control IDs provide mutual exclusion only.
 
-The initial system targets a local computer or trusted experiment LAN, with no account authentication or authenticated UDP transport. GitHub Pages serves static documentation only; it does not host the control server or control laboratory robots.
+The service targets local computers and trusted experiment LANs without account authentication or authenticated UDP. GitHub Pages hosts static documentation only.
 
 ## Development mode {#development-mode}
 
-```bash
-# Backend, inside robot_server/
-uv run --python 3.12 --extra test pytest -q
+Run all commands from the repository root:
 
-# Frontend, from the repository root
+```bash
+uv run --python 3.12 --extra test pytest -q
+uv run --python 3.12 --extra test pytest sdk/python/tests -q
 npm --prefix robot_server/frontend run dev
 ```
 
-The frontend development server proxies the API to local port 8000. Use a single process and worker. Run expensive policies in a separate process.
+The frontend development server proxies the API to local port 8000. Launch scripts do not rebuild an existing `frontend/dist/index.html`; after editing source, run `npm --prefix robot_server/frontend run build`. Use one backend process and worker; run expensive policies separately.

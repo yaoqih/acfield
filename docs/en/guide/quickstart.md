@@ -1,6 +1,6 @@
 # Quick start
 
-Start with the hardware-free demo to check the console and API. The default mode does not open the device UDP transport.
+Explicitly select the hardware-free demo to check the console and API. Demo mode does not open the device UDP transport. The launch scripts default to LAN hardware operation; the commands below override those defaults.
 
 ## Requirements {#requirements}
 
@@ -15,10 +15,11 @@ uv sync --python 3.12 --extra test
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-./run.sh
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-Open the [console](http://127.0.0.1:8000). For later launches, run `./run.sh` inside `robot_server/`.
+Open the [console](http://127.0.0.1:8000). For later launches, repeat the same environment overrides inside `robot_server/`; bare `./run.sh` uses the hardware defaults.
 
 Windows PowerShell:
 
@@ -27,10 +28,14 @@ git clone https://github.com/yaoqih/acfield.git
 cd acfield
 uv sync --python 3.12 --extra test
 cd robot_server
+$env:ROBOT_MODE = "demo"
+$env:ROBOT_HOST = "127.0.0.1"
+$env:ROBOT_UDP_HOST = "127.0.0.1"
+$env:ROBOT_ALLOW_UNLOCALIZED_CONTROL = "0"
 .\run.bat
 ```
 
-The first launch installs frontend dependencies and builds the page when needed. For later launches run `.\run.bat` in `robot_server`; press Ctrl+C to stop both services. Camera and device networking require validation on the actual Windows machine.
+The first launch installs frontend dependencies and builds the page when needed. For later launches run `.\run.bat` in `robot_server` in the same PowerShell session; set the variables again in a new terminal. Press Ctrl+C to stop both services. Camera and device networking require validation on the actual Windows machine.
 
 Without uv:
 
@@ -41,7 +46,8 @@ python3 -m venv .venv
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-./run.sh
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
 The commands without uv above target macOS/Linux. On Windows, use the uv instructions to share the root `.venv`.
@@ -53,7 +59,7 @@ The commands without uv above target macOS/Linux. On Windows, use the uv instruc
 3. Press Space outside an input, or use global stop, to lock every robot.
 4. After releasing global stop, explicitly arm the robot again before moving.
 
-When the page loses focus or becomes hidden it stops renewing commands and requests a stop. The server independently checks expiry. Joystick commands renew every 90 ms with a 300 ms TTL.
+When the page loses focus or becomes hidden it stops renewing commands and requests a stop. The server independently checks expiry. The joystick sends the latest target over an ordered WebSocket every 25 ms with a 300 ms TTL. Hardware operation waits for browser and device clock synchronization. Demo mode applies targets immediately and cannot establish physical latency.
 
 ## Inspect the API {#inspect-the-api}
 
@@ -79,6 +85,8 @@ Open the [interactive API documentation](http://127.0.0.1:8000/docs). With the s
 The example refuses hardware mode by default. Real robots require explicit `--hardware` and prior [bring-up](../hardware/bringup).
 
 Without uv, use `python -m pip install -e ./sdk/python` in your active environment, then run the example with that same Python. See the [Python SDK](./python-sdk) for installation into an independent algorithm environment.
+
+For phone control, use `http://SERVER_LAN_IP:8000/mobile`. The demo commands bind locally; follow [configuration](./configuration#startup-addresses-and-lan-access) to enable LAN access.
 
 ## Next steps {#next-steps}
 

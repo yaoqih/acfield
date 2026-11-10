@@ -19,7 +19,8 @@ uv sync --python 3.12 --extra test
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-./run.sh
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
 打开 http://127.0.0.1:8000。点击小车、解锁并按住方向按钮。全局停止会锁定所有车，释放后需重新解锁。服务保持运行时，从仓库根目录执行：

@@ -22,13 +22,15 @@ These decisions record the current choice, its costs and the evidence that could
 
 **Choice:** Policies use inspectable HTTP state/joint-action endpoints. The server exchanges compact JSON UDP packets with ESP32 devices.
 
+The console uses an ordered bidirectional WebSocket for targets, synchronization and state; the synchronous HTTP SDK retains explicit request semantics for policies.
+
 **Reason:** Message volume is small at the reference scale, integration is approachable and many languages can call the API. Sessions, sequences, telemetry echoes and TTL address common reordering and stale commands.
 
 **Cost and reconsideration:** HTTP is not hard real time; UDP has no delivery guarantee or authentication. Higher frequencies, precise synchronization, ROS integration or different networking requirements should motivate measured changes while keeping failure behavior testable.
 
 ## D04 · Devices check motion expiry independently {#d04-devices-check-motion-expiry-independently}
 
-**Choice:** A 50 Hz device task checks TTL and controls wheel speed. Networking and I²C run in another task.
+**Choice:** A 100 Hz device task checks TTL and controls wheel speed. Networking and I²C run in another task.
 
 **Reason:** If the server, network or policy stops updating, each robot needs local logic to converge to a stop.
 
@@ -45,6 +47,8 @@ These decisions record the current choice, its costs and the evidence that could
 ## D06 · Make protective actions visible {#d06-make-protective-actions-visible}
 
 **Choice:** Server protection checks boundaries, spacing, localization and device state, recording clamps and rejections.
+
+`ROBOT_ALLOW_UNLOCALIZED_CONTROL=1` skips pose freshness, boundary and spacing checks and is enabled by the launch scripts. Experiments requiring these checks must explicitly set `0` and record the effective configuration.
 
 **Reason:** Protection makes initial integration failures more manageable and provides evidence for interpreting experiments.
 

@@ -27,9 +27,13 @@ v_right = v + omega × wheel_track / 2
 
 Planar velocity vectors, goals and trajectories require an explicit tracker. Record inference time, observation age and action lifetime, reject stale results, and avoid continuously renewing old commands to hide blocked inference.
 
+Distinguish mapped Unix milliseconds, snapshot seconds and local monotonic clocks. Measure synchronization error, queue wait, sample-to-execution and execution-to-feedback separately. The page's server-update age measures only time since local receipt. See [device timing](../reference/protocol) for periods and scheduling windows.
+
 ## Report protective intervention {#report-protective-intervention}
 
 Distinguish policy requests, clamped/rejected actions, device acknowledgments and physical motion. If protection repeatedly prevents collisions, report both task performance and the protection layer's contribution.
+
+Record the effective `allow_unlocalized_control`: launch scripts default to `1`, disabling pose freshness, boundary and spacing checks. Set `0` when these constraints are required; hardware mode alone does not establish that protection is enabled.
 
 Record success, failure and aborted runs separately. Device faults, localization loss or incomplete logs need predefined inclusion rules; do not simply delete unsuccessful runs.
 

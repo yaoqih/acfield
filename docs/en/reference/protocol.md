@@ -6,7 +6,7 @@ Devices use the explicit-arming revision of UDP JSON `version=1`. Pair the serve
 
 `robot_id` is persistent; `boot_id` changes on each boot. Telemetry and commands have separate increasing sequence numbers. The server's `session` identifies a control session. Devices accept only commands matching boot, session and sequence rules.
 
-Devices send telemetry at approximately 20 Hz to server UDP port 9999, and the server replies to the source endpoint. Four identities are provided, `car-01` through `car-04`. Do not flash every board with the same identity.
+Devices send telemetry at approximately 40 Hz to server UDP port 9999, and the server replies to the source endpoint. Four identities are provided, `car-01` through `car-04`. Do not flash every board with the same identity.
 
 ## State transitions {#state-transitions}
 
@@ -53,18 +53,31 @@ New session binding must echo telemetry no more than 200 ms old and newer than t
 
 ## Telemetry {#telemetry}
 
-Reports identity, boot ID, sequence, `device_state`, firmware, `ack_session/ack_seq`, voltage, encoder counts, wheel speeds, limits, fault and stop reason. Unknown measurements are `null` or omitted.
+Reports identity, boot ID, sequence, `device_state`, firmware, `ack_session/ack_seq`, `applied_seq`, `sampled_at_ms`, `clock_synced`, `clock_uncertainty_ms`, voltage, encoder counts, wheel speeds, limits, fault and stop reason. `ack_seq` means protocol acceptance; `applied_seq` means a control update was processed. Neither proves physical motion. `sampled_at_ms` is telemetry construction time; wheel speeds come from the latest control cycle. Unknown measurements are `null` or omitted.
 
 Parsing/state-machine sources are `esp32_software/firmware/include/command_wire.h` and `protocol.h`. Cross-component tests compile the actual parser and feed it server-generated packets.
+
+## Clock synchronization and scheduling {#clock-synchronization-and-scheduling}
+
+At startup the server maps local UTC to monotonic time, tries NTP every 300 s by default and slews corrections at at most 1 ms/s without changing the operating-system clock. Offline operation works, but consistent time does not establish accurate UTC. Inspect source and pending correction through `GET /api/time`. TTL, heartbeat and loss checks use monotonic time.
+
+ESP32 over UDP and browsers over WebSocket initiate four-timestamp `time_sync` exchanges every second, preferring low-RTT samples. Devices reject scheduled motion after 15 s without synchronization or estimated uncertainty above 20 ms. The estimate depends on network-path and drift assumptions and is not an accuracy guarantee.
+
+Nonzero `drive` may include `execute_at_ms` in server-mapped Unix milliseconds. A synchronized browser schedules at sample time +100 ms. For clients omitting the field, the server supplies +60 ms for synchronized devices. Explicit nonzero execution times must be 15–150 ms ahead of the server clock. Unsynchronized devices support the immediate compatibility path only when no time is supplied. Demo applies immediately and does not establish scheduling performance.
+
+Devices map execution time to a monotonic deadline in a bounded queue processed by the 10 ms control task. Packets arriving past execution time, waiting over 150 ms or waiting at least their TTL are rejected. Queued packets more than 20 ms late are discarded, and a full queue drops new packets. TTL starts on reception and includes queue wait; duplicates do not renew it. Accepted zero motion clears future motion, and `stop` also disarms. Fault/loss handling bypasses scheduling.
+
+See [TIMING.md](https://github.com/yaoqih/acfield/blob/main/robot_server/TIMING.md) for design and measurement details. Update the server, frontend and firmware together; `version=1` alone does not establish timing compatibility.
 
 ## Current timing configuration {#current-timing-configuration}
 
 | Stage | Setting | Meaning |
 | --- | --- | --- |
-| Device motion task | 50 Hz | TTL checks and wheel-speed control |
-| Device telemetry | 20 Hz | Device state and feedback |
-| Server state stream | 10 Hz | Latest snapshots |
-| Suggested policy updates | About 10 Hz | Validate against inference/network measurements |
+| Device motion task | 100 Hz | TTL checks and wheel-speed control |
+| Device telemetry | 40 Hz | Device state and feedback |
+| Server loop and state stream | 40 Hz | 25 ms scheduling target; latest snapshots |
+| Console joystick targets | 40 Hz | Ordered WebSocket; skip missed cycles |
+| Python velocity example | About 10 Hz | Example rate; validate policies against inference/network measurements |
 | Heartbeat timeout | 1 s | Expiry disarms |
 | Localization timeout | 200 ms | Expiry invalidates pose |
 | Default action TTL | 300 ms | Configurable 100–500 ms |

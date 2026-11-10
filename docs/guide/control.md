@@ -23,7 +23,7 @@ Python 算法推荐通过 [Python SDK](./python-sdk) 接入：`Client` 负责 HT
 
 `GET /api/state` 返回场地、小车、事件和相机状态。车辆身份位于 `robots[i].config.id`，位置为 `x/y/theta`；同时检查 `armed`、在线与定位状态。字段以运行时的 OpenAPI 和返回值为准。
 
-`GET /api/health` 的 `ready` 表示全部配置车辆满足绑定、在线、定位等前提；它不表示已解锁，也不表示硬件已经通过物理验收。
+`GET /api/health` 的 `ready` 表示全部配置车辆满足绑定、在线、故障等前提，定位新鲜度是否必需由 `allow_unlocalized_control` 决定；它不表示已解锁，也不表示硬件已经通过物理验收。
 
 ## 联合动作 {#joint-actions}
 

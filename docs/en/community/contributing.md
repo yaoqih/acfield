@@ -15,10 +15,10 @@ npm run docs:build
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 
-# Backend
-cd robot_server
+# Python and backend checks, from the repository root
 uv sync --python 3.12 --extra test
-uv run pytest -q
+uv run --python 3.12 --extra test pytest -q
+uv run --python 3.12 --extra test pytest sdk/python/tests -q
 ```
 
 See [troubleshooting](../guide/troubleshooting) for vision, firmware and cross-component dependencies. CI requires actual-firmware parser tests to execute. Physical validation still needs measurement; a green build cannot replace it.

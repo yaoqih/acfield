@@ -10,7 +10,7 @@
 | Server | Joint velocity validation, ownership, state streaming, velocity limits | Single process; not hard real time |
 | Python SDK | Independent installation, typed state, joint actions, confirmed arming and conditional release | Synchronous HTTP; 0.1.0 preview; no async/WS client |
 | Vision | AprilTags, world calibration, provenance and freshness checks | External intrinsic calibration; arena-wide accuracy and latency need measurement |
-| Firmware | Wheel-speed control, explicit arming, TTL, encoder and undervoltage faults | Per-robot calibration required; motor output disabled by default |
+| Firmware | Wheel-speed control, explicit arming, TTL, encoder and undervoltage faults | Current configuration permits motor output; encoder, direction, loop-gain and limit calibration is required per robot; lift the wheels for the first power-up |
 | Protection | Stops for stale localization, link failure, boundaries and spacing | Conservative models; measured stopping distances still needed |
 | Recording | Configuration, poses, actions, telemetry and stop reasons in JSONL | No complete episode evaluation or replay system |
 | Reference hardware | 95 mm acrylic candidate and V11 printed reference | First-article and physical acceptance pending; compact tag/fastener conflict unresolved |
@@ -19,7 +19,14 @@
 
 GitHub Actions builds the console and four firmware environments, and runs control, vision and actual-firmware parser contract tests. Green CI means that revision passed its software checks. Counts and outcomes for each revision are recorded in [Actions](https://github.com/yaoqih/acfield/actions).
 
-Before import, the source project recorded 33 backend tests, 10 vision tests and four firmware builds passing. That history is not evidence for future revisions.
+Recheck the current local baseline with the commands below. Test counts change with each revision; use the corresponding [Actions](https://github.com/yaoqih/acfield/actions) run as the CI record:
+
+```bash
+uv run --python 3.12 --extra test pytest -q
+uv run --python 3.12 --extra test pytest sdk/python/tests -q
+npm --prefix robot_server/frontend run build
+npm run docs:build
+```
 
 The V11 build and audit scripts generate local reports checking two STL files and 213 nominal assembly conditions, including the cover’s continuous upper tag face and orientation. These use supplier dimensions and estimated mass; they do not test strength, print tolerances, tire friction or motor dynamics.
 

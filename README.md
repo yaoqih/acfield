@@ -20,7 +20,8 @@ uv sync --python 3.12 --extra test
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-./run.sh
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+  ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
 Open **http://127.0.0.1:8000**. Default demo mode does not open the device UDP transport. Select a robot, explicitly arm it and hold a direction button. Global stop locks the fleet; releasing it does not re-arm the robots.
@@ -69,7 +70,7 @@ Read the [design philosophy](https://yaoqih.github.io/acfield/design/philosophy)
 
 ## Real hardware
 
-Start with the [reference hardware](https://yaoqih.github.io/acfield/hardware/overview), [bring-up](https://yaoqih.github.io/acfield/hardware/bringup) and [localization](https://yaoqih.github.io/acfield/guide/localization) guides. The current firmware deliberately disables motor output until measured encoder parameters and configuration are supplied. Use one validated vehicle before replicating the fleet.
+Start with the [reference hardware](https://yaoqih.github.io/acfield/hardware/overview), [bring-up](https://yaoqih.github.io/acfield/hardware/bringup) and [localization](https://yaoqih.github.io/acfield/guide/localization) guides. The current firmware configuration permits motor output, but encoder counts, direction, wheel-control gains and limits still require per-robot calibration. Power the first vehicle with its wheels lifted, verify each stage, and validate one vehicle before replicating the fleet.
 
 The runtime is intended for a local computer or trusted experiment LAN. The public documentation site is static and does not control robots. See [configuration](https://yaoqih.github.io/acfield/guide/configuration) for operating boundaries.
 

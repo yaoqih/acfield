@@ -65,6 +65,6 @@ coverage ≈ 2 × (H − tag-plane height) × tan(field of view / 2)
 
 Check horizontal and vertical field of view at the actual capture resolution independently. A lens’s advertised diagonal angle is insufficient. Leave a margin and inspect corner distortion and the most distant tags; raising the camera expands coverage while reducing tag pixels.
 
-The advertised 110° value for a wide-angle USB camera is not automatically its horizontal or vertical field of view. Test the actual resolution, distortion, frame rate, tag pixels and motion blur after mounting; moving the camera or changing the lens requires recalibration.
+The H200S advertised 110° value is not automatically its horizontal or vertical field of view. Test actual resolution, distortion, frame rate, tag pixels and motion blur after mounting. Moving only the camera requires new world extrinsics. Changing camera, lens, focus or capture resolution also requires checking intrinsics. See [camera reference parameters](./h200s-camera) for device readback ranges; use the current driver's supported units and readback values in the dashboard.
 
 Ground IDs 0–3 illustrate placement only. Measure final tag centres, headings and dimensions before updating configuration. Validate arena-wide position error, frame age and invalidation after camera movement using the [localization and calibration](../guide/localization) procedure.

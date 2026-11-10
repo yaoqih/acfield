@@ -8,10 +8,20 @@ From the repository root:
 
 ```bash
 uv sync --python 3.12 --extra test
-uv run --python 3.12 python apriltag_live.py --source demo
+uv run --python 3.12 python apriltag_live.py --source demo --runtime-config output/vision-demo-settings.json
 ```
 
-Open the printed URL, normally **http://127.0.0.1:8765**. Synthetic images check detection, calibration and export. Their 120 mm tags and 120 mm height are demo definitions, not reference-hardware dimensions, and cannot drive physical robots.
+Use this separate demo profile to keep physical camera settings separate. Open the printed URL, normally **http://127.0.0.1:8765**. Synthetic images check detection, calibration and export. Their 120 mm tags and 120 mm height are demo definitions, not reference-hardware dimensions, and cannot drive physical robots.
+
+The dashboard has three workspaces. Switching preserves tag selection, filters and unsubmitted drafts:
+
+- **Live observation** shows the camera and arena trails, with tag summaries opening the inspector. World locking and clearing tracks are under arena actions.
+- **Tag data** filters by ID, name and observation status. The table shows pose, speed and quality; the inspector adds camera pose and raw corners. On phones, tag details open in a dialog closed with its button or Escape.
+- **Device settings** separates source, camera capture, tag detection and preview into four groups, showing one at a time. Drafts show pending changes, with apply/reset actions and retry after read failures. Camera controls apply to the connected physical camera.
+
+Recording, saving/export and the separate camera/world calibration page are available from the workspace header. Clearing world calibration or trajectory statistics requires confirmation. A compact status bar shows the next action; expand diagnostics for details. Source/detection changes wait for worker confirmation. Stale observations become lost during disconnection or capture expiry and resume on recovery.
+
+Preview width and rate affect MJPEG display only, not capture resolution or detection rate. Defaults are width `0` (original size) and `30` fps; they reset on restart. Source/detector changes apply to the current run; save the profile under saving/export to retain them. See [H200S parameters](../hardware/h200s-camera) for driver support, units and readback considerations.
 
 ## Physical tags {#physical-tags}
 
@@ -46,18 +56,30 @@ uv run --python 3.12 python verify_apriltags.py --write-reports
 
 To install printing tools alone with pip, use `python -m pip install -r requirements-print.txt`.
 
-The two PDFs are committed release artifacts. Individual PNGs, manifests and check reports are generated in ignored `output/apriltags/`. Official source images live once in `assets/apriltags/` and serve printing, demos and detector tests. Historical size variants have been removed from the working tree and remain in Git history. The synthetic demo keeps its independent dimensions.
+The two V11 PDFs are committed release artifacts. V11 individual PNGs, manifests and reports go to ignored `output/apriltags/`; compact PNGs and their ZIP live in `hardware_design/acrylic_95/tag_images/`. Official sources in `assets/apriltags/` serve printing, demos and tests. The synthetic demo keeps independent dimensions. Run `uv run python hardware_design/acrylic_95/tag_images/generate.py` to rebuild and digitally check all twelve compact labels; this does not replace camera measurements.
 
 ## Calibration order {#calibration-order}
 
-1. Fix focal length, focus and resolution. Use an external calibration tool to obtain intrinsics/distortion and enter them in `apriltag_live.json` under `camera`.
-2. Measure ground-tag positions, black-border sizes and headings in a shared frame. Fill the configuration and set `world.configured=true`.
-3. Fix the camera and start arena extrinsic calibration in the interface. Check reprojection error, then measure arena-wide coordinate error at known positions.
-4. Enter actual robot-tag size, height and heading correction. Nominal height is approximately 59 mm for the compact candidate or 64.6 mm for V11; these are design references only.
-5. Set the server's tag offset relative to the axle midpoint. Verify forward heading and avoid adding the same mounting angle twice.
-6. Occlude tags, freeze frames and move the camera to check expiry and calibration invalidation.
+Disarm all robots, connect a physical camera in the dashboard and fix focus and capture resolution. Open camera/world calibration at the same vision service's `/calibration` (normally `http://127.0.0.1:8765/calibration`). Keep the camera fixed and move the board during sampling.
 
-Public settings default to `camera=null` and an unconfigured world, not a laboratory calibration. `--source 0` normally opens the first camera; see `--help` for options.
+### ChArUco camera intrinsics {#charuco-intrinsics}
+
+1. Download the page's A4 board PDF (`/calibration/board.pdf`). Defaults are **8 columns × 11 rows of squares, 20 mm squares, 15 mm markers and `DICT_5X5_100`**. Counts refer to squares. Print at 100%, measure and mount it flat. For another board, match the settings to the physical board; changing settings does not regenerate the default PDF.
+2. Keep the same camera, resolution and focus. Move and tilt the board across the centre, corners, distances and angles. Capture at least 8 images, preferably 15–25, up to 40. Each image needs at least 8 valid corners.
+3. Calculate intrinsics and inspect the matrix, distortion, image size and reprojection RMS. RMS measures pixel fitting error; validate world coordinates at known locations separately.
+4. Save intrinsics to the runtime profile. Saving clears old world extrinsics, which must be recalibrated. Externally measured OpenCV intrinsics can also be imported when they match the camera and image mode.
+
+Sampling accepts fresh physical-camera frames only. Video, demo, frames older than 500 ms and repeated raw frames are rejected. Clear samples after changing board settings, camera connection or resolution. Samples live in server memory: refreshing the page retains them, restarting the service loses them. Calibration sample images are not persisted.
+
+### World coordinates and extrinsics {#world-coordinates-and-extrinsics}
+
+1. Measure ground reference tags **IDs 0–3**: centre X/Y in metres, Z=0, black-border sizes and headings. The separate page forms the boundary in order 0→1→2→3; enter a valid polygon rather than copying schematic coordinates. Other fixed IDs or non-ground arrangements require the full profile editor.
+2. Save measured coordinates to mark the world configured and clear old extrinsics. Lock extrinsics with all four complete reference tags visible. Measure position and heading error across the arena at known locations.
+3. Enter measured robot-tag size, height and heading correction. Nominal height is approximately 59 mm for the compact candidate or 64.6 mm for V11, as design references only. Set tag offset from the axle midpoint in the control server. Check forward heading and avoid duplicate mounting-angle compensation.
+4. Reload the vision profile in the control console before saving. After restarting, use **Verify and load**: the service observes fixed tags and solves again, rejecting camera-position differences above 3 cm. This initial software threshold does not replace arena-wide error measurement.
+5. Occlude tags, freeze frames and move the camera to validate invalidation and stops. Moving only the camera requires new world extrinsics. Changing camera, lens, focus or capture mode also requires checking intrinsics before solving extrinsics.
+
+Public initial settings have `camera=null` and an unconfigured world. The runtime profile defaults to `output/vision-settings.json` and overrides initial defaults. Saved extrinsics are not trusted automatically after restart. `--source 0` normally opens the first camera; see `--help` for more options.
 
 ## Hardware integration requirements {#hardware-integration-requirements}
 
@@ -66,3 +88,5 @@ Hardware data must declare `source_kind=camera`, `world_calibrated=true`, `tag36
 When quality metrics are supplied, an edge below 35 px, decision margin below 30, nonzero Hamming distance or implausible consecutive position jumps invalidate localization. OpenCV's missing quality fields alone do not cause rejection. Thresholds are initial values to revise against pixels, lighting and measured error.
 
 Localization expires after 200 ms. Inspect source-frame age, detection age and processing latency; an online service can still serve frozen images.
+
+These rules govern pose acceptance. With `ROBOT_ALLOW_UNLOCALIZED_CONTROL=1`, the control server permits manual motion with invalid localization and skips position protection. Set it to `0` for localization-constrained experiments; see [configuration](./configuration).

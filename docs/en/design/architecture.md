@@ -1,6 +1,6 @@
 # Architecture
 
-One computer manages shared infrastructure while each robot runs a local control loop. Reference policies submit velocities at approximately 10 Hz; independent firmware motion tasks check expiry and update wheel-speed control at 50 Hz. These are implementation settings; end-to-end performance requires measurement.
+One computer manages shared infrastructure while each robot runs a local control loop. The Python velocity example submits at approximately 10 Hz; console joystick and server loops run at 40 Hz, firmware motion tasks at 100 Hz and telemetry at 40 Hz. These are implementation settings; end-to-end performance requires measurement.
 
 ## Data and control paths {#data-and-control-paths}
 
@@ -25,7 +25,7 @@ Policy ── HTTP joint velocities ──► robot_server ◄── Web console
 
 | Module | Responsibility | Work kept explicit elsewhere |
 | --- | --- | --- |
-| Localization | Detection, extrinsics, tag-height correction, source and age | Policy planning, device identity |
+| Localization | Detection, intrinsic/extrinsic calibration, tag-height correction, source and age | Policy planning, device identity |
 | Control server | State, ownership, joint validation, protection, transport, recording | Training and research tasks |
 | Python SDK | Typed HTTP, explicit commands, control sessions and conditional release | Background renewal, policies, tasks |
 | Policy script | Observation-to-action mapping and algorithm state | Bypassing arming or expiry |
@@ -42,7 +42,7 @@ Use one worker. Additional workers duplicate state and contend for the UDP port;
 
 `POST /api/commands` validates the shared set of candidate velocities before sending new motion. Failure prevents partial dispatch of that batch and disarms involved robots owned by the requesting source.
 
-This boundary belongs to server validation. UDP delivery, device scheduling and motor startup retain timing skew. A joint request does not establish hardware synchronization; strict synchronization needs additional protocol and measurement.
+This boundary belongs to server validation. UDP delivery, device scheduling and motor startup retain timing skew. The platform provides clock synchronization and scheduled execution. A joint request still does not establish physical synchronization; measure clock error, device scheduling and mechanical response. See [device timing](../reference/protocol#clock-synchronization-and-scheduling).
 
 ## Coordinates and control point {#coordinates-and-control-point}
 
