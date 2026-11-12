@@ -46,31 +46,31 @@ int main() {
     c.action = Protocol::Action::Stop; assert(p.accept(c, 305));
     assert(!strcmp(p.state(), "fault")); // stop never clears a fault latch
 
-    EncoderGuard encoder;
-    for (int i=0; i<39; ++i) assert(encoder.check(.1f, 0, .02f, .0002f) == nullptr);
-    assert(!strcmp(encoder.check(.1f, 0, .02f, .0002f), "encoder_no_response"));
+    EncoderGuard encoder(true); // exercise thresholds with the optional guards enabled
+    for (int i=0; i<74; ++i) assert(encoder.check(.1f, 0, .02f, .0002f, false) == nullptr);
+    assert(!strcmp(encoder.check(.1f, 0, .02f, .0002f, false), "encoder_no_response"));
     encoder.reset();
-    for (int i=0; i<9; ++i) assert(encoder.check(.1f, -.05f, .02f, .0002f) == nullptr);
-    assert(!strcmp(encoder.check(.1f, -.05f, .02f, .0002f), "encoder_direction"));
+    for (int i=0; i<49; ++i) assert(encoder.check(.1f, -.1f, .02f, .0002f, true) == nullptr);
+    assert(!strcmp(encoder.check(.1f, -.1f, .02f, .0002f, true), "encoder_direction"));
     encoder.reset();
     // High measured speed alone must not latch a fault, in either direction.
     for (float direction : {1.f, -1.f}) {
         for (int i=0; i<100; ++i)
-            assert(encoder.check(direction*.1f, direction*10*config::maxWheelSpeed, .02f, .0002f) == nullptr);
+            assert(encoder.check(direction*.1f, direction*10*config::maxWheelSpeed, .02f, .0002f, true) == nullptr);
         encoder.reset();
     }
     encoder.reset();
     const float turning = config::maxOmega*config::trackWidth/2;
-    for (int i=0; i<39; ++i) assert(encoder.check(turning, 0, .02f, .0002f) == nullptr);
-    assert(!strcmp(encoder.check(turning, 0, .02f, .0002f), "encoder_no_response"));
+    for (int i=0; i<74; ++i) assert(encoder.check(turning, 0, .02f, .0002f, false) == nullptr);
+    assert(!strcmp(encoder.check(turning, 0, .02f, .0002f, false), "encoder_no_response"));
     encoder.reset();
-    // Coarse encoders at low speed need longer than 800 ms to produce three pulses.
-    for (int i=0; i<100; ++i) assert(encoder.check(.01f, 0, .02f, .01f) == nullptr);
-    assert(encoder.check(.01f, .005f, .02f, .01f) == nullptr); // a pulse resets the window
-    for (int i=0; i<100; ++i) assert(encoder.check(.01f, 0, .02f, .01f) == nullptr);
+    // Coarse encoders at low speed need longer than 1500 ms to produce six pulses.
+    for (int i=0; i<100; ++i) assert(encoder.check(.01f, 0, .02f, .01f, false) == nullptr);
+    assert(encoder.check(.01f, .005f, .02f, .01f, true) == nullptr); // a pulse resets the window
+    for (int i=0; i<100; ++i) assert(encoder.check(.01f, 0, .02f, .01f, false) == nullptr);
     encoder.reset();
-    for (int i=0; i<151; ++i) encoder.check(.01f, 0, .02f, .01f);
-    assert(!strcmp(encoder.check(.01f, 0, .02f, .01f), "encoder_no_response"));
+    for (int i=0; i<301; ++i) encoder.check(.01f, 0, .02f, .01f, false);
+    assert(!strcmp(encoder.check(.01f, 0, .02f, .01f, false), "encoder_no_response"));
 
     Protocol sessions(.1f, .3f);
     Protocol::Command binding;
@@ -114,10 +114,50 @@ int main() {
     assert(!strcmp(voltage.check(10.4f, 1000), "battery_low"));
 
     WheelControl wheel;
+    assert(diagnosticPwm(0) == 0);
+    assert(diagnosticPwm(1) == 255 && diagnosticPwm(-1) == -255);
+    assert(diagnosticPwm(.05f) > 0 && diagnosticPwm(-.05f) < 0);
     float output = wheel.update(.1f, 0, .02f);
     assert(output > 0 && wheel.target == .1f); // target applies without acceleration limiting
     for (int i=0; i<100; ++i) wheel.update(.1f, 0, .02f);
     wheel.update(.05f, 0, .02f);
     assert(wheel.target == .05f);
     wheel.reset(); assert(wheel.target == 0);
+
+    // Reproduce the real delayed telemetry: commands continue every 25 ms,
+    // echoing the last received telemetry while incoming telemetry stalls 770 ms.
+    for (uint32_t window : {200u, 1500u}) {
+        Protocol delayed(255.f/350.f, .1f, window);
+        Protocol::Command cmd;
+        cmd.session = "diagnostic"; cmd.ttl = 500; cmd.stop = true;
+        cmd.action = Protocol::Action::Stop; cmd.seq = 1;
+        delayed.sent(0, 0);
+        assert(delayed.accept(cmd, 1));
+        cmd.action = Protocol::Action::Arm; ++cmd.seq;
+        assert(delayed.accept(cmd, 2));
+        cmd.action = Protocol::Action::Drive; cmd.stop = false; cmd.v = 255.f/350.f;
+        for (uint32_t t = 25; t <= 775; t += 25) {
+            // The device continues sending telemetry which the server hasn't received.
+            delayed.sent(t/25, t);
+            ++cmd.seq;
+            const bool accepted = delayed.accept(cmd, t);
+            assert(accepted == (window == 1500 || t <= 200));
+            delayed.tick(t);
+        }
+        if (window == 200) {
+            assert(!strcmp(delayed.state(), "disarmed"));
+            assert(delayed.reason == "command_timeout" && delayed.motionEchoRejections > 0);
+        } else {
+            assert(!strcmp(delayed.state(), "armed") && delayed.motionEchoRejections == 0);
+            // Freshness is relaxed only for motion; arm still needs a 200 ms echo.
+            auto arm = cmd; arm.action = Protocol::Action::Arm; arm.v = 0; arm.stop = true; ++arm.seq;
+            assert(!delayed.accept(arm, 776));
+            assert(!delayed.accept(cmd, 776)); // duplicate does not renew TTL
+            ++cmd.seq;
+            assert(!delayed.accept(cmd, 1501));
+            assert(delayed.motionEchoRejections == 1);
+            delayed.tick(1501);
+            assert(delayed.reason == "command_timeout");
+        }
+    }
 }

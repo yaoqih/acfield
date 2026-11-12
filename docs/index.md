@@ -37,7 +37,7 @@ features:
   <div class="pipeline">
     <article><span>01 / OBSERVE</span><h3>看见场地</h3><p>固定相机与 AprilTag，建立共享世界坐标，保留定位来源和数据龄。</p></article>
     <article><span>02 / DECIDE</span><h3>接入策略</h3><p>通过统一接口获取状态、提交多车动作。算法与训练框架由研究者选择。</p></article>
-    <article><span>03 / EXECUTE</span><h3>执行与反馈</h3><p>主控检查动作，车端执行轮速闭环，以有限有效期和显式解锁管理运动。</p></article>
+    <article><span>03 / EXECUTE</span><h3>执行与反馈</h3><p>主控检查动作，车端执行电机输出并回传编码器数据，以有限有效期和自动控制握手管理运动。</p></article>
     <article><span>04 / UNDERSTAND</span><h3>解释每次运行</h3><p>关联动作、遥测和停车原因，为排查、复盘与后续评测保留依据。</p></article>
   </div>
   <section class="home-split">

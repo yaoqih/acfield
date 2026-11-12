@@ -4,6 +4,11 @@
 
 inline float clamp(float x, float low, float high) { return fmaxf(low, fminf(high, x)); }
 
+// The diagnostic build cannot trust encoder feedback; apply the requested duty.
+inline float diagnosticPwm(float target) {
+    return clamp(config::feedForward * target, -255.f, 255.f);
+}
+
 class WheelControl {
 public:
     float update(float goal, float measured, float dt) {

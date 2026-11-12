@@ -34,9 +34,7 @@ test('joystick sends proportional movement and stops on release', async ({ page 
   })
   await page.goto('/')
   await expect.poll(async () => Number((await page.getByTestId('update-age').innerText()).match(/[\d.]+/)?.[0])).toBeLessThan(1500)
-  const arm = page.getByRole('button', { name: '解锁控制' })
-  await expect(arm).toBeEnabled()
-  await arm.click()
+
   const joystick = page.getByRole('application', { name: '方向摇杆' })
   await expect(joystick).toHaveAttribute('aria-disabled', 'false')
   await joystick.scrollIntoViewIfNeeded()
@@ -54,8 +52,11 @@ test('joystick sends proportional movement and stops on release', async ({ page 
   await page.mouse.move(x + 40, y - 40)
   await expect.poll(() => commands.some(c => c.v > 0 && c.omega < 0)).toBeTruthy()
   const diagonal = commands.at(-1)!
-  // Equal joystick axes use the configured linear/yaw scales (0.50m/s, 1.50rad/s).
-  expect(diagonal.omega/diagonal.v).toBeCloseTo(-3)
+  // A right-forward arc retains positive targets on both wheels. Steering is
+  // coupled to travel rather than subtracting an independent full yaw demand.
+  expect(diagonal.omega/diagonal.v).toBeCloseTo(-3/Math.sqrt(2))
+  expect(diagonal.v-diagonal.omega*.061).toBeGreaterThan(0)
+  expect(diagonal.v+diagonal.omega*.061).toBeGreaterThan(0)
   commands.length = 0
   await page.mouse.move(x - 40, y + 40)
   await expect.poll(() => commands.some(c => c.v < 0 && c.omega > 0)).toBeTruthy()
@@ -81,35 +82,122 @@ test('joystick sends proportional movement and stops on release', async ({ page 
   commands.length = 0
   await page.keyboard.down('ArrowUp')
   await expect.poll(() => commands.some(c => c.v > 0)).toBeTruthy()
-  const lock = page.getByRole('button', { name: '锁定控制', exact: true })
+  const lock = page.getByRole('button', { name: '停车', exact: true })
   await lock.focus()
   await expect.poll(() => commands.at(-1)?.v === 0 && commands.at(-1)?.omega === 0).toBeTruthy()
   await page.keyboard.up('ArrowUp')
   await lock.click()
-  await expect(arm).toBeVisible()
+  await expect(page.getByRole('button', { name: '解锁控制' })).toHaveCount(0)
   expect(failures).toEqual([])
 })
 
-test('parking disarms and clears held input until explicitly armed again', async ({ page }) => {
+test('parking clears held input and fresh input starts without unlocking', async ({ page }) => {
   await page.goto('/')
-  const arm = page.getByRole('button', { name: '解锁控制' })
-  await expect(arm).toBeEnabled()
-  await arm.click()
+
   const joystick = page.getByRole('application', { name: '方向摇杆' })
   await expect(joystick).toHaveAttribute('aria-disabled', 'false')
   await joystick.focus()
   await page.keyboard.down('ArrowUp')
   await expect.poll(async () => (await (await page.request.get('/api/state')).json()).robots[0].target_v).toBeGreaterThan(0)
   await page.getByRole('button', { name: '停车', exact: true }).click()
-  await expect(arm).toBeVisible()
-  await expect(joystick).toHaveAttribute('aria-disabled', 'true')
+  await expect(page.getByRole('button', { name: '解锁控制' })).toHaveCount(0)
+  await expect(joystick).toHaveAttribute('aria-disabled', 'false')
   await page.keyboard.up('ArrowUp')
   const state = await (await page.request.get('/api/state')).json()
   expect(state.robots[0].armed).toBe(false)
   expect(state.robots[0].target_v).toBe(0)
+  await joystick.focus()
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await (await page.request.get('/api/state')).json()).robots[0].target_v).toBeGreaterThan(0)
+  await page.keyboard.up('ArrowUp')
 })
 
-test('congested control falls back to disarming and rejects delayed motion', async ({ page }) => {
+for (const path of ['/', '/mobile']) {
+  test(`joystick continues without clock synchronization on ${path}`, async ({ page, request }) => {
+    if (path === '/mobile') await page.setViewportSize({ width: 390, height: 844 })
+    let deviceSynced = false
+    const commands: { v: number; execute_at_ms?: number }[] = []
+    await page.routeWebSocket('**/ws', socket => {
+      const server = socket.connectToServer()
+      socket.onMessage(raw => {
+        const message = JSON.parse(String(raw))
+        if (message.type === 'time_sync') return
+        if (message.type === 'control' && message.command.v) commands.push(message.command)
+        server.send(raw)
+      })
+      server.onMessage(raw => {
+        const message = JSON.parse(String(raw))
+        if (message.robots) {
+          message.mode = 'hardware'
+          message.robots[0].clock_synced = deviceSynced
+        }
+        socket.send(JSON.stringify(message))
+      })
+    })
+    await page.goto(path)
+    const joystick = page.getByRole('application', { name: '方向摇杆' })
+    await expect(joystick).toHaveAttribute('aria-disabled', 'false')
+    await joystick.focus()
+    await page.keyboard.down('ArrowUp')
+    await expect.poll(async () => (await (await request.get('/api/state')).json()).robots[0].target_v).toBeGreaterThan(0)
+    await expect.poll(() => commands.length).toBeGreaterThan(3)
+    deviceSynced = true
+    await page.waitForTimeout(150)
+    deviceSynced = false
+    const before = commands.length
+    await expect.poll(() => commands.length).toBeGreaterThan(before + 3)
+    await expect(joystick).toHaveAttribute('aria-disabled', 'false')
+    expect(commands.every(command => command.execute_at_ms === undefined)).toBeTruthy()
+    await page.keyboard.up('ArrowUp')
+  })
+
+  test(`joystick keeps 40 Hz differential turning while held on ${path}`, async ({ page }) => {
+    if (path === '/mobile') await page.setViewportSize({ width: 390, height: 844 })
+    await page.addInitScript(() => {
+      const recorded = window as typeof window & { controlSamples: { at: number; v: number; omega: number }[] }
+      recorded.controlSamples = []
+      const send = WebSocket.prototype.send
+      WebSocket.prototype.send = function(data) {
+        if (typeof data === 'string') {
+          const message = JSON.parse(data)
+          if (message.type === 'control' && message.command.v > 0)
+            recorded.controlSamples.push({ at: performance.now(), v: message.command.v, omega: message.command.omega })
+        }
+        return send.call(this, data)
+      }
+    })
+    await page.goto(path)
+
+    const joystick = page.getByRole('application', { name: '方向摇杆' })
+    await expect(joystick).toHaveAttribute('aria-disabled', 'false')
+    await joystick.focus()
+    await page.keyboard.down('ArrowUp')
+    await page.keyboard.down('ArrowRight')
+    await expect.poll(() => page.evaluate(() =>
+      (window as typeof window & { controlSamples: unknown[] }).controlSamples.length)).toBeGreaterThan(2)
+    await page.evaluate(() => (window as typeof window & { controlSamples: unknown[] }).controlSamples = [])
+    await page.waitForTimeout(1000)
+    await page.keyboard.up('ArrowUp')
+    await page.keyboard.up('ArrowRight')
+    const samples = await page.evaluate(() =>
+      (window as typeof window & { controlSamples: { at: number; v: number; omega: number }[] }).controlSamples)
+    // Measure in the browser so Playwright transport batching cannot hide a
+    // reduced cadence. Allow scheduler jitter, while rejecting 30/20 Hz loops.
+    expect(samples.length).toBeGreaterThanOrEqual(36)
+    const hz = (samples.length-1)*1000/(samples.at(-1)!.at-samples[0].at)
+    expect(hz).toBeGreaterThan(35)
+    expect(hz).toBeLessThan(45)
+    for (const command of samples) {
+      const left = command.v-command.omega*.061, right = command.v+command.omega*.061
+      expect(left).toBeGreaterThan(right)
+      expect(right).toBeGreaterThan(0)
+    }
+    await page.getByRole('button', { name: '停车', exact: true }).click()
+    await expect(page.getByRole('button', { name: '解锁控制' })).toHaveCount(0)
+  })
+}
+
+test('congested control retires socket, stops and supports fresh control after reconnect', async ({ page }) => {
   await page.addInitScript(() => {
     const send = WebSocket.prototype.send
     let replay: (() => void) | undefined
@@ -117,12 +205,13 @@ test('congested control falls back to disarming and rejects delayed motion', asy
       if (typeof data === 'string') {
         const message = JSON.parse(data)
         if (message.type === 'control' && (message.command.v || message.command.omega)) {
-          replay = () => send.call(this, JSON.stringify({ ...message, seq: message.seq + 1000 }))
+          replay = () => { if (this.readyState !== WebSocket.OPEN) window.dispatchEvent(new Event('old-socket-closed')); else send.call(this, JSON.stringify({ ...message, seq: message.seq + 1000 })) }
         }
       }
       return send.call(this, data)
     }
     window.addEventListener('replay-delayed-motion', () => replay?.())
+    window.addEventListener('old-socket-closed', () => document.body.dataset.oldSocketClosed = 'true')
   })
   const rejected: string[] = []
   page.on('websocket', ws => ws.on('framereceived', frame => {
@@ -130,9 +219,7 @@ test('congested control falls back to disarming and rejects delayed motion', asy
     if (message.type === 'control_error') rejected.push(message.message)
   }))
   await page.goto('/')
-  const arm = page.getByRole('button', { name: '解锁控制' })
-  await expect(arm).toBeEnabled()
-  await arm.click()
+
   const joystick = page.getByRole('application', { name: '方向摇杆' })
   await expect(joystick).toHaveAttribute('aria-disabled', 'false')
   await joystick.focus()
@@ -140,12 +227,20 @@ test('congested control falls back to disarming and rejects delayed motion', asy
   await expect.poll(async () => (await (await page.request.get('/api/state')).json()).robots[0].target_v).toBeGreaterThan(0)
   await page.evaluate(() => Object.defineProperty(WebSocket.prototype, 'bufferedAmount', { configurable: true, get: () => 8192 }))
   await page.keyboard.up('ArrowUp')
-  await expect(arm).toBeVisible()
+  await expect(page.getByRole('button', { name: '解锁控制' })).toHaveCount(0)
+  await expect.poll(async () => (await (await page.request.get('/api/state')).json()).robots[0].armed).toBe(false)
   await page.evaluate(() => window.dispatchEvent(new Event('replay-delayed-motion')))
-  await expect.poll(() => rejected.length).toBeGreaterThan(0)
+  await expect(page.locator('body')).toHaveAttribute('data-old-socket-closed', 'true')
+  expect(rejected).toEqual([])
   const state = await (await page.request.get('/api/state')).json()
   expect(state.robots[0].armed).toBe(false)
   expect(state.robots[0].target_v).toBe(0)
+  await page.evaluate(() => Object.defineProperty(WebSocket.prototype, 'bufferedAmount', { configurable: true, get: () => 0 }))
+  await expect(joystick).toHaveAttribute('aria-disabled', 'false')
+  await joystick.focus()
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await (await page.request.get('/api/state')).json()).robots[0].target_v).toBeGreaterThan(0)
+  await page.keyboard.up('ArrowUp')
 })
 
 test('settings keep edits across sections, reveal invalid fields and save locked', async ({ page }) => {

@@ -31,7 +31,12 @@ export interface Robot {
   bound: boolean; arm_pending: boolean; control_owner: string | null;
   device_state: string | null; firmware: string | null; voltage_v: number | null;
   effective_max_v: number; effective_max_omega: number;
+  encoder_diagnostic?: { max_pwm: number; pwm_per_mps: number } | null;
+  diagnostic_running?: boolean;
+  diagnostic_remaining_ms?: number | null;
+  motion_echo_rejections?: number | null;
   wheel_left: number | null; wheel_right: number | null; stop_reason: string | null;
+  last_stop_reason: string | null;
   encoder_left: number | null; encoder_right: number | null;
   pose_age_ms: number | null; heartbeat_age_ms: number | null;
   measured_v: number | null; measured_omega: number | null;

@@ -10,7 +10,7 @@
 | Server | Joint velocity validation, ownership, state streaming, velocity limits | Single process; not hard real time |
 | Python SDK | Independent installation, typed state, joint actions, confirmed arming and conditional release | Synchronous HTTP; 0.1.0 preview; no async/WS client |
 | Vision | AprilTags, world calibration, provenance and freshness checks | External intrinsic calibration; arena-wide accuracy and latency need measurement |
-| Firmware | Wheel-speed control, explicit arming, TTL, encoder and undervoltage faults | Current configuration permits motor output; encoder, direction, loop-gain and limit calibration is required per robot; lift the wheels for the first power-up |
+| Firmware | Default open-loop output, optional wheel-speed regulation, automatic control handshake, TTL, encoder telemetry and undervoltage handling | Motor output is enabled and encoder fault stops are disabled; encoder, direction, loop-gain and limit calibration is required per robot; lift the wheels for the first power-up |
 | Protection | Stops for stale localization, link failure, boundaries and spacing | Conservative models; measured stopping distances still needed |
 | Recording | Configuration, poses, actions, telemetry and stop reasons in JSONL | No complete episode evaluation or replay system |
 | Reference hardware | 95 mm acrylic candidate and V11 printed reference | First-article and physical acceptance pending; compact tag/fastener conflict unresolved |

@@ -15,14 +15,16 @@
 | `GET /api/vision/config?url=...` | 读取视觉服务状态与相机配置 |
 | `POST /api/vision/cameras` | 扫描视觉服务主机上的相机 ID 0–5 |
 | `POST /api/vision/operations` | 执行 `calibrate`、`load_world`、`reset_world`；全部车辆保持锁定 |
-| `POST /api/robots/{id}/arm` | `{"enabled":true}` 解锁；`false` 锁定 |
+| `POST /api/robots/{id}/arm` | 兼容接口：`{"enabled":true}` 主动准备控制；`false` 停车 |
 | `POST /api/robots/{id}/release` | 控制 ID 仍匹配时停车锁定，返回 `released` |
 | `POST /api/robots/{id}/command` | 单车速度命令 |
 | `POST /api/commands` | 统一校验一批多车速度 |
 | `POST /api/stop` | 全局停车并锁定 |
-| `POST /api/reset-stop` | 释放全局停止，不解锁车辆 |
+| `POST /api/reset-stop` | 释放全局停止，之后可直接重新操作 |
 | `GET /api/camera/stream` | 转发配置的视觉 MJPEG |
 | `WS /ws` | 约每 25 ms 最新状态、时钟同步与有序单车控制 |
+
+真实模式 `/api/health` 还包含当前 UDP 接收端累计的 `udp_received`、`udp_rejected` 与按原因分组的 `udp_rejections`；模拟模式为 `null`。拒收同时写入运行日志的 `udp_rejected` 记录，包含 `endpoint`、`reason`、`fields`，可区分报文校验失败与未收到报文。它们不会因查询而清零。
 
 ## 动作格式与限制 {#action-format-and-limits}
 
@@ -37,13 +39,19 @@
 
 速度对象可带 `execute_at_ms`（主控统一时间，Unix 毫秒）。非零动作的显式执行时刻须在主控当前时间后 15–150 ms；真实模式还要求车端时钟已同步。省略时，已同步设备默认预留 60 ms；未同步设备走即时兼容路径。零速不等待排程并清空未来运动。详见[设备时序](./protocol#clock-synchronization-and-scheduling)。
 
-HTTP 解锁和非零动作必须带同一 `X-Control-ID`。零速度可请求停车，但不会解除锁定或全局停止。`release` 也必须带控制 ID：服务端原子检查控制源并停车锁定；不匹配或已释放返回 `{"released":false}`，不会影响新控制源。显式锁定与全局停止仍可停止其他控制源。Python 程序优先使用 [SDK](../guide/python-sdk) 的控制会话。
+编码器诊断页使用 `immediate: true` 明确禁用默认排程。该选项仅接受已识别的 `0.2.3-encoder-diagnostic`（PWM 35）、`0.2.4-encoder-diagnostic` 与 `0.2.5-encoder-diagnostic`（PWM 255），不能同时指定 `execute_at_ms`，且要求 `omega=0`、输出不超过固件实际 PWM 上限。状态中的 `encoder_diagnostic` 提供 `max_pwm` 和 `pwm_per_mps`，页面以 `v=PWM/pwm_per_mps` 兼容固件；这里的 `v` 不表示实际车速，不使用普通 m/s 配置限速。
+
+持续诊断需在 WebSocket 的 `command` 对象内同时指定 `immediate: true, hold: true, ttl_ms: 500`。主控每 25 ms 续发，无需浏览器定时续发，单次最多运行 120 秒，主控计时，应用新 PWM 不重置计时；输出 0 保持解锁。`hold` 自动准备控制并要求匹配控制权，HTTP 单车/批量命令接口拒绝 `hold: true`，避免建立没有控制连接的持续任务。状态 `diagnostic_running` 表示主控正在维持输出，`diagnostic_remaining_ms` 返回剩余运行时间；连接断开、释放、故障或任意停车清除持续任务，后续普通指令也会替换它。控制权、解锁、设备 TTL、离线和故障检查继续生效；`immediate` 与 `hold` 都不下发到固件。
+
+`POST /api/robots/{id}/release` 可选 JSON 请求体 `{"reason":"用户点击停车"}`，原因长度为 1–120 字符。仅控制 ID 匹配时停车，并将原因保存在 `last_stop_reason`；省略请求体仍使用默认释放原因，重复清理不会覆盖已记录的原因。
+
+HTTP 非零动作必须带 `X-Control-ID`；首次非零动作自动取得空闲车辆的控制权，并完成车端 arm 握手。握手期间仅保留该控制源最新且仍在原始 TTL 内的动作，确认后重新计算执行时刻；停车、断连或过期会清除待执行动作。无需先调用 `/arm`，该接口保留给旧客户端。零速度可请求停车，但不会解除锁定或全局停止。`release` 也必须带控制 ID：服务端原子检查控制源并停车锁定；不匹配或已释放返回 `{"released":false}`，不会影响新控制源。显式锁定与全局停止仍可停止其他控制源。Python 程序优先使用 [SDK](../guide/python-sdk) 的控制会话。
 
 ## WebSocket 消息 {#websocket-messages}
 
 连接 `/ws` 后会收到与 `/api/state` 类似的最新快照，额外含 `server_time_ms`；快照不带消息 `type`，不要将其当作控制回执。同步请求为 `{"type":"time_sync","t1":客户端采样时间}`，响应回显 `t1`，并包含主控接收 `t2` 与发送 `t3`（毫秒）。客户端在接收时取 `t4` 形成四时间戳样本。
 
-先通过 HTTP 解锁，再发送单车控制：
+直接发送单车控制，主控按需自动完成握手：
 
 ```json
 {
@@ -55,17 +63,17 @@ HTTP 解锁和非零动作必须带同一 `X-Control-ID`。零速度可请求停
 }
 ```
 
-`seq` 是连接内严格递增的整数；`owner` 长度 1–64，连接内不得更换，并与 HTTP 解锁 ID 一致。成功返回 `{"type":"control_ack","seq":1,"packet":{...}}`，业务拒绝返回 `control_error`、原 `seq` 与 `message`。非法序号或控制源会关闭连接；断开时按控制源条件释放其车辆。
+`seq` 是连接内严格递增的整数；`owner` 长度 1–64，连接内不得更换，若同时使用 HTTP，则与其控制 ID 一致。成功返回 `{"type":"control_ack","seq":1,"packet":{...}}`，业务拒绝返回 `control_error`、原 `seq` 与 `message`。非法序号或控制源会关闭连接；断开时按控制源条件释放其车辆。
 
-`control_ack` 只表示主控接受动作，不是车端 ACK。网页每 25 ms 发送最新摇杆目标，错过周期跳过补发；真实模式等待浏览器/车端校时后，以采样时刻 +100 ms 排程。通道断开或拥塞时，页面通过 HTTP 备用路径停车锁定，恢复后重新解锁。
+`control_ack` 只表示主控接受动作，不是车端 ACK。网页每 25 ms 发送最新摇杆目标，错过周期跳过补发；无需等待校时，主控根据最新车端校时状态选择排程或即时发送。通道断开或拥塞时，页面关闭旧控制连接并通过 HTTP 备用路径停车；恢复后可直接发出新操作，无需手动解锁。
 
 ## 响应与状态 {#responses-and-state}
 
-非法 HTTP 输入返回 422，车辆不存在返回 404，控制权、定位、保护或解锁条件不满足通常返回 409。联合校验失败不会下发本批新的部分运动动作，并锁定本批属于该控制源的车辆。
+非法 HTTP 输入返回 422，车辆不存在返回 404，控制权、定位、保护或控制准备条件不满足通常返回 409。联合校验失败不会下发本批新的部分运动动作，并锁定本批属于该控制源的车辆。
 
 `armed` 在真实模式仅在设备确认后成立；`ack_seq` 表示协议接受，`applied_seq` 表示车端控制更新已处理，均不证明物理运动。检查轮速、编码器与视觉反馈。
 
-`ready` 针对全部配置车辆，主控支持 1–16 条车辆记录，提供四个参考固件环境。`allow_unlocalized_control=true` 会跳过定位新鲜度、边界与车距保护；绑定、心跳、故障、解锁与 TTL 仍生效。运行初值见[配置](../guide/configuration)。
+`ready` 针对全部配置车辆，主控支持 1–16 条车辆记录，提供四个参考固件环境。`allow_unlocalized_control=true` 会跳过定位新鲜度、边界与车距保护；绑定、心跳、故障、自动握手与 TTL 仍生效。运行初值见[配置](../guide/configuration)。
 
 真实模式 `PUT /api/config` 可附带 `vision` 档案。主控先锁车，再让视觉服务应用，成功后才保存主控配置；失败时保持全局停止。
 

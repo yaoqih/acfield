@@ -14,7 +14,7 @@ from fastapi import Body, FastAPI, Header, HTTPException, WebSocket, WebSocketDi
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .models import Command, Settings
 from .clock import clock
@@ -38,6 +38,11 @@ class ArmRequest(BaseModel):
 class ModeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     mode: Literal['demo', 'hardware']
+
+
+class ReleaseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    reason: str = Field(min_length=1, max_length=120)
 
 
 def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path | None = None,
@@ -142,13 +147,16 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     async def health():
         fleet, recorder = app.state.fleet, app.state.recorder
         tasks = {name: "stopped" if task.done() else "running" for name, task in app.state.tasks.items()}
+        udp = getattr(app.state, "udp", None) if fleet.mode == "hardware" else None
         healthy = (not fleet.runtime_fault and all(v == "running" for v in tasks.values())
                    and time.monotonic()-fleet.control_at < .5 and not recorder.error and recorder.dropped == 0)
         return JSONResponse(status_code=200 if healthy else 503, content={
             "status": "ok" if healthy else "degraded", "mode": fleet.mode, "tasks": tasks,
             "fault": fleet.runtime_fault, "vision_connected": fleet.camera["connected"],
             "ready": healthy and all(fleet.ready(r, time.monotonic()) is None for r in fleet.robots.values()),
-            "run_id": recorder.run_id, "recording_error": recorder.error, "recording_dropped": recorder.dropped})
+            "run_id": recorder.run_id, "recording_error": recorder.error, "recording_dropped": recorder.dropped,
+            "udp_received": udp.received if udp else None, "udp_rejected": udp.rejected if udp else None,
+            "udp_rejections": dict(udp.rejection_counts) if udp else None})
 
     @app.get("/api/state")
     async def state():
@@ -164,11 +172,11 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         if app.state.configuration_lock.locked():
             raise HTTPException(409, '相机或配置操作正在进行，请稍后再试')
         if any(r.armed or (r.pending and r.pending["action"] == "arm") for r in fleet.robots.values()):
-            raise HTTPException(409, "请先锁定所有小车再修改配置")
+            raise HTTPException(409, "请先停止所有小车再修改配置")
         settings = Settings.model_validate(body.model_dump(exclude={'vision'}))
         async with app.state.configuration_lock:
             if any(r.armed or (r.pending and r.pending["action"] == "arm") for r in fleet.robots.values()):
-                raise HTTPException(409, '请先锁定所有小车再修改配置')
+                raise HTTPException(409, '请先停止所有小车再修改配置')
             # Keep motion blocked even if another client releases the emergency stop.
             if settings.vision_url and (fleet.mode == 'hardware' or body.vision is not None):
                 begin_vision_update(fleet)
@@ -179,7 +187,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                     await request_vision(settings.vision_url, 'POST', '/api/config', profile)
                     return save_configuration(settings, vision_synced=True)
                 except Exception:
-                    fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再解锁'
+                    fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再操作'
                     fleet.camera = {'connected': False, 'available': False, 'fps': 0,
                                     'reason': fleet.vision_sync_error}
                     raise
@@ -203,7 +211,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         fleet.record("configuration", {"session": fleet.session, "settings": settings.model_dump()})
         if fleet.mode == "demo":
             Simulator(fleet)
-        fleet.event("配置已保存 · 全车锁定，请释放全局停止后重新解锁")
+        fleet.event("配置已保存 · 全车锁定，请释放全局停止后继续操作")
         return settings
 
     def begin_vision_update(fleet):
@@ -233,7 +241,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                             await request_vision(fleet.settings.vision_url, 'POST', '/api/config', profile)
                             fleet.vision_sync_error = None
                         except Exception:
-                            fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再解锁'
+                            fleet.vision_sync_error = '视觉配置同步失败，请重新保存配置后再操作'
                             raise
                     try:
                         new_transport, protocol = await asyncio.get_running_loop().create_datagram_endpoint(
@@ -296,7 +304,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                 return result
             except HTTPException as exc:
                 if exc.status_code >= 500:
-                    fleet.vision_sync_error = '视觉操作结果不确定，请重新保存配置后再解锁'
+                    fleet.vision_sync_error = '视觉操作结果不确定，请重新保存配置后再操作'
                     fleet.camera = {'connected': False, 'available': False, 'fps': 0,
                                     'reason': fleet.vision_sync_error}
                 raise
@@ -323,12 +331,16 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         return {"armed": r.armed, "pending": bool(r.pending and r.pending["action"] == "arm")}
 
     @app.post("/api/robots/{ident}/release")
-    async def release(ident: str, x_control_id: str = Header(min_length=1, max_length=64)):
+    async def release(ident: str, body: ReleaseRequest | None = None,
+                      x_control_id: str = Header(min_length=1, max_length=64)):
         # Conditional cleanup must not race a new controller's acquisition.
-        return {"released": app.state.fleet.release(robot(ident), x_control_id)}
+        reason = f"{body.reason} · 已停车" if body else "控制源已释放 · 已停车"
+        return {"released": app.state.fleet.release(robot(ident), x_control_id, reason)}
 
     @app.post("/api/robots/{ident}/command")
     async def command(ident: str, body: Command, x_control_id: str | None = Header(default=None, min_length=1, max_length=64)):
+        if body.hold:
+            raise HTTPException(422, "持续诊断只支持 WebSocket 控制连接")
         if (body.v or body.omega) and not x_control_id:
             raise HTTPException(422, "运动需提供 X-Control-ID 控制页面标识")
         try:
@@ -339,6 +351,8 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     @app.post("/api/commands")
     async def commands(body: dict[str, Command] = Body(min_length=1, max_length=16),
                        x_control_id: str | None = Header(default=None, min_length=1, max_length=64)):
+        if any(cmd.hold for cmd in body.values()):
+            raise HTTPException(422, "持续诊断只支持 WebSocket 控制连接")
         if any(cmd.v or cmd.omega for cmd in body.values()) and not x_control_id:
             raise HTTPException(422, "运动需提供 X-Control-ID 控制页面标识")
         try:
@@ -356,7 +370,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
     @app.post("/api/reset-stop")
     async def reset_stop():
         app.state.fleet.estop = False
-        app.state.fleet.event("全局停止已释放 · 小车仍需逐车解锁")
+        app.state.fleet.event("全局停止已释放 · 可直接操作小车")
         return {"estop": False}
 
     @app.get("/api/time")
@@ -415,7 +429,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
                 await task
             if owner:
                 for r in app.state.fleet.robots.values():
-                    app.state.fleet.release(r, owner)
+                    app.state.fleet.release(r, owner, "控制连接断开 · 已停车")
             with contextlib.suppress(RuntimeError, WebSocketDisconnect):
                 await ws.close()
 
@@ -452,6 +466,7 @@ def create_app(*, mode: Literal["demo", "hardware"] | None = None, db_path: Path
         return FileResponse(dist / "favicon.svg", media_type="image/svg+xml")
 
     @app.get("/mobile", include_in_schema=False)
+    @app.get("/encoder", include_in_schema=False)
     @app.get("/")
     async def index():
         if not (dist / "index.html").is_file():

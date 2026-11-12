@@ -55,11 +55,13 @@ The commands without uv above target macOS/Linux. On Windows, use the uv instruc
 ## First interaction {#first-interaction}
 
 1. Select a robot in the arena and inspect its state on the right.
-2. Arm the robot, then drag the joystick. Releasing it requests a stop. On a computer, you can also focus the joystick and hold the arrow keys.
+2. Drag the joystick directly; the server automatically performs the device handshake. Releasing it requests a stop. On a computer, you can also focus the joystick and hold the arrow keys.
 3. Press Space outside an input, or use global stop, to lock every robot.
-4. After releasing global stop, explicitly arm the robot again before moving.
+4. After releasing global stop, use fresh joystick input to move again. Old motion is not resumed.
 
-When the page loses focus or becomes hidden it stops renewing commands and requests a stop. The server independently checks expiry. The joystick sends the latest target over an ordered WebSocket every 25 ms with a 300 ms TTL. Hardware operation waits for browser and device clock synchronization. Demo mode applies targets immediately and cannot establish physical latency.
+The joystick is relative to the robot's nose: up drives forward, down reverses, and diagonals produce arcs through different wheel targets. Forward-right requests a faster left wheel; forward-left requests a faster right wheel. In reverse, right/left still turns the nose right/left. Travelling arcs retain a same-direction inner-wheel target of at least 30% of the mean wheel speed. Near horizontal input, steering blends smoothly into a counter-rotating pivot, passing through zero on the inner wheel during that transition. Normal firmware 0.2.8 defaults to open-loop PWM proportional to wheel targets; actual speed varies with battery and load, and very low output may not keep a wheel turning.
+
+The joystick sends the latest target over an ordered WebSocket every 25 ms (40 Hz) with a 300 ms TTL. Page blur or visibility changes alone do not disarm. Key release or loss of keyboard focus clears held keys; touch release or pointer cancellation ends the current input. The server independently checks expiry. Hardware operation waits for browser and device clock synchronization. Demo mode applies targets immediately and cannot establish physical latency.
 
 ## Inspect the API {#inspect-the-api}
 

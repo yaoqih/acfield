@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "wheel_control.h"
 #include "encoder_guard.h"
+#include "encoder_speed.h"
 #include "differential_drive.h"
 
 class Motors {
@@ -16,5 +17,6 @@ private:
     DifferentialDrive drive_;
     WheelControl controller_[2];
     EncoderGuard guard_[2];
+    EncoderSpeed speedWindow_[2];
     void write(unsigned side, float pwm);
 };

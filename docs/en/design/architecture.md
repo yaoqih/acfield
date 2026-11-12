@@ -1,6 +1,6 @@
 # Architecture
 
-One computer manages shared infrastructure while each robot runs a local control loop. The Python velocity example submits at approximately 10 Hz; console joystick and server loops run at 40 Hz, firmware motion tasks at 100 Hz and telemetry at 40 Hz. These are implementation settings; end-to-end performance requires measurement.
+One computer manages shared infrastructure while each robot runs local motor control. Normal firmware 0.2.8 defaults to open-loop output, using encoders only for display and logging; closed-loop regulation can be enabled after feedback calibration and PI tuning. The Python velocity example submits at approximately 10 Hz; console joystick and server loops run at 40 Hz, firmware motion tasks at 100 Hz and telemetry at 40 Hz. These are implementation settings; end-to-end performance requires measurement.
 
 ## Data and control paths {#data-and-control-paths}
 

@@ -20,7 +20,7 @@ def demo():
     return f, r
 
 
-def test_expiry_locks_and_other_controller_cannot_move():
+def test_expiry_stops_and_fresh_input_can_resume_without_unlock():
     f, r = demo()
     f.arm(r, True, "alice")
     with pytest.raises(ValueError, match="另一"):
@@ -30,8 +30,8 @@ def test_expiry_locks_and_other_controller_cannot_move():
     f.command(r, Command(v=.05, omega=0, ttl_ms=100), "alice")
     f.tick(time.monotonic()+.11)
     assert not r.armed and r.owner is None
-    with pytest.raises(ValueError, match="解锁"):
-        f.command(r, Command(v=.05, omega=0), "alice")
+    f.command(r, Command(v=.05, omega=0), "alice")
+    assert r.armed and r.owner == "alice"
     # Anyone may stop, including a page that has no control lease.
     assert f.command(r, Command(v=0, omega=0), "bob")["stop"]
 

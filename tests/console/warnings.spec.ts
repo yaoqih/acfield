@@ -26,10 +26,8 @@ for (const path of ['/', '/mobile']) {
     })
     await page.goto(path)
     const notice = page.locator('.device-warning')
-    await expect(notice).toContainText('不影响解锁和运动')
-    const arm = page.getByRole('button', { name: '解锁控制', exact: true })
-    await expect(arm).toBeEnabled()
-    await arm.click()
+    await expect(notice).toContainText('不影响运动')
+
     const joystick = page.getByRole('application', { name: '方向摇杆' })
     await expect(joystick).toHaveAttribute('aria-disabled', 'false')
     await joystick.scrollIntoViewIfNeeded()

@@ -23,9 +23,8 @@ def ready_fleet(mode="demo"):
 
 def test_arm_limits_and_expiry():
     fleet, r, now = ready_fleet()
-    with pytest.raises(ValueError, match="解锁"):
-        fleet.command(r, Command(v=.2, omega=0))
-    fleet.arm(r, True)
+    fleet.command(r, Command(v=.2, omega=0))
+    assert r.armed and r.owner == "local"
     packet = fleet.command(r, Command(v=1, omega=6, ttl_ms=100))
     assert packet["v"] == fleet.limits(r)[0]
     assert packet["omega"] == fleet.limits(r)[1]
@@ -92,6 +91,22 @@ def test_udp_order_boot_restart_and_ack_session():
     assert not r.armed and r.target_v == 0
     fleet.telemetry(telemetry(8), ("127.0.0.1", 1234))
     assert r.boot_id == "second"
+
+
+def test_timeout_reason_survives_stop_binding_confirmation():
+    fleet, r, _ = ready_fleet("hardware")
+    r.boot_id, r.telemetry_seq = "first", 5
+    r.armed, r.owner = True, "test"
+    fleet.telemetry(Telemetry(version=1, type="telemetry", robot_id=r.config.id, boot_id="first", seq=6,
+                              device_state="disarmed", stop_reason="command_timeout"), ("127.0.0.1", 1234))
+    stop_seq = r.pending["seq"]
+    fleet.telemetry(Telemetry(version=1, type="telemetry", robot_id=r.config.id, boot_id="first", seq=7,
+                              device_state="disarmed", stop_reason="server_stop", ack_session=fleet.session,
+                              ack_seq=stop_seq), ("127.0.0.1", 1234))
+    state = fleet.snapshot()["robots"][0]
+    assert state["stop_reason"] == "server_stop"
+    assert state["last_stop_reason"] == "车端已停机：command_timeout"
+    assert state["bound"] and not state["armed"]
 
 
 def test_rotated_collision_box():
@@ -175,6 +190,9 @@ def test_hardware_real_udp_datagram(tmp_path):
             device.sendto(b'x'*5000, endpoint)
             time.sleep(.05)
             assert client.app.state.udp.rejected == 2
+            health = client.get('/api/health').json()
+            assert health['udp_received'] == 3 and health['udp_rejected'] == 2
+            assert health['udp_rejections'] == {'invalid_message': 1, 'datagram_too_large': 1}
 
 
 def test_mode_switch_replaces_session_stops_and_isolates_hardware(tmp_path):
@@ -298,7 +316,7 @@ def test_unlocalized_control_preserves_liveness_checks(monkeypatch, expiry):
     if expiry == "owner":
         r.owner_until = now - 1
     else:
-        r.seen_at = now - 2
+        r.seen_at = now - 4
     fleet.tick(now)
     assert not r.armed and r.owner is None
     assert r.target_v == r.target_omega == 0

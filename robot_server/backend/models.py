@@ -53,6 +53,9 @@ class Command(Model):
     omega: float = Field(ge=-6, le=6)
     ttl_ms: int = Field(default=300, ge=100, le=500)
     execute_at_ms: float | None = None
+    # Only the known encoder diagnostic firmware may bypass scheduled execution.
+    immediate: bool = Field(default=False, strict=True)
+    hold: bool = Field(default=False, strict=True)
 
 
 class DeviceLimits(Model):
@@ -67,8 +70,10 @@ class Telemetry(Model):
     boot_id: str = Field(min_length=1, max_length=64)
     seq: int = Field(ge=0)
     battery: float | None = Field(default=None, ge=0, le=100)
-    measured_v: float | None = Field(default=None, ge=-3, le=3)
-    measured_omega: float | None = Field(default=None, ge=-30, le=30)
+    # Encoder interference can produce physically impossible measurements. Keep
+    # finite raw feedback so it cannot invalidate identity/heartbeat/ACK data.
+    measured_v: float | None = None
+    measured_omega: float | None = None
     ack_session: str | None = None
     ack_seq: int | None = Field(default=None, ge=0)
     fault: str | None = Field(default=None, max_length=120)
@@ -77,8 +82,8 @@ class Telemetry(Model):
     firmware: str | None = Field(default=None, max_length=40)
     stop_reason: str | None = Field(default=None, max_length=80)
     voltage_v: float | None = Field(default=None, ge=0, le=30)
-    wheel_left: float | None = Field(default=None, ge=-3, le=3)
-    wheel_right: float | None = Field(default=None, ge=-3, le=3)
+    wheel_left: float | None = None
+    wheel_right: float | None = None
     encoder_left: int | None = None
     encoder_right: int | None = None
     limits: DeviceLimits | None = None
@@ -86,6 +91,7 @@ class Telemetry(Model):
     clock_uncertainty_ms: float | None = Field(default=None, ge=0)
     sampled_at_ms: float | None = None
     applied_seq: int | None = Field(default=None, ge=0)
+    motion_echo_rejections: int | None = Field(default=None, ge=0)
 
 
 def default_settings():

@@ -15,7 +15,8 @@ public:
         bool stop = false;
         Action action = Action::Drive;
     };
-    Protocol(float maxV, float maxOmega) : maxV_(maxV), maxOmega_(maxOmega) {}
+    Protocol(float maxV, float maxOmega, uint32_t motionEchoMs = 200)
+        : maxV_(maxV), maxOmega_(maxOmega), motionEchoMs_(motionEchoMs) {}
     void sent(uint64_t seq, uint32_t now) {
         auto& stamp = history_[cursor_++ % history_.size()];
         stamp.seq = seq; stamp.time = now; stamp.valid = true;
@@ -41,8 +42,10 @@ public:
         }
         if (hasAck && c.seq <= ackSeq) return false;
         if (c.action != Action::Stop && (awaitingStop_ || !fault_.empty())) return false;
-        if (c.action == Action::Arm || (c.action == Action::Drive && !zero)) {
-            if (!fresh(c.telemetry, now)) return false;
+        if (c.action == Action::Arm && !fresh(c.telemetry, now)) return false;
+        if (c.action == Action::Drive && !zero && !fresh(c.telemetry, now, motionEchoMs_)) {
+            ++motionEchoRejections;
+            return false;
         }
         if (c.action == Action::Drive && !armed_) return false;
         if (c.action == Action::Stop) {
@@ -76,20 +79,22 @@ public:
     }
     std::string session, reason = "boot";
     uint64_t ackSeq = 0;
+    uint32_t motionEchoRejections = 0;
     bool hasAck = false;
     float v = 0, omega = 0;
 private:
     struct Stamp { uint64_t seq = 0; uint32_t time = 0; bool valid = false; };
-    std::array<Stamp, 64> history_{};
-    bool fresh(uint64_t seq, uint32_t now) const {
+    std::array<Stamp, 128> history_{};
+    bool fresh(uint64_t seq, uint32_t now, uint32_t maxAge = 200) const {
         for (const auto& h : history_)
-            if (h.valid && h.seq == seq && uint32_t(now-h.time) <= 200) return true;
+            if (h.valid && h.seq == seq && uint32_t(now-h.time) <= maxAge) return true;
         return false;
     }
     size_t cursor_ = 0;
     uint64_t lastSent_ = 0, bindingFloor_ = 0;
     uint32_t received_ = 0, ttl_ = 0;
     float maxV_, maxOmega_;
+    uint32_t motionEchoMs_;
     bool awaitingStop_ = true, armed_ = false, moving_ = false, hasBinding_ = false;
     std::string fault_;
 };

@@ -20,7 +20,7 @@ WiFiUDP udp;
 IPAddress server;
 Motors motors;
 Battery battery;
-Protocol protocol(config::maxV, config::maxOmega);
+Protocol protocol(config::maxV, config::maxOmega, config::motionEchoMs);
 SemaphoreHandle_t stateMutex;
 char bootId[33];
 uint64_t telemetrySeq = 0;
@@ -156,6 +156,7 @@ void telemetry() {
     urgentTelemetry = false;
     doc["encoder_left"] = motors.encoder[0]; doc["encoder_right"] = motors.encoder[1];
     doc["device_state"] = protocol.state(); doc["stop_reason"] = protocol.reason;
+    doc["motion_echo_rejections"] = protocol.motionEchoRejections;
     doc["fault"] = protocol.faultCode();
     if (protocol.hasAck) {
         doc["ack_session"] = protocol.session; doc["ack_seq"] = protocol.ackSeq;
@@ -222,6 +223,8 @@ void setup() {
     if (xTaskCreatePinnedToCore(sampleBattery, "battery", 3072, nullptr, 1, nullptr, 0) != pdPASS) abort();
     WiFi.setAutoReconnect(true); WiFi.begin(wifiSsid, wifiPassword);
     Serial.printf("Robot %s, firmware %s, boot %s\n", config::robotId, config::firmware, bootId);
+    Serial.printf("Motor control: %s\n", config::encoderDiagnostic ? "diagnostic_open_loop" :
+                  config::motorClosedLoop ? "closed_loop" : "open_loop");
 }
 
 void loop() {

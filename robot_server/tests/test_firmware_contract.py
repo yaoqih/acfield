@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT/"esp32_software/firmware"
 
 
-@pytest.mark.parametrize("name", ["protocol", "motion", "scheduler", "time_sync"])
+@pytest.mark.parametrize("name", ["protocol", "motion", "scheduler", "time_sync", "encoder_feedback"])
 def test_firmware_host_regressions(name, tmp_path):
     compiler = shutil.which("clang++") or shutil.which("g++")
     if not compiler:
@@ -22,6 +22,20 @@ def test_firmware_host_regressions(name, tmp_path):
     binary = tmp_path/name
     subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-I", str(FIRMWARE/"include"),
                     str(FIRMWARE/f"test/{name}_test.cpp"), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+
+
+@pytest.mark.parametrize("diagnostic", [False, True])
+def test_encoder_diagnostic_motor_behavior(diagnostic, tmp_path):
+    compiler = shutil.which("clang++") or shutil.which("g++")
+    if not compiler:
+        pytest.skip("Host C++ compiler is unavailable")
+    binary = tmp_path/"motors"
+    flags = ["-DENCODER_DIAGNOSTIC"] if diagnostic else []
+    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", *flags,
+                    "-I", str(FIRMWARE/"test/fakes"), "-I", str(FIRMWARE/"include"),
+                    str(FIRMWARE/"test/motors_diagnostic_test.cpp"), str(FIRMWARE/"src/motors.cpp"),
+                    "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
 
 
@@ -73,13 +87,16 @@ def test_boot_lost_binding_arm_motion_timeout_and_reconnect(peer):
     telemetry(status)
     assert r.bound
     f.pose(r, 1, 1, 0, time.monotonic())
-    f.arm(r, True)
+    # Fresh motion performs the arm handshake automatically, including with
+    # the existing firmware protocol. No explicit /arm call is required.
+    f.command(r, Command(v=.1, omega=0))
     assert not r.armed and r.pending["action"] == "arm"
     status = peer(packet=outgoing[-1], now=103)
     assert status["accepted"] and status["device_state"] == "armed"
     telemetry(status)
     assert r.armed
-    packet = f.command(r, Command(v=.1, omega=0))
+    packet = outgoing[-1]
+    assert packet["action"] == "drive"
     status = peer(packet=packet, now=105)
     assert status["accepted"] and status["v"] == pytest.approx(.1)
     assert not peer(packet=packet, now=300)["accepted"]
