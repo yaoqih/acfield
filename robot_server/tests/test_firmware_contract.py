@@ -117,3 +117,70 @@ def test_zero_request_cannot_overtake_pending_disarm(peer):
     f.telemetry(Telemetry(version=1, type="telemetry", robot_id="car-01", boot_id="test-boot", seq=1,
                           device_state="disarmed", ack_session=f.session, ack_seq=packet["seq"]), r.endpoint)
     assert r.bound and r.pending is None
+
+
+@pytest.mark.parametrize("invalid_voltage", [None, 0, 17])
+def test_battery_sensor_warning_allows_arming_and_continuous_motion(peer, invalid_voltage):
+    fleet = Fleet(default_settings(), "hardware")
+    fleet.allow_unlocalized_control = True
+    robot = fleet.robot("car-01")
+    outgoing = []
+    fleet.send = lambda packet, endpoint: outgoing.append(packet.copy())
+    seq = 0
+
+    def telemetry(status, now):
+        nonlocal seq
+        peer("sent", seq=seq, now=now)
+        data = {k: status[k] for k in ("device_state", "ack_session", "ack_seq", "stop_reason", "fault", "warning")
+                if k in status}
+        fleet.telemetry(Telemetry(version=1, type="telemetry", robot_id=robot.config.id,
+                                  boot_id="test-boot", seq=seq, **data), ("127.0.0.1", 9998))
+        seq += 1
+
+    # Even an invalid first sample must permit binding and explicit arming.
+    status = peer("battery", voltage_v=invalid_voltage, now=100)
+    assert status["warning"] == "battery_sensor" and status["fault"] is None
+    telemetry(status, 100)
+    telemetry(peer(packet=outgoing[-1], now=101), 102)
+    assert robot.bound
+    fleet.arm(robot, True)
+    telemetry(peer(packet=outgoing[-1], now=103), 104)
+    assert robot.armed and robot.warning == "battery_sensor"
+    packet = fleet.command(robot, Command(v=.1, omega=0))
+    assert peer(packet=packet, now=105)["accepted"]
+
+    # Persistent warnings, recovery, and recurrence leave motion and ownership intact.
+    for i, voltage in enumerate([invalid_voltage]*15 + [12.4, invalid_voltage, 12.4]):
+        now = 200+i*100
+        status = peer("battery", voltage_v=voltage, now=now)
+        assert status["device_state"] == "armed" and status["v"] == pytest.approx(.1)
+        assert status["fault"] is None
+        expected_warning = None if voltage == 12.4 else "battery_sensor"
+        assert status["warning"] == expected_warning
+        telemetry(status, now)
+        fleet.tick(time.monotonic())
+        assert robot.armed and robot.owner == "local" and robot.pending is None
+        assert fleet.ready(robot, time.monotonic()) is None
+        assert fleet.snapshot()["robots"][0]["warning"] == expected_warning
+        packet = fleet.command(robot, Command(v=.1, omega=0))
+        assert peer(packet=packet, now=now+1)["accepted"]
+        assert peer("tick", now=now+2)["device_state"] == "armed"
+
+    # Missing readings interrupt the continuous low-voltage interval.
+    assert peer("battery", voltage_v=10.4, now=2000)["fault"] is None
+    status = peer("battery", voltage_v=invalid_voltage, now=2400)
+    assert status["warning"] == "battery_sensor" and status["fault"] is None
+    status = peer("battery", voltage_v=10.4, now=3000)
+    assert status["fault"] is None and status["device_state"] == "armed"
+    assert peer("battery", voltage_v=10.4, now=3999)["fault"] is None
+
+    # Actual continuous undervoltage still latches and cannot be erased by recovery.
+    status = peer("battery", voltage_v=10.4, now=4000)
+    assert status["fault"] == "battery_low" and status["v"] == 0
+    telemetry(status, 4000)
+    assert not robot.armed
+    status = peer("battery", voltage_v=12.4, now=4100)
+    assert status["fault"] == "battery_low" and status["warning"] is None
+    telemetry(status, 4100)
+    with pytest.raises(ValueError, match="battery_low"):
+        fleet.arm(robot, True)

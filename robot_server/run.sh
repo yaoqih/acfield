@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 export ROBOT_MODE="${ROBOT_MODE:-hardware}"
 export ROBOT_HOST="${ROBOT_HOST:-0.0.0.0}"
 export ROBOT_UDP_HOST="${ROBOT_UDP_HOST:-0.0.0.0}"
-export ROBOT_ALLOW_UNLOCALIZED_CONTROL="${ROBOT_ALLOW_UNLOCALIZED_CONTROL:-1}"
+export ROBOT_ALLOW_UNLOCALIZED_CONTROL="${ROBOT_ALLOW_UNLOCALIZED_CONTROL-1}"
 python="../.venv/bin/python"
 if [[ ! -x "$python" ]]; then
   echo '请先在仓库根目录运行：uv sync --python 3.12 --extra test'

@@ -23,9 +23,9 @@ class RobotConfig(Model):
     tag_offset_x: float = Field(default=0, ge=-1, le=1)
     tag_offset_y: float = Field(default=0, ge=-1, le=1)
     heading_offset: float = Field(default=0, ge=-3.142, le=3.142)
-    # Conservative platform defaults; experiments can raise these after measuring the vehicle.
-    max_v: float = Field(default=.10, gt=0, le=1)
-    max_omega: float = Field(default=.30, gt=0, le=6)
+    # A12 1:20 defaults, five times the previous 1:100 command limits.
+    max_v: float = Field(default=.50, gt=0, le=1)
+    max_omega: float = Field(default=1.50, gt=0, le=6)
 
 
 class Settings(Model):
@@ -72,6 +72,7 @@ class Telemetry(Model):
     ack_session: str | None = None
     ack_seq: int | None = Field(default=None, ge=0)
     fault: str | None = Field(default=None, max_length=120)
+    warning: str | None = Field(default=None, max_length=120)
     device_state: Literal["unbound", "disarmed", "armed", "fault"] | None = None
     firmware: str | None = Field(default=None, max_length=40)
     stop_reason: str | None = Field(default=None, max_length=80)

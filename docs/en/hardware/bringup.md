@@ -2,7 +2,7 @@
 
 Measure one complete control loop before replicating robots. Firmware currently allows motor output (`motorsEnabled=true`), but encoder counts per turn, direction, PI gains and useful limits are still uncalibrated; the first power-up must be with the wheels lifted, not on the floor.
 
-The current validation sample uses two A12, 12 V, 1:100, three-wire encoder motors. The CAD candidate and some dynamics notes use 1:20, whose nominal speed is much higher; re-enter the measured ratio, counts and limits during bring-up.
+All four robots have changed from A12, 12 V, 1:100 motors to the same family at 1:20. With 34 mm wheels, the nominal 500 rpm rated point is about 0.89 m/s. Firmware limits are 0.89 m/s for linear and wheel speed and 3.00 rad/s for yaw; server defaults are 0.50 m/s and 1.50 rad/s. Acceleration limiting has been removed. Counts per output turn are scaled from 300 to 60, assuming the same encoder; measure each wheel to confirm.
 
 ## Configure and build {#configure-and-build}
 

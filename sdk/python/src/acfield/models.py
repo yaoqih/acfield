@@ -37,6 +37,7 @@ class RobotState(ResponseModel):
     arm_pending: bool
     control_owner: str | None
     fault: str | None
+    warning: str | None = None
     reason: str
     target_v: float
     target_omega: float

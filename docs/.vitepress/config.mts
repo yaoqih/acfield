@@ -60,6 +60,7 @@ function sidebar(english: boolean): DefaultTheme.SidebarItem[] {
 
 export default defineConfig({
   title: 'ACField', base: '/acfield/', cleanUrls: true, lastUpdated: true,
+  srcExclude: ['privacy_docs/**'],
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/acfield/favicon.svg' }],
     ['meta', { name: 'theme-color', content: '#123d38' }],

@@ -57,6 +57,8 @@ unbound ── 新鲜遥测回显 + stop ──► disarmed
 
 协议解析与状态机源文件位于 `esp32_software/firmware/include/command_wire.h` 和 `protocol.h`。跨端测试会编译实际解析器，让服务端生成的报文进入真实固件逻辑。
 
+可选 `warning` 字段只报告警告，不改变解锁或运动状态。固件电压传感器读取失败或读数超出 7–16 V 时发送 `warning="battery_sensor"`、`voltage_v=null`，有效读数恢复后自动清除警告。异常读数中断欠压计时；有效电压连续低于 10.5 V 达 1 s 仍触发锁存故障 `fault="battery_low"`。完整代码、触发条件与恢复方式见[故障与警告表](../guide/troubleshooting#fault-codes)。
+
 ## 时钟同步与排程 {#clock-synchronization-and-scheduling}
 
 主控启动时将本机 UTC 映射到单调时钟，默认每 300 s 尝试 NTP，以最多 1 ms/s 渐进修正；不会修改系统时间。离线仍能运行，但统一时间不等于准确 UTC。`GET /api/time` 可查看来源和待校正量。TTL、心跳与失联检查使用单调时间。

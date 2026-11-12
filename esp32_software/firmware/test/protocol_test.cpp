@@ -53,7 +53,12 @@ int main() {
     for (int i=0; i<9; ++i) assert(encoder.check(.1f, -.05f, .02f, .0002f) == nullptr);
     assert(!strcmp(encoder.check(.1f, -.05f, .02f, .0002f), "encoder_direction"));
     encoder.reset();
-    assert(!strcmp(encoder.check(.1f, 3*config::maxWheelSpeed+.1f, .02f, .0002f), "wheel_overspeed"));
+    // High measured speed alone must not latch a fault, in either direction.
+    for (float direction : {1.f, -1.f}) {
+        for (int i=0; i<100; ++i)
+            assert(encoder.check(direction*.1f, direction*10*config::maxWheelSpeed, .02f, .0002f) == nullptr);
+        encoder.reset();
+    }
     encoder.reset();
     const float turning = config::maxOmega*config::trackWidth/2;
     for (int i=0; i<39; ++i) assert(encoder.check(turning, 0, .02f, .0002f) == nullptr);
@@ -95,13 +100,22 @@ int main() {
     assert(voltage.check(10.4f, 1099) == nullptr);
     assert(!strcmp(voltage.check(10.4f, 1100), "battery_low"));
     assert(voltage.check(11.f, 1101) == nullptr);
-    assert(!strcmp(voltage.check(NAN, 1102), "battery_sensor"));
+    assert(voltage.check(NAN, 1102) == nullptr);
+    assert(!strcmp(voltage.warningCode(), "battery_sensor"));
+    assert(voltage.check(12.4f, 1103) == nullptr);
+    assert(voltage.warningCode() == nullptr); // recovery clears the advisory without reboot
+    for (float invalid : {NAN, INFINITY, 0.f, 6.9f, 16.1f}) {
+        assert(voltage.check(invalid, 1200) == nullptr);
+        assert(!strcmp(voltage.warningCode(), "battery_sensor"));
+    }
+    assert(voltage.check(11.f, 1300) == nullptr);
+    assert(voltage.warningCode() == nullptr);
     assert(voltage.check(10.4f, UINT32_MAX-100) == nullptr);
     assert(!strcmp(voltage.check(10.4f, 1000), "battery_low"));
 
     WheelControl wheel;
     float output = wheel.update(.1f, 0, .02f);
-    assert(output > 0 && wheel.target == .1f); // already ramped by the paired controller
+    assert(output > 0 && wheel.target == .1f); // target applies without acceleration limiting
     for (int i=0; i<100; ++i) wheel.update(.1f, 0, .02f);
     wheel.update(.05f, 0, .02f);
     assert(wheel.target == .05f);

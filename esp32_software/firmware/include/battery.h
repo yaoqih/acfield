@@ -11,10 +11,13 @@ public:
         valid = read(0x02, bus) && read(0x01, shunt) && (bus & 2);
         voltage = valid ? (bus >> 3)*.004f + int16_t(shunt)*.00001f : NAN;
         valid = valid && voltage >= 7 && voltage <= 16;
-        return guard_.check(valid ? voltage : NAN, now);
+        const char* fault = guard_.check(valid ? voltage : NAN, now);
+        warning = guard_.warningCode();
+        return fault;
     }
     bool valid = false;
     float voltage = NAN;
+    const char* warning = nullptr;
 private:
     VoltageGuard guard_;
     bool read(uint8_t reg, uint16_t& value) {

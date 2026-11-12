@@ -2,12 +2,12 @@
 
 The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. The **current compact first-article candidate** is a 95 × 80 mm acrylic robot, pending assembly and measurements; it is not a validated four-robot fleet.
 
-Keep the CAD assumptions separate from hardware samples. The compact CAD and dynamics notes use a 1:20 motor as a fast candidate; the current validation sample is the same A12 family at 1:100. Do not carry speed limits, wiring or clearances from one ratio to the other without measurement.
+Keep the CAD assumptions separate from hardware samples. All four robots have changed from A12 1:100 motors to the same family at 1:20, matching the compact CAD ratio. Battery dimensions, plates, wiring, clearances and control parameters still require measurement on the assembled robot.
 
 | Item | Compact candidate |
 | --- | --- |
 | Bottom / top | 95.1 × 80 × 4 mm / 95 × 80 × 2 mm acrylic |
-| Motors / wheels | Two A12 12 V 1:20 quadrature encoder motors and 34 mm wheels; CAD candidate, with a 1:100 validation sample |
+| Motors / wheels | Two A12 12 V 1:20 quadrature encoder motors and 34 mm wheels; CAD candidate; current motors have also changed to 1:20 |
 | Support / posts | One CY-12B ball caster; four each M3 nylon posts, 45 and 15 mm |
 | Battery | 3S, layout assumes 55 × 30 × 20 mm; actual model, capacity and mass unconfirmed |
 | Robot tag | tag36h11, 72 mm black square, 4 mm white margin per side, 80 mm finished size, no bleed |
@@ -22,7 +22,7 @@ The following is a reusable selection example. Prices are a discounted November 
 | Part | Reference specification | Price reference | Design use and checks |
 | --- | --- | ---: | --- |
 | Controller | ESP32 + TB6612 class controller; software reference is Waveshare SKU23730 | CNY 135.91 | Reads encoders and drives two motors. Verify the actual IC, input voltage, PWM/direction/encoder pins and 3.3 V levels. |
-| Geared encoder motors | A12, 12 V, three-wire encoder, brackets, 1:100 x2 | CNY 66.32 per pair | Current validation sample. Verify ratio, encoder type, bracket holes, shaft height and pinout; 1:20 is the faster CAD candidate. |
+| Geared encoder motors | A12, 12 V, three-wire encoder, brackets, 1:100 x2 | CNY 66.32 per pair | Previous 1:100 purchase reference; all four robots now use 1:20. Verify the new encoder type, bracket holes, shaft height and pinout. This price is not a quote for the replacement motors. |
 | Drive wheels | N20 D-shaft rubber wheels, 34 mm x2 | CNY 4.74 per pair | Differential drive contact. Measure diameter, width, bore, shaft engagement and effective track. |
 | Ball caster | CY-12B nylon ball caster x1 | CNY 1.50 | Supports the body but is not the kinematic reference point. Measure holes, working height and rolling resistance. |
 | 3S battery | 11.1 V, 2200 mAh, XT60 x1 | CNY 47.15 | Check fit in the 55 x 30 x 20 mm assumed space, mass, 12.6 V full charge and peak current. |
@@ -63,7 +63,7 @@ The audit image now shows **only the 95 mm version**. Both plates use the actual
 
 The [detailed design notes, in Chinese](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/dimensions.md) cover hole coordinates, height chains, controller clearance, mass assumptions and acceptance. The [BOM](https://github.com/yaoqih/acfield/blob/main/hardware_design/acrylic_95/bom.csv) lists quantities for one and four robots. Acrylic mass is approximately 48.6 g. The estimated 272 g total and 25.9 mm centre-of-mass height assume a 90 g battery and other nominal inputs. The caster carries approximately 46.7% of static load, so measure its rolling resistance.
 
-With 34 mm wheels, the 1:20 motor's supplied 500 rpm rated point corresponds to 0.89 m/s, while the nominal 1:100 point is about 0.23 m/s. Two rated torques imply a theoretical 1.73 N wheel-edge force for the 1:20 data sheet. Use the measured motor ratio, loaded speed, turning, low voltage and temperature to set limits; these nominal values are not a floor-speed or stopping guarantee.
+With 34 mm wheels, the 1:20 motor's supplied 500 rpm rated point corresponds to 0.89 m/s, while the nominal 1:100 point is about 0.23 m/s. All four robots now use 1:20 motors; firmware linear and wheel-speed limits are 0.89 m/s, with a server default linear limit of 0.50 m/s. Two rated torques imply a theoretical 1.73 N wheel-edge force for the 1:20 data sheet. Use the measured motor ratio, loaded speed, turning, low voltage and temperature to set limits; these nominal values are not a floor-speed or stopping guarantee.
 
 The differential-drive/unicycle reference point is the axle midpoint. A centred tag lies approximately **30.5 mm forward** of it, requiring offset compensation. The front plate extends approximately 78.1 mm ahead of the axle, so the body envelope also needs an offset. Existing runtime defaults remain V11; measure tag size, height, offsets, wheel diameter, track and encoder counts after assembly.
 

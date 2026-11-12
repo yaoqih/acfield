@@ -66,7 +66,7 @@ Use the console or `GET/PUT /api/config` for arena size, identities, tag IDs, bo
 
 Hardware saves synchronize robot tag IDs, black-border sizes and mounting heights to vision. Set heading correction in the control server. The compact acrylic candidate uses nominal 72 mm black borders and 80 mm finished labels; V11 uses 104/130 mm. Measure height from the floor to the tag centre. Saved settings do not migrate with hardware changes. Let only one control server manage a shared vision profile.
 
-New robot configurations default to `0.10 m/s` and `0.30 rad/s`. Effective limits are the lower of configuration and device reports; existing databases retain saved values. The approximately 200 × 160 mm body envelope is a conservative initial value. Measure the full outline including wheels, tag board and mounting offsets.
+New robot configurations for A12 1:20 motors default to `0.50 m/s` and `1.50 rad/s`. Hardware mode uses the lower of configuration and device reports; current firmware allows `0.89 m/s` and `3.00 rad/s`. Without a device limit report, hardware mode falls back to `0.10 m/s` and `0.30 rad/s`. Demo mode uses the configured limits. Existing databases retain saved values; update the affected robots in Experiment settings after replacing motors. The approximately 200 × 160 mm body envelope is a conservative initial value. Measure the full outline including wheels, tag board and mounting offsets.
 
 ## Ownership and networking {#ownership-and-networking}
 

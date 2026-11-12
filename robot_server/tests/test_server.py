@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.models import Command, Telemetry, default_settings
+from backend.models import Command, DeviceLimits, Telemetry, default_settings
 from backend.state import Fleet, POSE_TTL
 
 
@@ -32,6 +32,26 @@ def test_arm_limits_and_expiry():
     fleet.tick(now + .15)
     assert r.target_v == 0 and r.target_omega == 0
     assert r.command_status == "expired"
+
+
+@pytest.mark.parametrize("mode,reported,expected", [
+    ("demo", None, (.50, 1.50)),
+    ("hardware", None, (.10, .30)),
+    ("hardware", (.89, 3.00), (.50, 1.50)),
+    ("hardware", (.20, .80), (.20, .80)),
+])
+def test_1_20_limits_respect_configuration_and_device(mode, reported, expected):
+    fleet, r, _ = ready_fleet(mode)
+    if reported:
+        r.limits = DeviceLimits(max_v=reported[0], max_omega=reported[1])
+    assert fleet.limits(r) == expected
+    # Exercise clipping in both directions independently of arena geometry.
+    fleet.allow_unlocalized_control = True
+    r.armed, r.owner = True, "local"
+    for sign in (-1, 1):
+        packet = fleet.command(r, Command(v=sign, omega=sign*6))
+        assert packet["v"] == sign*expected[0]
+        assert packet["omega"] == sign*expected[1]
 
 
 def test_pose_expiry_and_estop_never_rearm():

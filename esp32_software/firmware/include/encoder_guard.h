@@ -14,7 +14,6 @@ public:
         if (quietMs_ >= config::encoderQuietMs && missingDistance_ >= 3*distancePerPulse)
             return "encoder_no_response";
         if (reverseMs_ >= 200) return "encoder_direction";
-        if (fabsf(measured) > 3*config::maxWheelSpeed) return "wheel_overspeed";
         return nullptr;
     }
     void reset() { quietMs_ = reverseMs_ = 0; missingDistance_ = 0; }

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 function pages(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
-    if (entry.name.startsWith('.') || entry.name === 'public' || entry.name === 'en') return []
+    if (entry.name.startsWith('.') || entry.name === 'public' || entry.name === 'en' || entry.name === 'privacy_docs') return []
     return entry.isDirectory()
       ? pages(join(directory, entry.name)).map(path => entry.name + '/' + path)
       : entry.name.endsWith('.md') ? [entry.name] : []

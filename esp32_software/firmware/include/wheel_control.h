@@ -7,7 +7,7 @@ inline float clamp(float x, float low, float high) { return fmaxf(low, fminf(hig
 class WheelControl {
 public:
     float update(float goal, float measured, float dt) {
-        // Acceleration is coordinated across both wheels by DifferentialDrive.
+        // DifferentialDrive supplies the current speed-limited target directly.
         target = goal;
         float error = target-measured;
         float candidate = clamp(integral_+error*dt, -.5f, .5f);

@@ -3,12 +3,10 @@
 #include <cstring>
 #include "protocol.h"
 
-inline bool decodeCommand(const char* data, size_t length, const char* id, const char* boot,
+inline bool decodeCommand(JsonVariantConst doc, const char* id, const char* boot,
                           Protocol::Command& command) {
-    if (!length || length > 1024) return false;
-    StaticJsonDocument<1536> doc;
-    if (deserializeJson(doc, data, length)) return false;
-    if (!doc["version"].is<int>() || doc["version"].as<int>() != 1 ||
+    if (!doc.is<JsonObjectConst>() ||
+        !doc["version"].is<int>() || doc["version"].as<int>() != 1 ||
         !doc["type"].is<const char*>() || strcmp(doc["type"], "command") ||
         !doc["robot_id"].is<const char*>() || strcmp(doc["robot_id"], id) ||
         !doc["boot_id"].is<const char*>() || strcmp(doc["boot_id"], boot) ||
@@ -27,4 +25,12 @@ inline bool decodeCommand(const char* data, size_t length, const char* id, const
     command.v = doc["v"].as<float>(); command.omega = doc["omega"].as<float>();
     command.ttl = doc["ttl_ms"].as<uint32_t>(); command.stop = doc["stop"].as<bool>();
     return true;
+}
+
+inline bool decodeCommand(const char* data, size_t length, const char* id, const char* boot,
+                          Protocol::Command& command) {
+    if (!length || length > 1024) return false;
+    StaticJsonDocument<1536> doc;
+    if (deserializeJson(doc, data, length)) return false;
+    return decodeCommand(doc.as<JsonVariantConst>(), id, boot, command);
 }

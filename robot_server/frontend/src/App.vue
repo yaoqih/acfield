@@ -60,7 +60,7 @@ async function addRobot() {
   while (ids.has(`car-${String(index).padStart(2, '0')}`)) index++
   const tagId = Array.from({ length: 587 }, (_, i) => i).find(id => !tags.has(id))
   if (tagId === undefined) { configError.value = '没有可用的 AprilTag ID'; return }
-  const robot: RobotConfig = { id: `car-${String(index).padStart(2, '0')}`, name: `小车 ${index}`, tag_id: tagId, color: ['#28786b', '#427dc2', '#ac7b35', '#ba6070'][draft.value.robots.length % 4]!, tag_size: .104, tag_height: .0646, length: .20, width: .16, body_offset_x: 0, body_offset_y: 0, tag_offset_x: 0, tag_offset_y: 0, heading_offset: 0, max_v: .10, max_omega: .30 }
+  const robot: RobotConfig = { id: `car-${String(index).padStart(2, '0')}`, name: `小车 ${index}`, tag_id: tagId, color: ['#28786b', '#427dc2', '#ac7b35', '#ba6070'][draft.value.robots.length % 4]!, tag_size: .104, tag_height: .0646, length: .20, width: .16, body_offset_x: 0, body_offset_y: 0, tag_offset_x: 0, tag_offset_y: 0, heading_offset: 0, max_v: .50, max_omega: 1.50 }
   draft.value.robots.push(robot)
   addedRobotIndex.value = draft.value.robots.length - 1
   configError.value = ''
@@ -97,13 +97,16 @@ const blockedReason = computed(() => {
   if (state.value?.system_fault) return '控制服务故障，请重启服务'
   if (state.value?.estop) return '全局停止已锁定，请先释放全局停止'
   if (!selected.value) return '请先选择一辆小车'
-  if (state.value?.mode === 'hardware' && (!selected.value.clock_synced || !serverClock.ready(monotonicNow.value))) return '等待控制端与车端时间同步'
   if (selected.value.fault) return `设备故障：${selected.value.fault}`
-  if (!selected.value.online) return '设备离线，请检查小车电源与网络'
+  if (!selected.value.online) return '设备离线，请检查小车电源、Wi-Fi 与固件中的主控 IP'
   if (!selected.value.bound) return '等待车端停车绑定确认'
   if (!selected.value.visible && !state.value?.allow_unlocalized_control) return '定位不可用，请检查标签可见性与场地标定'
   if (selected.value.control_owner && selected.value.control_owner !== controlId) return '另一页面正在控制此车，请先锁定'
   if (selected.value.arm_pending) return '等待车端解锁确认'
+  if (state.value?.mode === 'hardware') {
+    if (!selected.value.clock_synced) return '等待车端时间同步，请检查小车与主控之间的 UDP 通信'
+    if (!serverClock.ready(monotonicNow.value)) return '等待浏览器与控制服务时间同步'
+  }
   if (!selected.value.armed) return '准备就绪，点击「解锁控制」后即可操作'
   return ''
 })
@@ -192,6 +195,12 @@ const batteryClass = (robot: Robot) => {
   return percent == null ? 'unknown' : percent <= 15 ? 'danger' : percent <= 35 ? 'warn' : 'ok'
 }
 const batteryVoltageLabel = (robot: Robot) => !connected.value || !robot.online || robot.voltage_v == null ? '—' : `${robot.voltage_v.toFixed(2)} V`
+const deviceWarning = computed(() => {
+  if (!connected.value || !selected.value?.online || !selected.value.warning) return ''
+  return selected.value.warning === 'battery_sensor'
+    ? '电池传感器读数异常，电量暂不可用；不影响解锁和运动。'
+    : `设备警告：${selected.value.warning}`
+})
 const linkLabel = (robot: Robot) => !connected.value ? '服务器断开' : robot.online ? '车辆在线' : '车辆离线'
 const linkClass = (robot: Robot) => !connected.value ? 'unknown' : robot.online ? 'ok' : 'danger'
 const poseLabel = (robot: Robot) => !connected.value ? '状态未知' : robot.visible ? '定位有效' : '定位丢失'
@@ -495,6 +504,7 @@ onUnmounted(() => {
       <label class="remote-select">选择小车<select :value="selectedId" :disabled="!state?.robots.length" @change="select(($event.target as HTMLSelectElement).value)"><option v-for="robot in state?.robots" :key="robot.config.id" :value="robot.config.id">{{ robot.config.name }} · {{ robot.config.id }}</option></select></label>
       <template v-if="selected">
         <div class="remote-status"><span class="status-chip" :class="linkClass(selected)"><Wifi :size="15" />{{ linkLabel(selected) }}</span><span class="status-chip" :class="poseClass(selected)"><Crosshair :size="15" />{{ poseLabel(selected) }}</span><span class="status-chip" :class="batteryClass(selected)" title="按 3S 锂电池 10.5–12.6 V 估算"><Battery :size="16" />{{ batteryLabel(selected) }}</span></div>
+        <p v-if="deviceWarning" class="device-warning" role="status">{{ deviceWarning }}</p>
         <div class="remote-control-heading"><div><h2>手动控制</h2><p role="status">{{ blockedReason || '控制已就绪' }}</p></div><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="15"/><LockKeyhole v-else :size="15" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
         <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="emergencyStop" />
         <div class="remote-telemetry"><span>X <b>{{ metric(selected.x) }}</b> m</span><span>Y <b>{{ metric(selected.y) }}</b> m</span><span>朝向 <b>{{ deg(selected.theta) }}</b></span></div>
@@ -568,6 +578,7 @@ onUnmounted(() => {
             <template v-if="selected">
               <div class="device-identity"><div class="device-symbol" :style="{ '--robot-color': selected.config.color }"><Focus :size="27" /></div><div><h2>{{ selected.config.name }}</h2><span class="mono">{{ selected.config.id.toUpperCase() }} <span class="muted">/ TAG {{ selected.config.tag_id }}</span></span></div><span class="online-label" :class="linkClass(selected)"><i></i>{{ linkLabel(selected) }}</span></div>
               <div class="device-status"><span class="status-chip" :class="linkClass(selected)"><Wifi :size="13" />{{ linkLabel(selected) }}</span><span class="status-chip" :class="poseClass(selected)"><Crosshair :size="13" />{{ poseLabel(selected) }}</span><span class="status-chip" :class="batteryClass(selected)" title="按 3S 锂电池 10.5–12.6 V 估算"><Battery :size="15" />{{ batteryLabel(selected) }}</span></div>
+              <p v-if="deviceWarning" class="device-warning" role="status">{{ deviceWarning }}</p>
               <div class="position-summary"><span>X <b class="mono">{{ metric(selected.x, 2) }}</b> m</span><span>Y <b class="mono">{{ metric(selected.y, 2) }}</b> m</span><span><b class="mono">{{ deg(selected.theta) }}</b></span></div>
               <div class="control-heading"><h3>手动控制</h3><button class="lock-toggle" :class="{ armed: selected.armed }" :disabled="armPending || (!selected.armed && !canArm) || !connected" :title="blockedReason" @click="toggleArm"><UnlockKeyhole v-if="selected.armed" :size="12"/><LockKeyhole v-else :size="12" />{{ armPending || selected.arm_pending ? '确认中…' : selected.armed ? '锁定控制' : '解锁控制' }}</button></div>
               <p v-if="blockedReason" class="control-explanation" role="status">{{ blockedReason }}</p><div v-else class="control-explanation ready">控制已就绪</div>

@@ -75,6 +75,8 @@ void sampleBattery(void*) {
         const char* fault = sampler.sample(millis());
         xSemaphoreTake(stateMutex, portMAX_DELAY);
         battery.valid = sampler.valid; battery.voltage = sampler.voltage;
+        if (battery.warning != sampler.warning) urgentTelemetry = true;
+        battery.warning = sampler.warning;
         if (fault) { protocol.fault(fault); motors.stop(); urgentTelemetry = true; }
         xSemaphoreGive(stateMutex);
     }
@@ -101,7 +103,8 @@ void receive() {
         return;
     }
     Protocol::Command command;
-    if (n != size || !decodeCommand(buffer, n, config::robotId, bootId, command)) return;
+    // The envelope owns references into the mutated input buffer; decode it directly.
+    if (!decodeCommand(envelope.as<JsonVariantConst>(), config::robotId, bootId, command)) return;
     if (!envelope["execute_at_ms"].isNull() && command.action == Protocol::Action::Drive &&
         (command.v != 0 || command.omega != 0)) {
         if (!envelope["execute_at_ms"].is<double>()) return;
@@ -141,6 +144,7 @@ void telemetry() {
     xSemaphoreTake(stateMutex, portMAX_DELAY);
     if (battery.valid) doc["voltage_v"] = battery.voltage;
     else doc["voltage_v"] = nullptr;
+    doc["warning"] = battery.warning;
     xSemaphoreGive(stateMutex);
     doc["limits"]["max_v"] = config::maxV; doc["limits"]["max_omega"] = config::maxOmega;
     xSemaphoreTake(stateMutex, portMAX_DELAY);
@@ -178,10 +182,11 @@ void debugStatus(uint32_t now) {
     const int rssi = wifiConnected ? WiFi.RSSI() : 0;
     xSemaphoreTake(stateMutex, portMAX_DELAY);
     char line[512];
-    snprintf(line, sizeof(line), "[status] wifi=%s local=%s rssi=%d udp=%s state=%s fault=%s cmd=%.3f/%.3f target=%.3f/%.3f speed=%.3f/%.3f pwm=%.1f/%.1f enc=%lld/%lld voltage=%.2fV\n",
+    snprintf(line, sizeof(line), "[status] wifi=%s local=%s rssi=%d udp=%s state=%s fault=%s warning=%s cmd=%.3f/%.3f target=%.3f/%.3f speed=%.3f/%.3f pwm=%.1f/%.1f enc=%lld/%lld voltage=%.2fV\n",
                   wifiConnected ? "connected" : "disconnected", localIP.c_str(), rssi,
                   connected ? "ready" : "off",
                   protocol.state(), protocol.faultCode() ? protocol.faultCode() : "none",
+                  battery.warning ? battery.warning : "none",
                   protocol.v, protocol.omega,
                   motors.target[0], motors.target[1], motors.speed[0], motors.speed[1],
                   motors.pwm[0], motors.pwm[1],

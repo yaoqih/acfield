@@ -57,6 +57,8 @@ Reports identity, boot ID, sequence, `device_state`, firmware, `ack_session/ack_
 
 Parsing/state-machine sources are `esp32_software/firmware/include/command_wire.h` and `protocol.h`. Cross-component tests compile the actual parser and feed it server-generated packets.
 
+The optional `warning` field is advisory and does not change arming or motion. Failed voltage sensor reads or readings outside 7–16 V report `warning="battery_sensor"` and `voltage_v=null`; the next valid reading clears the warning automatically. Invalid readings interrupt the undervoltage timer; valid readings continuously below 10.5 V for 1 s still trigger the latched `fault="battery_low"` protection. See the [fault and warning table](../guide/troubleshooting#fault-codes) for codes, triggers and recovery.
+
 ## Clock synchronization and scheduling {#clock-synchronization-and-scheduling}
 
 At startup the server maps local UTC to monotonic time, tries NTP every 300 s by default and slews corrections at at most 1 ms/s without changing the operating-system clock. Offline operation works, but consistent time does not establish accurate UTC. Inspect source and pending correction through `GET /api/time`. TTL, heartbeat and loss checks use monotonic time.

@@ -51,7 +51,7 @@ void Motors::update(float v, float omega, float dt) {
         if (config::calibrated()) fault = "control_overrun";
         stop(); return;
     }
-    drive_.update(v, omega, config::trackWidth, config::maxWheelSpeed, config::acceleration, dt);
+    drive_.update(v, omega, config::trackWidth, config::maxWheelSpeed);
     for (unsigned i = 0; i < 2; ++i) target[i] = drive_.wheel[i];
     for (unsigned i = 0; i < 2; ++i) {
         speed[i] = count[i]*config::encoderSign[i]*PI*config::wheelDiameter/config::pulsesPerTurn[i]/dt;

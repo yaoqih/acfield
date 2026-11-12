@@ -75,6 +75,8 @@
 .status-chip.unknown{border-color:#d9ded9;background:#f1f3f0;color:#7f8a83}
 .device-status{justify-content:flex-start;gap:7px;flex-wrap:wrap}
 .device-status .status-chip{flex:1 1 0;min-width:0}
+.device-warning{margin:12px 20px 0;padding:9px 11px;border:1px solid #ecd7a6;border-radius:5px;background:#fff8e8;color:#94702e;font-size:11px;line-height:1.7}
+.remote-main .device-warning{margin:12px 0 0}
 .online-label.ok{color:#2c7950}
 .online-label.ok i{background:#2f9b62}
 .online-label.danger{color:#a34c40}

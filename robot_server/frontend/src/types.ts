@@ -37,7 +37,7 @@ export interface Robot {
   measured_v: number | null; measured_omega: number | null;
   estimated_v: number | null; acceleration: number | null;
   target_v: number; target_omega: number; seq: number; ack_seq: number;
-  command_status: string; reason: string; fault: string | null;
+  command_status: string; reason: string; fault: string | null; warning: string | null;
   clock_synced: boolean; clock_uncertainty_ms: number | null;
   sampled_at_ms: number | null; applied_seq: number | null;
   corners: number[][]; trail: number[][];

@@ -1,5 +1,17 @@
 import { expect, test } from '@playwright/test'
 
+test.beforeEach(async ({ request }) => {
+  // Leave room for the faster defaults and reset poses between control scenarios.
+  const settings = await (await request.get('/api/config')).json()
+  settings.arena_width = settings.arena_height = 10
+  expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
+  expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
+  await expect.poll(async () => {
+    const state = await (await request.get('/api/state')).json()
+    return state.robots.every((robot: {online: boolean}) => robot.online)
+  }).toBeTruthy()
+})
+
 test('joystick sends proportional movement and stops on release', async ({ page }) => {
   const commands: {v: number; omega: number}[] = []
   const failures: (number | string)[] = []
@@ -42,7 +54,7 @@ test('joystick sends proportional movement and stops on release', async ({ page 
   await page.mouse.move(x + 40, y - 40)
   await expect.poll(() => commands.some(c => c.v > 0 && c.omega < 0)).toBeTruthy()
   const diagonal = commands.at(-1)!
-  // Equal joystick axes use the configured linear/yaw scales (0.10m/s, 0.30rad/s).
+  // Equal joystick axes use the configured linear/yaw scales (0.50m/s, 1.50rad/s).
   expect(diagonal.omega/diagonal.v).toBeCloseTo(-3)
   commands.length = 0
   await page.mouse.move(x - 40, y + 40)

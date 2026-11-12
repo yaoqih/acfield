@@ -64,6 +64,16 @@ def test_batch_api_validates_and_records_raw_and_applied_velocities(tmp_path):
     app = create_app(db_path=tmp_path/"config.db")
     with TestClient(app) as client:
         ids = ("car-01", "car-02")
+        # Existing per-robot limits still override the faster motor defaults.
+        settings = client.get("/api/config").json()
+        for robot in settings["robots"]:
+            robot["max_v"] = .1
+        assert client.put("/api/config", json=settings).status_code == 200
+        assert client.post("/api/reset-stop").status_code == 200
+        deadline = time.monotonic() + 2
+        while not all(r["online"] for r in client.get("/api/state").json()["robots"]):
+            assert time.monotonic() < deadline, "Demo devices did not become ready"
+            time.sleep(.01)
         body = {ident: {"v": .35, "omega": 0} for ident in ids}
         assert client.post("/api/commands", json=body).status_code == 422
         client.headers["X-Control-ID"] = "script"

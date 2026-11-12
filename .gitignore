@@ -37,3 +37,4 @@ hardware_design/print_v11/assembly_audit.json
 hardware_design/print_v11/mesh_validation.json
 hardware_design/print_v11/stability_validation.json
 *.log
+docs/privacy_docs

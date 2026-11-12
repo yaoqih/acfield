@@ -55,6 +55,7 @@ class Robot:
     telemetry_seq: int = -1
     retired_boots: set = field(default_factory=set)
     fault: str | None = None
+    warning: str | None = None
     applied_seq: int | None = None
     sampled_at_ms: float | None = None
     clock_synced: bool = False
@@ -214,6 +215,8 @@ class Fleet:
         return packets
 
     def limits(self, r):
+        if self.mode == "demo":
+            return r.config.max_v, r.config.max_omega
         return (min(r.config.max_v, r.limits.max_v if r.limits else .10),
                 min(r.config.max_omega, r.limits.max_omega if r.limits else .30))
 
@@ -287,6 +290,7 @@ class Fleet:
         r.encoder_left, r.encoder_right = msg.encoder_left, msg.encoder_right
         r.device_state, r.firmware, r.stop_reason = msg.device_state, msg.firmware, msg.stop_reason
         r.limits, r.fault = msg.limits, msg.fault
+        r.warning = msg.warning
         r.applied_seq, r.sampled_at_ms = msg.applied_seq, msg.sampled_at_ms
         r.clock_synced = msg.clock_synced
         r.clock_uncertainty_ms = msg.clock_uncertainty_ms
@@ -365,7 +369,7 @@ class Fleet:
                 "clock_synced": r.clock_synced, "clock_uncertainty_ms": r.clock_uncertainty_ms,
                 "applied_seq": r.applied_seq, "sampled_at_ms": r.sampled_at_ms,
                 "seq": r.seq, "ack_seq": r.ack_seq, "command_status": r.command_status,
-                "reason": r.reason, "fault": r.fault, "stop_reason": r.stop_reason,
+                "reason": r.reason, "fault": r.fault, "warning": r.warning, "stop_reason": r.stop_reason,
                 "corners": corners, "trail": list(r.trail)})
         return {"mode": self.mode, "session": self.session, "estop": self.estop,
                 "allow_unlocalized_control": self.allow_unlocalized_control,

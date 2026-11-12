@@ -1,3 +1,5 @@
+import time
+
 import httpx
 import pytest
 from pydantic import ValidationError
@@ -11,7 +13,8 @@ def test_typed_snapshot_and_forward_compatible_fields(server, transport):
         state = client.state()
         robot = state.robot("car-01")
         assert robot.id == "car-01"
-        assert robot.config.max_v == .1
+        assert robot.config.max_v == .5
+        assert robot.config.max_omega == 1.5
         assert robot.x is not None
         assert robot.model_dump()["voltage_v"] is None
         assert robot.trail  # Additional server fields are preserved.
@@ -20,7 +23,15 @@ def test_typed_snapshot_and_forward_compatible_fields(server, transport):
             state.robot("missing")
 
 
-def test_explicit_arm_motion_receipts_release_and_global_stop(transport):
+def test_explicit_arm_motion_receipts_release_and_global_stop(transport, server):
+    settings = server.get("/api/config").json()
+    settings["robots"][0]["max_v"] = .1
+    assert server.put("/api/config", json=settings).status_code == 200
+    assert server.post("/api/reset-stop").status_code == 200
+    deadline = time.monotonic() + 2
+    while not all(r["online"] for r in server.get("/api/state").json()["robots"]):
+        assert time.monotonic() < deadline, "Demo devices did not become ready"
+        time.sleep(.01)
     with Client(transport=transport) as client:
         assert client.arm("car-01").armed
         receipt = client.command("car-01", v=.5, omega=0)
