@@ -56,6 +56,25 @@ int main() {
     feedback.stop();
     assert(feedback.pwm[0] == 0 && feedback.pwm[1] == 0);
 
+    if (!config::encoderDiagnostic && config::motorClosedLoop) {
+        // Equal wheel targets with asymmetric encoder speeds must produce
+        // more drive on the slower wheel, in both forward and reverse.
+        for (float direction : {1.f, -1.f}) {
+            Motors regulated;
+            regulated.begin();
+            for (int i = 0; i < 20; ++i) {
+                for (unsigned wheel = 0; wheel < 2; ++wheel)
+                    for (int n = 0; n < (wheel == 0 ? 2 : 4); ++n)
+                        pulseWheel(wheel, direction*config::encoderSign[wheel] > 0);
+                regulated.update(direction*.3f, 0, .01f);
+            }
+            assert(direction*regulated.speed[0] < direction*regulated.speed[1]);
+            assert(std::fabs(regulated.pwm[0]) > std::fabs(regulated.pwm[1]));
+            assert(!regulated.fault);
+            regulated.stop();
+        }
+    }
+
     Motors motors;
     motors.begin();
     // Persistent missing feedback must not stop either build when guards are disabled.

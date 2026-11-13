@@ -115,7 +115,8 @@ int main() {
 
     WheelControl wheel;
     assert(diagnosticPwm(0) == 0);
-    assert(diagnosticPwm(1) == 255 && diagnosticPwm(-1) == -255);
+    const float saturatingTarget = 256.f/config::feedForward;
+    assert(diagnosticPwm(saturatingTarget) == 255 && diagnosticPwm(-saturatingTarget) == -255);
     assert(diagnosticPwm(.05f) > 0 && diagnosticPwm(-.05f) < 0);
     float output = wheel.update(.1f, 0, .02f);
     assert(output > 0 && wheel.target == .1f); // target applies without acceleration limiting

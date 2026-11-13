@@ -63,6 +63,16 @@ class DeviceLimits(Model):
     max_omega: float = Field(gt=0, le=6)
 
 
+class ImuSample(Model):
+    """Raw sensor axes, SI units; not a calibrated body pose or displacement."""
+    sampled_mono_us: int = Field(ge=0)
+    sensor_ticks: int = Field(ge=0, le=0xffffff)
+    age_ms: int = Field(ge=0)
+    saturated: bool
+    accel_m_s2: tuple[float, float, float]
+    gyro_rad_s: tuple[float, float, float]
+
+
 class Telemetry(Model):
     version: Literal[1]
     type: Literal["telemetry"]
@@ -92,6 +102,7 @@ class Telemetry(Model):
     sampled_at_ms: float | None = None
     applied_seq: int | None = Field(default=None, ge=0)
     motion_echo_rejections: int | None = Field(default=None, ge=0)
+    imu: ImuSample | None = None
 
 
 def default_settings():

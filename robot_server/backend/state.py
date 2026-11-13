@@ -5,7 +5,7 @@ import time
 import uuid
 from collections import deque
 from dataclasses import dataclass, field
-from .models import Command, DeviceLimits, RobotConfig, Settings, Telemetry
+from .models import Command, DeviceLimits, ImuSample, RobotConfig, Settings, Telemetry
 from . import safety
 from .clock import clock
 
@@ -37,6 +37,7 @@ class Robot:
     wheel_right: float | None = None
     encoder_left: int | None = None
     encoder_right: int | None = None
+    imu: ImuSample | None = None
     estimated_v: float | None = None
     acceleration: float | None = None
     armed: bool = False
@@ -359,6 +360,7 @@ class Fleet:
         r.measured_v, r.measured_omega = msg.measured_v, msg.measured_omega
         r.wheel_left, r.wheel_right = msg.wheel_left, msg.wheel_right
         r.encoder_left, r.encoder_right = msg.encoder_left, msg.encoder_right
+        r.imu = msg.imu
         r.device_state, r.firmware, r.stop_reason = msg.device_state, msg.firmware, msg.stop_reason
         r.limits, r.fault = msg.limits, msg.fault
         r.warning = msg.warning
@@ -454,6 +456,7 @@ class Fleet:
                 "measured_omega": r.measured_omega if online else None,
                 "wheel_left": r.wheel_left if online else None, "wheel_right": r.wheel_right if online else None,
                 "encoder_left": r.encoder_left if online else None, "encoder_right": r.encoder_right if online else None,
+                "imu": r.imu.model_dump(mode="json") if online and r.imu is not None else None,
                 "estimated_v": r.estimated_v if visible else None,
                 "acceleration": r.acceleration if visible else None,
                 "target_v": r.target_v, "target_omega": r.target_omega,

@@ -4,7 +4,7 @@ import { Activity, Battery, Camera, Check, ChevronDown, CircleHelp, Crosshair, E
 import type { Robot, RobotConfig, Settings, Snapshot, VisionProfile, VisionResponse, VisionStatus } from './types'
 import CameraSettings from './CameraSettings.vue'
 import TouchJoystick from './TouchJoystick.vue'
-import { bodyVelocity, elapsedMs } from './control'
+import { bodyVelocity, elapsedMs, joystickArcMaxOmega } from './control'
 import { ServerClock } from './timeSync'
 
 const state = ref<Snapshot | null>(null)
@@ -556,7 +556,7 @@ onUnmounted(() => {
               <TouchJoystick :disabled="!controlReady" :active="active === 'joystick'" :connected="connected" @move="moveJoystick" @stop="endHold" @emergency="emergencyStop" />
               <p class="control-hint">直接操作摇杆，松开即停车</p>
               <p v-if="selected.encoder_diagnostic" class="control-explanation">诊断固件按 PWM 开环运行，设置值不代表实际车速。<a href="/encoder">前往编码器排查调节 PWM</a></p>
-              <p v-else class="control-hint">当前有效目标上限 {{ metric(selected.effective_max_v, 2) }} m/s · {{ metric(selected.effective_max_omega, 2) }} rad/s</p>
+              <p v-else class="control-hint">手动上限 {{ metric(selected.effective_max_v, 2) }} m/s · 行驶转向 {{ metric(Math.min(selected.effective_max_omega, joystickArcMaxOmega), 2) }} / 原地转向 {{ metric(selected.effective_max_omega, 2) }} rad/s</p>
               <div class="command-state"><span class="command-dot" :class="{ on: selected.armed }"></span><span>{{ !connected ? '连接中断 · 暂停控制' : selected.reason }}</span><span class="mono">#{{ String(selected.seq).padStart(4, '0') }}</span></div><div class="ack-status">{{ commandLabel(selected) }} · 有效期 300 ms</div>
               <details class="telemetry-section"><summary>定位与速度详情<ChevronDown :size="14" /></summary>              <div class="telemetry-grid"><div><label>X 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.x, 3) }}</strong></div><div><label>Y 坐标 <span>m</span></label><strong class="mono">{{ metric(selected.y, 3) }}</strong></div><div><label>车体朝向</label><strong class="mono">{{ deg(selected.theta) }}</strong></div><div><label>距上次定位 <span>ms</span></label><strong class="mono">{{ metric(selected.pose_age_ms, 0) }}</strong></div></div>
               <div class="velocity-row"><span>实测线速度<strong class="mono">{{ metric(selected.measured_v) }}<small> m/s</small></strong></span><span>视觉估计<strong class="mono">{{ metric(selected.estimated_v) }}<small> m/s</small></strong></span></div>
@@ -607,6 +607,6 @@ onUnmounted(() => {
         </form>
       </section>
     </div>
-    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，即可直接操作摇杆。</li><li>摇杆相对车头：上前进、下后退；斜向靠两轮快慢差走弧线，接近纯横向时平滑过渡为原地转向；左右对应车头转向，倒车时也相同。松开停车。电脑可用 Tab 聚焦摇杆并按住方向键操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障恢复或指令超时后，可直接重新操作；不会恢复旧运动。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
+    <div v-if="help" class="modal-backdrop" @click.self="help = false"><section ref="modalElement" tabindex="-1" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="modal-header"><h2 id="help-title">开始一次实验</h2><button aria-label="关闭操作说明" @click="help = false"><X :size="20" /></button></div><div class="modal-body"><ol><li>确认顶部为模拟环境或预期的真实设备模式。</li><li>在场地或设备标签中选择一辆小车。</li><li>确认通信与定位有效，即可直接操作摇杆。</li><li>摇杆相对车头：上前进、下后退；斜向靠两轮快慢差走弧线，越靠近左右侧越偏向旋转，横向上下各 20° 内为原地转向；左后方让车尾向左后方走，右后方让车尾向右后方走；纯左右输入控制车头原地转向。松开停车。电脑可用 Tab 聚焦摇杆并按住方向键操作。</li><li>按空格或点击「全局停止」锁定全部设备。</li></ol><p>真实设备需要实现 UDP 协议和独立的车端超时停车。已加入保守的边界与车间距离停车保护，仍需实测定位误差和停止距离；它不会自动规划绕行。故障恢复或指令超时后，可直接重新操作；不会恢复旧运动。</p><p>在「实验配置」中连接相机、填写内参和固定标签坐标，再执行场地标定。真实模式保存时会同步小车标签尺寸和安装高度。</p></div></section></div>
   </div>
 </template>

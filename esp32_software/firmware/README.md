@@ -1,6 +1,16 @@
-# General Driver for Robots 固件 0.2.8
+# General Driver for Robots 固件 0.2.9
 
 适用 SKU23730 / ESP32-WROOM-32UE + TB6612FNG，与 `robot_server` 配套。主控是ESP32，无需STM32或额外串口桥。供应商示例不在本仓分发；平台参考见 [ACField 文档](https://yaoqih.github.io/acfield/hardware/bringup)。
+
+## IMU 诊断遥测（0.2.9）
+
+新增板载 QMI8658C 六轴原始采样，必须先更新服务端以接受 `imu` 字段，再烧录车端。与 INA219 共用 SDA32/SCL33，由同一个低优先级传感器任务访问 I2C；电机任务仍独立 100 Hz。芯片配置为 125 Hz、加速度 ±8g、陀螺仪 ±1024°/s；约 100 Hz 读取最新样本，现有 40 Hz 遥测仅发送其中最新一份，不保存全部芯片样本。未接入磁力计，不自动修改方向控制。
+
+`imu` 包含 `sampled_mono_us`（本次读取完成时的车端单调微秒）、`sensor_ticks`（芯片原始 24 位时间戳）、`age_ms`（发送时的读取年龄）、`saturated`、`accel_m_s2` 和 `gyro_rad_s` 三元数组。轴向为**芯片坐标系**，不是已校准车体系；加速度包含重力的影响，静止约 9.81 m/s²。初始化或读取失败时为 `null`；IMU 不可用不改变原有电机保护。服务端 `/api/state` 和运行记录保留这些字段；现有 `acceleration` 仍是视觉计算量。
+
+实车使用前需要检查约 1g 静止读数、持续更新的芯片时间戳、静止陀螺仪偏置，并手动逆时针转车核对正方向。短时相对航向可以由去偏后的陀螺仪积分估计；运动时加速度不能直接当成倾角，六轴也不能提供无漂移的绝对航向或可靠的米级位移。
+
+2026-11-13 已将 0.2.9 烧录到 car-01，实测芯片时间戳持续更新，静止和短时前后运动均收到真实 IMU 遥测。该车静止加速度模长约 9.30 m/s²；陀螺仪 X/Y/Z 零偏约 +15.0/+2.3/−2.1°/s，分析时必须先测零偏。倒退逆时针转动已由用户观察与去偏 IMU 正方向交叉核对；手动转角尚未完成独立比例校准，原始积分角度不能视作已校准真值。当前只用于诊断，没有启用 IMU 航向闭环。
 
 ## 配置与构建
 
@@ -25,14 +35,16 @@ CAR-01 编码器断线排查可使用专用构建 `pio run -e encoder-diagnostic
 
 旧 `0.2.3-encoder-diagnostic` 内部仍限幅 35/255，须重新烧录才能开放完整 PWM 与新回显窗口。两版均通过 `v=PWM/350` 映射；更改映射须同步更新固件版本与主控识别。诊断构建对所有控制入口生效。结束后使用 `pio run -e general-driver -t upload` 恢复普通固件。详情见[编码器线材排查](../../docs/guide/troubleshooting.md#编码器线材排查)。
 
-从仓库根目录烧录普通固件（当前默认开环）：
+从仓库根目录烧录普通固件（当前配置为编码器闭环）：
 
 ```sh
 pio run -d esp32_software/firmware -e general-driver -t upload
 pio device monitor -d esp32_software/firmware -e general-driver
 ```
 
-串口或网页应显示固件 `0.2.8`，启动串口应有 `Motor control: open_loop`。当前 `motorClosedLoop=false`：编码器只用于测速显示与记录，不参与 PWM 调节。协议和页面保留 m/s 目标，按目标轮速乘 `feedForward=350` 换算 PWM，例如直行 0.10、0.20、0.50 对应约 35、70、175；任一轮超过 255 时两轮一起缩放，保留转向比例。开环不能保证目标等于实际 m/s，电量、负载和电机差异都会影响实际速度。电机与编码器方向以 `include/config.h` 的 `motorSign` 和 `encoderSign` 为准，编码器排查页仍可查看原始计数曲线。
+串口或网页应显示固件 `0.2.9`，启动串口应有 `Motor control: closed_loop`。闭环需要普通构建中的 `encoderDiagnostic=false` 和 `motorClosedLoop=true` 同时成立；只修改后者不够，诊断模式会优先绕过 PI。`encoder-diagnostic` 构建始终使用开环 PWM。修改配置后必须重新编译并烧录，刷新网页不会更新板上固件；网页中的普通固件提示不代表实际控制模式。
+
+当前普通固件以左右编码器测速分别进行前馈加 PI 调节；本轮架空调试起始值为 `feedForward=250`、`kp=60`、`ki=0`，先关闭积分，稳定后再考虑设为 20。诊断构建继续使用 `feedForward=350`，保持 PWM 传输映射。`encoderGuardsEnabled=false` 只关闭编码器异常停车，不会关闭闭环。确认每侧每圈计数、轮径和反馈方向正确后再整定 PI；反馈跳变会直接影响 PWM。需要隔离反馈时，将 `motorClosedLoop=false` 并重新烧录：此时目标轮速乘配置中的 `feedForward` 换算 PWM，任一轮超过 255 时两轮一起缩放。电机与编码器方向以 `include/config.h` 的 `motorSign` 和 `encoderSign` 为准，编码器排查页仍可查看原始计数曲线。
 
 ## 执行规则
 

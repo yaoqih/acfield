@@ -52,13 +52,16 @@ test('joystick sends proportional movement and stops on release', async ({ page 
   await page.mouse.move(x + 40, y - 40)
   await expect.poll(() => commands.some(c => c.v > 0 && c.omega < 0)).toBeTruthy()
   const diagonal = commands.at(-1)!
-  // A right-forward arc retains positive targets on both wheels. Steering is
-  // coupled to travel rather than subtracting an independent full yaw demand.
-  expect(diagonal.omega/diagonal.v).toBeCloseTo(-3/Math.sqrt(2))
+  // A 45° right-forward arc turns gently and retains positive wheel targets.
+  expect(diagonal.omega/diagonal.v).toBeLessThan(-1)
+  expect(diagonal.omega/diagonal.v).toBeGreaterThan(-1.6)
   expect(diagonal.v-diagonal.omega*.061).toBeGreaterThan(0)
   expect(diagonal.v+diagonal.omega*.061).toBeGreaterThan(0)
   commands.length = 0
   await page.mouse.move(x - 40, y + 40)
+  await expect.poll(() => commands.some(c => c.v < 0 && c.omega < 0)).toBeTruthy()
+  commands.length = 0
+  await page.mouse.move(x + 40, y + 40)
   await expect.poll(() => commands.some(c => c.v < 0 && c.omega > 0)).toBeTruthy()
   await page.mouse.up()
   await expect.poll(() => commands.at(-1)?.v === 0 && commands.at(-1)?.omega === 0).toBeTruthy()
@@ -113,6 +116,45 @@ test('parking clears held input and fresh input starts without unlocking', async
 })
 
 for (const path of ['/', '/mobile']) {
+  test(`full horizontal joystick input requests a pivot at the vehicle yaw limit on ${path}`, async ({ page, request }) => {
+    const settings = await (await request.get('/api/config')).json()
+    settings.robots[0].max_omega = 6
+    expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
+    expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
+    if (path === '/mobile') await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(path)
+    const joystick = page.getByRole('application', { name: '方向摇杆' })
+    await expect(joystick).toHaveAttribute('aria-disabled', 'false')
+    await joystick.scrollIntoViewIfNeeded()
+    const box = (await joystick.boundingBox())!
+    for (const side of [-1, 1]) {
+      const x = box.x+box.width*(.5+side*.45), y = box.y+box.height/2
+      await page.mouse.move(x, y)
+      await page.mouse.down()
+      await expect.poll(async () => {
+        const robot = (await (await request.get('/api/state')).json()).robots[0]
+        return robot.target_v === 0 && Math.abs(robot.target_omega+side*6) < .001
+      }).toBeTruthy()
+      // Full rotation must remain easy to find with ordinary finger-angle
+      // errors. By 30° the input should still turn strongly while easing travel.
+      for (const degrees of [-30, -18, 18, 30]) {
+        const angle = degrees*Math.PI/180, radius = box.width*.45
+        await page.mouse.move(box.x+box.width/2+side*radius*Math.cos(angle), y+radius*Math.sin(angle))
+        await expect.poll(async () => {
+          const robot = (await (await request.get('/api/state')).json()).robots[0]
+          return Math.abs(degrees) < 20
+            ? Math.abs(robot.target_v) < .001 && -side*robot.target_omega > 5.6
+            : Math.abs(robot.target_v) < .1 && -side*robot.target_omega > 3
+        }).toBeTruthy()
+      }
+      await page.mouse.up()
+      await expect.poll(async () => {
+        const robot = (await (await request.get('/api/state')).json()).robots[0]
+        return robot.target_v === 0 && robot.target_omega === 0
+      }).toBeTruthy()
+    }
+  })
+
   test(`joystick continues without clock synchronization on ${path}`, async ({ page, request }) => {
     if (path === '/mobile') await page.setViewportSize({ width: 390, height: 844 })
     let deviceSynced = false
@@ -192,6 +234,22 @@ for (const path of ['/', '/mobile']) {
       expect(left).toBeGreaterThan(right)
       expect(right).toBeGreaterThan(0)
     }
+    // Back-right steers the tail right, then back-left steers it left. Verify
+    // the commands received by the server on desktop and mobile alike.
+    await page.keyboard.down('ArrowDown')
+    await page.keyboard.down('ArrowRight')
+    await expect.poll(async () => {
+      const robot = (await (await page.request.get('/api/state')).json()).robots[0]
+      return robot.target_v < 0 && robot.target_omega > 0
+    }).toBeTruthy()
+    await page.keyboard.up('ArrowRight')
+    await page.keyboard.down('ArrowLeft')
+    await expect.poll(async () => {
+      const robot = (await (await page.request.get('/api/state')).json()).robots[0]
+      return robot.target_v < 0 && robot.target_omega < 0
+    }).toBeTruthy()
+    await page.keyboard.up('ArrowLeft')
+    await page.keyboard.up('ArrowDown')
     await page.getByRole('button', { name: '停车', exact: true }).click()
     await expect(page.getByRole('button', { name: '解锁控制' })).toHaveCount(0)
   })

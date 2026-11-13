@@ -14,7 +14,7 @@ const samples = ref<Sample[]>([])
 const speed = ref(0.05)
 const pwm = ref(18)
 const diagnostic = computed(() => selected.value?.encoder_diagnostic)
-const speedLimit = computed(() => Math.min(0.1, selected.value?.effective_max_v ?? 0))
+const speedLimit = computed(() => selected.value?.effective_max_v ?? 0)
 const commandedPwm = computed(() => diagnostic.value ? Math.round((selected.value?.target_v ?? 0) * diagnostic.value.pwm_per_mps) : null)
 const running = ref(false)
 const releasing = ref(false)
@@ -216,7 +216,7 @@ onUnmounted(() => {
     <main>
       <div class="intro"><p class="eyebrow">HARDWARE DIAGNOSTICS</p><h1>编码器排查</h1><p>转动双轮，观察编码计数，轻晃线材和插头，查找变化异常的一侧。</p></div>
       <div class="notice"><strong>请先将小车架空，确保双轮离地。</strong> 单次最多运行 2 分钟；诊断固件支持切到后台继续运行。点击停车、离开页面或控制连接断开时停车。</div>
-      <div v-if="state?.mode === 'hardware' && selected?.online" class="notice" role="status"><template v-if="diagnostic"><strong>编码器诊断固件已启用。</strong> 电机按 PWM 占空比运行，编码器无响应和方向保护已关闭；指令到达即执行，无需等待校时。PWM 不代表 m/s。排查完成后请烧录普通固件。</template><template v-else-if="selected.firmware?.includes('encoder-diagnostic')"><strong>诊断固件尚未被主控识别。</strong> 请更新配套主控后再运行。</template><template v-else><strong>当前是普通固件。</strong> 0.2.8 正式固件采用开环控制，编码器仅用于观测。需要直接设置 PWM 时，可烧录编码器诊断固件。</template></div>
+      <div v-if="state?.mode === 'hardware' && selected?.online" class="notice" role="status"><template v-if="diagnostic"><strong>编码器诊断固件已启用。</strong> 电机按 PWM 占空比运行，编码器无响应和方向保护已关闭；指令到达即执行，无需等待校时。PWM 不代表 m/s。排查完成后请烧录普通固件。</template><template v-else-if="selected.firmware?.includes('encoder-diagnostic')"><strong>诊断固件尚未被主控识别。</strong> 请更新配套主控后再运行。</template><template v-else><strong>当前是普通固件。</strong> 页面下发目标速度，开环或闭环由车端固件配置决定，可通过启动串口的 Motor control 确认。需要直接设置 PWM 时，可烧录编码器诊断固件。</template></div>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <section class="panel controls">
         <div class="panel-title"><div><h2>电机控制</h2><p>{{ state?.mode === 'hardware' ? '真实设备' : '模拟环境' }} · 双轮直行</p></div><span :class="selected?.online && connected ? 'online' : 'offline'">{{ selected?.online && connected ? '车辆在线' : '车辆离线' }}</span></div>

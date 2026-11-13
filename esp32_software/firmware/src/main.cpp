@@ -6,6 +6,7 @@
 #include <esp_timer.h>
 #include "time_sync.h"
 #include "battery.h"
+#include "imu.h"
 #include "motors.h"
 #include "command_wire.h"
 #include "command_scheduler.h"
@@ -20,6 +21,8 @@ WiFiUDP udp;
 IPAddress server;
 Motors motors;
 Battery battery;
+Imu imu;
+ImuSample imuSample;
 Protocol protocol(config::maxV, config::maxOmega, config::motionEchoMs);
 SemaphoreHandle_t stateMutex;
 char bootId[33];
@@ -67,17 +70,25 @@ void control(void*) {
     }
 }
 
-void sampleBattery(void*) {
+void sampleSensors(void*) {
     Battery sampler;
     TickType_t wake = xTaskGetTickCount();
+    uint32_t lastBattery = millis();
     while (true) {
-        vTaskDelayUntil(&wake, pdMS_TO_TICKS(config::batteryMs));
-        const char* fault = sampler.sample(millis());
+        vTaskDelayUntil(&wake, pdMS_TO_TICKS(config::controlMs));
+        const ImuSample nextImu = imu.sample();
+        const uint32_t now = millis();
+        const bool batteryDue = uint32_t(now-lastBattery) >= config::batteryMs;
+        const char* fault = batteryDue ? sampler.sample(now) : nullptr;
+        if (batteryDue) lastBattery = now;
         xSemaphoreTake(stateMutex, portMAX_DELAY);
-        battery.valid = sampler.valid; battery.voltage = sampler.voltage;
-        if (battery.warning != sampler.warning) urgentTelemetry = true;
-        battery.warning = sampler.warning;
-        if (fault) { protocol.fault(fault); motors.stop(); urgentTelemetry = true; }
+        imuSample = nextImu;
+        if (batteryDue) {
+            battery.valid = sampler.valid; battery.voltage = sampler.voltage;
+            if (battery.warning != sampler.warning) urgentTelemetry = true;
+            battery.warning = sampler.warning;
+            if (fault) { protocol.fault(fault); motors.stop(); urgentTelemetry = true; }
+        }
         xSemaphoreGive(stateMutex);
     }
 }
@@ -127,7 +138,7 @@ void receive() {
 }
 
 void telemetry() {
-    StaticJsonDocument<2048> doc;
+    StaticJsonDocument<3072> doc;
     doc["version"] = 1; doc["type"] = "telemetry";
     doc["robot_id"] = config::robotId; doc["boot_id"] = bootId;
     doc["seq"] = telemetrySeq; doc["firmware"] = config::firmware;
@@ -145,6 +156,18 @@ void telemetry() {
     if (battery.valid) doc["voltage_v"] = battery.voltage;
     else doc["voltage_v"] = nullptr;
     doc["warning"] = battery.warning;
+    if (imuSample.valid) {
+        auto raw = doc.createNestedObject("imu");
+        raw["sampled_mono_us"] = imuSample.sampledMonoUs;
+        raw["sensor_ticks"] = imuSample.sensorTicks;
+        raw["age_ms"] = uint32_t((esp_timer_get_time()-imuSample.sampledMonoUs)/1000);
+        raw["saturated"] = imuSample.saturated;
+        auto accel = raw.createNestedArray("accel_m_s2");
+        auto gyro = raw.createNestedArray("gyro_rad_s");
+        for (unsigned axis = 0; axis < 3; ++axis) {
+            accel.add(imuSample.accel[axis]); gyro.add(imuSample.gyro[axis]);
+        }
+    } else doc["imu"] = nullptr;
     xSemaphoreGive(stateMutex);
     doc["limits"]["max_v"] = config::maxV; doc["limits"]["max_omega"] = config::maxOmega;
     xSemaphoreTake(stateMutex, portMAX_DELAY);
@@ -162,7 +185,7 @@ void telemetry() {
         doc["ack_session"] = protocol.session; doc["ack_seq"] = protocol.ackSeq;
     } else { doc["ack_session"] = nullptr; doc["ack_seq"] = nullptr; }
     xSemaphoreGive(stateMutex);
-    char buffer[1536];
+    char buffer[2048];
     size_t n = serializeJson(doc, buffer, sizeof(buffer));
     if (!doc.overflowed() && n < sizeof(buffer) && udp.beginPacket(server, config::serverPort)) {
         udp.write(reinterpret_cast<const uint8_t*>(buffer), n);
@@ -209,6 +232,7 @@ void setup() {
     battery.begin();
     delay(20); // INA219 conversion startup, with motor outputs held at zero
     if (const char* fault = battery.sample(millis())) protocol.fault(fault);
+    Serial.printf("QMI8658C: %s (raw sensor axes, no bias correction)\n", imu.begin() ? "ready" : "unavailable");
     WiFi.persistent(false); WiFi.mode(WIFI_STA); WiFi.setSleep(false);
     snprintf(bootId, sizeof(bootId), "%08lx%08lx%08lx%08lx",
              (unsigned long)esp_random(), (unsigned long)esp_random(),
@@ -220,7 +244,7 @@ void setup() {
         while (true) { motors.stop(); esp_task_wdt_reset(); delay(100); }
     }
     if (xTaskCreatePinnedToCore(control, "motor-control", 4096, nullptr, 3, nullptr, 1) != pdPASS) abort();
-    if (xTaskCreatePinnedToCore(sampleBattery, "battery", 3072, nullptr, 1, nullptr, 0) != pdPASS) abort();
+    if (xTaskCreatePinnedToCore(sampleSensors, "sensors", 3072, nullptr, 1, nullptr, 0) != pdPASS) abort();
     WiFi.setAutoReconnect(true); WiFi.begin(wifiSsid, wifiPassword);
     Serial.printf("Robot %s, firmware %s, boot %s\n", config::robotId, config::firmware, bootId);
     Serial.printf("Motor control: %s\n", config::encoderDiagnostic ? "diagnostic_open_loop" :
