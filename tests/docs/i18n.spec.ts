@@ -76,7 +76,7 @@ for (const path of pages('docs/en')) {
     const links = await page.locator('.VPContent a[href], .VPNavBarMenu a[href], .VPSidebar a[href]')
       .evaluateAll(elements => elements.map(element => element.getAttribute('href') || ''))
     const leaks = links.filter(link => link.startsWith('/acfield/')
-      && !link.startsWith('/acfield/en/') && !/\.(png|svg|pdf|glb|stl)$/.test(link))
+      && !link.startsWith('/acfield/en/') && !/\.(png|svg|pdf|glb|stl|zip|dxf|json)$/.test(link))
     expect(leaks, path).toEqual([])
     expect(await page.locator('.VPContent').innerText(), path).not.toMatch(/[一-鿿]/)
   })

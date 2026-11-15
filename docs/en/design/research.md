@@ -1,16 +1,16 @@
 # Research validity
 
-ACField provides shared infrastructure for physical systems. Multi-robot actions provide a research integration point; comparable multi-agent experiments also need a defined task and evidence chain.
+ACField is a physical testbed for studying multi-agent control, swarm intelligence and emergent behavior with differential-drive robots. Multi-robot actions provide a research integration point; comparable policy studies also need a defined task, local information boundary and evidence chain. Platform reliability supports this research.
 
-## Research directions to explore {#research-directions-to-explore}
+## Research questions to explore {#research-directions-to-explore}
 
-Low-speed formation, pursuit/evasion, cooperative arrival, coverage and assignment are possible future tasks. Pretrained policies can use the velocity API after adaptation to differential-drive motion, frequency, latency and stop rules. Actual performance requires measurement.
+Local task allocation/adaptive division of labor under changing demand, coverage/search with limited communication, flocking/formation and resilience from local rules, and collective choice under local evidence are candidate questions. Compare centralized, fixed-role, no-communication and local-interaction baselines, and compute group metrics from individual trajectories. Planning, learned or pretrained policies can use the velocity API but must respect differential-drive motion and measured operating conditions.
 
 The external camera currently provides shared localization. Raw-image sharing, BEV fusion, collaborative SLAM and onboard autonomous perception need additional equipment or data paths; a four-robot motion demo does not establish these capabilities.
 
 ## Central infrastructure and decentralized policies {#central-infrastructure-and-decentralized-policies}
 
-Agents may run on one computer or receive local observations from an adapter. Whether a policy is decentralized depends on available information and message rules, not whether processes are separate.
+Agents may run on one computer or receive local observations from an adapter. Whether a policy is decentralized depends on available information and message rules, not whether processes are separate. Emergence claims require individual-level controls, mechanism ablations and repeated evidence.
 
 `/api/state` currently exposes global platform state with no observation isolation. Limited-communication experiments need observation/message adapters to prevent access to information outside the rules. Evaluation and stopping protection may retain global state, with explicit isolation from the policy.
 

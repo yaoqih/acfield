@@ -25,9 +25,9 @@ Acceptance means another user can build the reference combination from public ma
 ## As research needs develop · Experiment environment {#as-research-needs-develop-experiment-environment}
 
 - Fixed-step differential-drive simulation with configurable disturbances.
-- A small set of tasks, baselines, episodes and termination rules.
+- A small set of multi-agent control/swarm tasks, baselines, episodes and termination rules, initially focused on dynamic allocation and local cooperative coverage/search.
 - Observation/action/execution associations, evaluation and replay.
-- Observation and communication isolation defined by experiment rules.
+- Agent-local observation and communication isolation, with group metrics and controls for emergence hypotheses.
 - Optional PettingZoo or ROS 2 integration when actual users need it.
 
 Paper-specific methods, training settings and weights live in separate repositories pinned to an ACField revision. Add capabilities to the platform once multiple experiments demonstrate their general use.

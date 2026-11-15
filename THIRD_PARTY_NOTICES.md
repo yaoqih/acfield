@@ -12,4 +12,8 @@ The printable label PDFs embed a subset of Bitstream Vera Sans, provided with Re
 
 ## Dependencies and board references
 
-Python, JavaScript, PlatformIO and CAD dependencies are installed separately and retain their respective licenses. Consult the dependency manifests and lockfiles. Waveshare General Driver for Robots is the reference controller board; vendor firmware, schematics and documentation are not redistributed here. The board name identifies compatibility. Mechanical models use simplified purchased-part envelopes. Supplier dimensions must be checked against actual components.
+Python, JavaScript, PlatformIO and CAD dependencies are installed separately and retain their respective licenses. Consult the dependency manifests and lockfiles. Waveshare General Driver for Robots is the reference controller board; full vendor firmware, CAD archives and schematics are linked upstream rather than bundled. The board name identifies compatibility. Mechanical models use simplified purchased-part envelopes. Supplier dimensions must be checked against actual components.
+
+## Supplier parameter images
+
+Eleven user-supplied supplier/brand parameter images in `docs/public/images/` are preserved unchanged for hardware reference. They cover the controller, motor, bracket, wheel, caster, battery and camera. Original text and brand marks remain intact, and third-party material retains its respective rights rather than inheriting the repository's Apache-2.0 license. [`docs/public/images/hardware-parameters.json`](docs/public/images/hardware-parameters.json) records the supplied source URLs, filenames, dimensions and SHA-256 hashes. The archive date is not the original capture date. Product descriptions and generic supplier tables are not independent measurements of purchased hardware.

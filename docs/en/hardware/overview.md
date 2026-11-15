@@ -1,5 +1,7 @@
 # Materials and mechanical design
 
+The [detailed BOM](./bom) records the new purchasing options and quantities in priority order. [Resources and CAD](./resources) collects official controller files, fabrication downloads and eleven original parameter images. The new 1:30 motors, 1200 mAh 3S battery and M3x50 posts differ from the historical design and robot records below; review the BOM compatibility table first.
+
 The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. The **current compact first-article candidate** is a 95 × 80 mm acrylic robot, pending assembly and measurements; it is not a validated four-robot fleet.
 
 Keep the CAD assumptions separate from hardware samples. All four robots have changed from A12 1:100 motors to the same family at 1:20, matching the compact CAD ratio. Battery dimensions, plates, wiring, clearances and control parameters still require measurement on the assembled robot.
@@ -17,7 +19,7 @@ DXF files, label images, the bill of materials and open checks are in the [95 mm
 
 ## Reference purchasing and design boundaries {#reference-purchases}
 
-The following is a reusable selection example. Prices are a discounted November 2026 snapshot for rough budgeting, not fixed procurement costs or a supplier requirement. Equivalent parts may be substituted after checking voltage, current, pinout, mounting holes, dimensions and clearance.
+The following is a historical selection example. Motor ratio, battery, charger, posts and support connectors may differ from the new [detailed BOM](./bom), which records the current supplied options and quantities. Prices belong to the previous November 2026 selection and are not quotes for the new options. Check voltage, current, pinout, mounting holes, dimensions and clearance before substitution.
 
 | Part | Reference specification | Price reference | Design use and checks |
 | --- | --- | ---: | --- |
@@ -28,7 +30,7 @@ The following is a reusable selection example. Prices are a discounted November 
 | 3S battery | 11.1 V, 2200 mAh, XT60 x1 | CNY 47.15 | Check fit in the 55 x 30 x 20 mm assumed space, mass, 12.6 V full charge and peak current. |
 | Charger | B4 charger and adapter, 2–4S | CNY 65.49 | Match both the main and balance connectors of the selected 3S pack. |
 
-Use assembled adapter cables where possible. ZH1.5-to-PH2.0 6P cables are signal/encoder candidates (CNY 4.20 for two); XT60-to-DC5525 (CNY 8.80) and DC5525-to-XH2.54 2P (CNY 6.80) are power candidates only when polarity, wire gauge and board ratings match. Connector names do not define pinout. Loose terminals and crimping tools are workshop equipment, not the robot BOM.
+Use assembled adapter cables where possible. ZH1.5-to-PH2.0 6P cables are signal/encoder candidates (historical CNY 4.20 for two); XT60-to-DC5525 (CNY 8.80) and DC5525-to-XH2.54 2P (CNY 6.80) are previous power candidates only when polarity, wire gauge and board ratings match. Connector names do not define pinout. The new list includes loose terminals, 6P housings and tools as [inventory and shared workshop equipment](./bom#connectors-and-tools).
 
 ## Relationship between robot, arena and control chain {#system-hardware-relationship}
 

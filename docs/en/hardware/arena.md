@@ -22,18 +22,19 @@ Robot icons are enlarged for readability. The spatial and plan views explain the
 
 ## Arena reference materials {#arena-reference-materials}
 
-Prices are one discounted purchasing snapshot, not fixed procurement costs. Tube quantities and connectors are design inputs; determine the final structure from a support drawing and the camera coverage calculation.
+The following reflects the newly supplied options, with vision equipment first. See the [detailed BOM](./bom#vision-and-camera-support) for product links, quantities and tools. Shared equipment counts are suggestions where no total was supplied. A support drawing and camera coverage calculation must still determine the structure.
 
-| Part | Reference specification | Reference quantity and price | Notes |
+| Part | Current specification | Quantity | Notes |
 | --- | --- | ---: | --- |
-| Camera | H200S, 1080p, 60 fps, 3 mm, advertised 110-degree wide angle | 1, CNY 167.13 | Verify actual resolution, distortion, frame rate and USB cable length before choosing the height. |
-| Camera mount | U-shaped gimbal clamp for an approximately 30 mm cylinder | 1, CNY 8.78 | Candidate for the boom or tube; check anti-slip, anti-rotation and vibration resistance. |
-| Tube | 15 x 15 x 0.9 mm square tube, 1.2 m x3 | 3.6 m total, CNY 4.61 each | Light support candidate; assign it to a mast, boom or brace only after the layout is fixed. |
-| Tube | 20 x 20 x 1.1 mm square tube, 1.2 m x3 and 0.5 m x2 | 4.6 m total, CNY 5.29 / 1.69 each | Main support candidate; complete the span, height and base drawing before cutting. |
-| Tube connectors | 20 mm straight, three-way and four-way connectors | 1 each, CNY 2.08 / 2.43 / 2.43 | Match the tube wall thickness, locking method and required stiffness. |
-| AprilTag cards | 80 x 80 mm custom cards, 12 pieces | CNY 7.00 per batch | Printing carrier candidate; verify `tag36h11`, 72 mm black border, white margin and 100% scale. |
+| Camera | H200S, 60 fps, 3 mm, selected 110-degree option | Suggested one | Request a 1/4 mounting hole and 5 m cable, CNY 20 surcharge. Verify actual format, rate, resolution and distortion. |
+| Camera mount | U-shaped clamp for an approximately 30 mm round pole | Suggested one | Compatibility with the 20 mm square tube is unresolved; verify grip and rotation restraint. |
+| Steel tube | 20x20x1.1 mm, 1.2 m pieces | Three pieces, 3.6 m: explicit | Assign mast, boom and braces after completing the support drawing. |
+| Steel tube | 20x20x1.1 mm, 0.5 m pieces | Two pieces, 1.0 m: explicit | Combined total is five pieces and 4.6 m. Complete the span and height drawing before cutting. |
+| Aluminium connectors | 20x20 spatial four-way, three-hole seller option | Two: explicit | Confirm geometry, wall-thickness fit, locking hardware and stiffness. |
+| Aluminium connectors | 20x20 straight, four-hole option | Quantity unresolved | Count from the support drawing and confirm included locking screws. |
+| AprilTag cards | Single-sided matte, 80x80 mm, twelve different designs | Suggested one twelve-card batch | tag36h11, 72 mm black square, 4 mm margins, actual-size printing; [files](./resources#fabrication-files). |
 
-The reference tube quantity totals about 8.2 m, but it does not define a stable mast and boom by itself. Confirm the camera optical axis, boom deflection, base footprint, cable routing and vehicle clearance before assembly.
+The current 20 mm steel tube selection totals 4.6 m; historical 15 mm tubes and connector counts are excluded. Length alone does not establish stability. Confirm the optical axis, boom deflection, base footprint, cable routing and vehicle clearance.
 
 Twelve 80 mm cards cover candidate robot IDs 10–21. The four ground reference tags, IDs 0–3, need separate production, measurement and mounting. A generic square card cannot replace the required tag pattern.
 

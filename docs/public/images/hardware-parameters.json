@@ -1,0 +1,161 @@
+{
+  "archived_on": "2026-11-15",
+  "rights": "Original supplier/brand material retains its respective rights.",
+  "images": [
+    {
+      "filename": "主控板接口1.png",
+      "path": "docs/public/images/主控板接口1.png",
+      "bom_ids": [
+        "B01"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=923727056922",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 800,
+      "height_px": 606,
+      "bytes": 393267,
+      "sha256": "0f7155893555bf65154518be60fa6a28db680d8ca5228ad46bd9c92828a17217"
+    },
+    {
+      "filename": "主控板参数2.png",
+      "path": "docs/public/images/主控板参数2.png",
+      "bom_ids": [
+        "B01"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=923727056922",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 800,
+      "height_px": 844,
+      "bytes": 424132,
+      "sha256": "f83d859bc39e543afbbc48d47c4f388a45e4f910a9934fabf0864f9c138fae5d"
+    },
+    {
+      "filename": "主控板尺寸.png",
+      "path": "docs/public/images/主控板尺寸.png",
+      "bom_ids": [
+        "B01"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=923727056922",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 800,
+      "height_px": 760,
+      "bytes": 411218,
+      "sha256": "4d73f0a5011399030064f7e78de6b9a0529aa6d5bbf2814c593258dde92c9821"
+    },
+    {
+      "filename": "电机参数.png",
+      "path": "docs/public/images/电机参数.png",
+      "bom_ids": [
+        "B02"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=777868414369",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 879,
+      "bytes": 662299,
+      "sha256": "586a899dbc18d0ad417751e2365589a4328c5f510c79e3a4f94b86666446dea8"
+    },
+    {
+      "filename": "电机尺寸.png",
+      "path": "docs/public/images/电机尺寸.png",
+      "bom_ids": [
+        "B02"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=777868414369",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 710,
+      "bytes": 138306,
+      "sha256": "914ee60b44303ced77c01c138b62dad231dd82a12a97864e802d47e59ea9068d"
+    },
+    {
+      "filename": "电机接线.png",
+      "path": "docs/public/images/电机接线.png",
+      "bom_ids": [
+        "B02"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=777868414369",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 1072,
+      "bytes": 346586,
+      "sha256": "cd4c11e02e91ec194eb361583b50f547062fe169c47be92286320f6ebdf4032d"
+    },
+    {
+      "filename": "电机支架.png",
+      "path": "docs/public/images/电机支架.png",
+      "bom_ids": [
+        "B02"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=777868414369",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 1071,
+      "bytes": 217334,
+      "sha256": "18ad573fb318320c86ef55470a469ac361bc4e453c40823e6557d3d4bbc1afb4"
+    },
+    {
+      "filename": "轮子尺寸.png",
+      "path": "docs/public/images/轮子尺寸.png",
+      "bom_ids": [
+        "B05"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=708154853977",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 839,
+      "bytes": 274101,
+      "sha256": "3b6876bc112fcdd1869b6c4e361cd220930d3b2732ef1008b316d7c5dab52e25"
+    },
+    {
+      "filename": "万向轮参数.png",
+      "path": "docs/public/images/万向轮参数.png",
+      "bom_ids": [
+        "B06"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=923727056922",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 1040,
+      "height_px": 1030,
+      "bytes": 399677,
+      "sha256": "9b6de5f69ddd00a857f4e0776f3d3f453ec38a8e9b4c79718efd2b00135a6d4b"
+    },
+    {
+      "filename": "电池.png",
+      "path": "docs/public/images/电池.png",
+      "bom_ids": [
+        "B03",
+        "B04"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=39418236809",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 800,
+      "height_px": 800,
+      "bytes": 660652,
+      "sha256": "50cd64b70e15b07a23965602c99fa14689308de850f3f0dda58e7da9dffbdf3e"
+    },
+    {
+      "filename": "摄像头参数.png",
+      "path": "docs/public/images/摄像头参数.png",
+      "bom_ids": [
+        "B11"
+      ],
+      "source_url": "https://item.taobao.com/item.htm?id=655976902051",
+      "source_basis": "User-supplied image and associated purchasing URL; exact upstream image URL and capture date unknown.",
+      "captured_at": null,
+      "width_px": 750,
+      "height_px": 1520,
+      "bytes": 492938,
+      "sha256": "f78e343abe3ce760573b6cc78ef099b93409442532ca46c6e47f32d9bcbfb724"
+    }
+  ]
+}
