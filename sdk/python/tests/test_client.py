@@ -101,10 +101,12 @@ def test_joint_actions_and_ids_validate_locally(transport):
 
 def test_api_errors_preserve_status_and_detail(transport):
     with Client(transport=transport) as client:
+        # Fresh motion now arms automatically; global stop must still reject it.
+        assert client.stop_all().estop
         with pytest.raises(APIError) as failure:
             client.command("car-01", v=.05, omega=0)
         assert failure.value.status_code == 409
-        assert "解锁" in failure.value.detail
+        assert failure.value.detail == "全局停止已锁定"
         with pytest.raises(APIError) as failure:
             client.arm("missing")
         assert failure.value.status_code == 404

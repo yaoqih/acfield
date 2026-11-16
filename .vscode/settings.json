@@ -1,0 +1,16 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.envFile": "${workspaceFolder}/.vscode/test.env",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}",
+  "python.testing.pytestArgs": [
+    "tests",
+    "robot_server/tests",
+    "sdk/python/tests"
+  ],
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  "playwright.env": {
+    "ACFIELD_TEST_BUILD": "1"
+  }
+}

@@ -71,7 +71,9 @@ def main():
     manifest = json.loads((directory / 'manifest.json').read_text())
     sources = {entry['id']: entry for entry in json.loads((ROOT / 'assets/apriltags/sources.json').read_text())}
     tags = manifest['tags']
-    assert {path.name for path in (ROOT / 'output/pdf').glob('*.pdf')} == {
+    # Other project PDFs can coexist here in a local workspace. Keep the
+    # generated AprilTag set exact without rejecting unrelated documents.
+    assert {path.name for path in (ROOT / 'output/pdf').glob('apriltag36h11*.pdf')} == {
         'apriltag36h11_130mm_A4.pdf', 'apriltag36h11_130mm_tag_only.pdf'}
     physical = json.loads((ROOT / 'apriltag_live.json').read_text())
     assert all(spec['size_m'] == .104 for spec in physical['tags'].values())

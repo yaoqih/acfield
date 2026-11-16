@@ -14,7 +14,9 @@ export default defineConfig({
       ? { executablePath: process.env.DOCS_CHROME_PATH } : {}
   },
   webServer: process.env.DOCS_TEST_URL ? undefined : {
-    command: 'npm run docs:preview -- --port 4175',
+    // The VS Code extension runs individual tests without a preceding build task.
+    command: (process.env.ACFIELD_TEST_BUILD === '1' ? 'npm run docs:build && ' : '')
+      + 'npm run docs:preview -- --port 4175',
     url: 'http://127.0.0.1:4175/acfield/',
     reuseExistingServer: false
   }

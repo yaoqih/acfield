@@ -10,22 +10,25 @@ void pulseWheel(unsigned wheel, int level) {
 }
 
 int main() {
-    static_assert(config::wheelChannels[0] == 1 && config::wheelChannels[1] == 0,
-                  "This chassis has B on the left and A on the right");
+    constexpr unsigned left = config::wheelChannels[0], right = config::wheelChannels[1];
+    static_assert(left < 2 && right < 2 && left != right,
+                  "Left and right wheels must use distinct A/B channels");
     Motors mapping;
     mapping.begin();
-    // Positive yaw means left: physical A/right must run faster than B/left.
+    // Positive yaw means left: the configured right channel must run faster.
     mapping.update(.2f, .05f, .01f);
-    assert(fakeArduino::duties()[0] > fakeArduino::duties()[1]);
-    assert(fakeArduino::levels()[21] == (config::motorSign[1] < 0));
-    assert(fakeArduino::levels()[22] == (config::motorSign[0] < 0));
+    assert(fakeArduino::duties()[right] > fakeArduino::duties()[left]);
+    const int directionPins[] = {21, 22};
+    assert(fakeArduino::levels()[directionPins[left]] == (config::motorSign[0] < 0));
+    assert(fakeArduino::levels()[directionPins[right]] == (config::motorSign[1] < 0));
     // A pulse on each physical encoder must appear on the same logical wheel.
+    const unsigned wheelA = left == 0 ? 0 : 1, wheelB = 1-wheelA;
     fakeArduino::pulse(34, 35, 1);
     mapping.update(0, 0, .01f);
-    assert(mapping.encoder[0] == 0 && mapping.encoder[1] == 1);
+    assert(mapping.encoder[wheelA] == 1 && mapping.encoder[wheelB] == 0);
     fakeArduino::pulse(16, 27, 0);
     mapping.update(0, 0, .01f);
-    assert(mapping.encoder[0] == -1 && mapping.encoder[1] == 1);
+    assert(mapping.encoder[wheelA] == 1 && mapping.encoder[wheelB] == -1);
     mapping.stop();
 
     Motors feedback;

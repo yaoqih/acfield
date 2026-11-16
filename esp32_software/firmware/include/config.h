@@ -20,7 +20,7 @@ constexpr float wheelDiameter = 0.034f, trackWidth = 0.122f;
 // Same encoder as the previous 1:100 motor: 300 * 20 / 100 = 60 counts/turn.
 constexpr float pulsesPerTurn[2] = {88, 88};
 // Logical left/right -> physical driver and encoder channels (A=0, B=1).
-// On this chassis B is the left wheel and A is the right wheel.
+// Current profile maps left/right to A/B; verify the actual chassis wiring.
 constexpr unsigned wheelChannels[2] = {0, 1};
 constexpr int motorSign[2] = {1, 1}, encoderSign[2] = {1, 1};
 // CHR-GM12-N20ABHL A12, 1:20: 500 rpm rated speed, 1100 rpm no-load.

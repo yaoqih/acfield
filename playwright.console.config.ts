@@ -8,7 +8,9 @@ export default defineConfig({
   workers: 1,
   use: { baseURL: 'http://127.0.0.1:18125', ...devices['Desktop Chrome'] },
   webServer: {
-    command: 'uv run --python 3.12 --extra test --directory robot_server python -m backend.app',
+    // Build the current UI when running directly from VS Code's Testing panel.
+    command: (process.env.ACFIELD_TEST_BUILD === '1' ? 'npm --prefix robot_server/frontend run build && ' : '')
+      + 'uv run --python 3.12 --extra test --directory robot_server python -m backend.app',
     url: 'http://127.0.0.1:18125/api/health',
     reuseExistingServer: false,
     env: {
