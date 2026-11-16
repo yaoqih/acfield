@@ -28,6 +28,7 @@ const sections: [zh: string, en: string, items: Item[]][] = [
   ]],
   ['参考硬件', 'Reference hardware', [
     ['/hardware/bom', '详细 BOM 与采购规格', 'Detailed BOM and purchasing'],
+    ['/hardware/purchasing', '购买链接与下单选项', 'Purchase links and order options'],
     ['/hardware/resources', '硬件资料、CAD 与参数图片', 'Resources, CAD and parameter images'],
     ['/hardware/overview', '物料与机械设计', 'Materials and mechanical design'],
     ['/hardware/arena', '场地与相机布置', 'Arena and camera setup'],

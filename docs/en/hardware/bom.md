@@ -8,7 +8,7 @@ Updated 2026-11-15. Items are ordered by importance: **controller, drive and pow
 
 **Quantity basis:** one-robot and four-robot requirements are estimates for a differential-drive configuration. Explicit quantities, pack contents and suggested purchases are distinguished below. Shared equipment is not multiplied by robot count. No current total cost is calculated: only the CNY 20 camera cable surcharge was supplied.
 
-[Parameter images, controller documentation and CAD](./resources) · [Mechanical design](./overview) · [Arena setup](./arena)
+[Purchase links and order options](./purchasing) · [Parameter images, controller documentation and CAD](./resources) · [Mechanical design](./overview) · [Arena setup](./arena)
 
 ## Check these specifications first {#priority-checks}
 
