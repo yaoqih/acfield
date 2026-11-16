@@ -17,7 +17,7 @@ pageClass: hardware-bom
 | B03 | 电池：颜色/选项 `102050x3S-1200mAh` | 待定 | [淘宝商品](https://item.taobao.com/item.htm?id=39418236809) |
 | B04 | 充电器：颜色/选项 `1A+XH2.54反向母座转换头` | 待定 | [淘宝商品](https://item.taobao.com/item.htm?id=37065896052) |
 | B05 | 车轮：`黑色 N20电机橡胶轮 直径34mm` | 待定 | [淘宝商品](https://item.taobao.com/item.htm?id=708154853977) |
-| B06 | 万向轮：`CY-12B（主球尼龙）` | 待定；所给链接与主控板相同，选项待确认 | [用户提供链接](https://item.taobao.com/item.htm?id=923727056922) |
+| B06 | 万向轮：`CY-12B（主球尼龙）` | 待定；所给链接与主控板相同，选项待确认 | [淘宝商品](https://item.taobao.com/item.htm?id=1004178769321) |
 
 ## 车体加工与装配 {#chassis-fabrication}
 

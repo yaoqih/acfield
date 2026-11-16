@@ -17,7 +17,7 @@ The URLs and selections come from the supplied purchasing list. Current listings
 | B03 | Battery variant: **102050x3S-1200mAh** | Pending | [Taobao product](https://item.taobao.com/item.htm?id=39418236809) |
 | B04 | Charger variant: **1 A + reverse XH2.54 female adapter** | Pending | [Taobao product](https://item.taobao.com/item.htm?id=37065896052) |
 | B05 | Black N20 rubber wheel, **34 mm diameter** | Pending | [Taobao product](https://item.taobao.com/item.htm?id=708154853977) |
-| B06 | **CY-12B**, nylon main ball caster | Pending; supplied URL matches the controller listing, so confirm the variant | [Supplied URL](https://item.taobao.com/item.htm?id=923727056922) |
+| B06 | **CY-12B**, nylon main ball caster | Pending; supplied URL matches the controller listing, so confirm the variant | [Taobao product](hhttps://item.taobao.com/item.htm?id=1004178769321) |
 
 ## Chassis fabrication and assembly {#chassis-fabrication}
 
