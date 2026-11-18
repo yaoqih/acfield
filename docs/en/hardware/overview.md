@@ -1,5 +1,7 @@
 # Materials and mechanical design
 
+Identify body, motor and tag combinations in [hardware compatibility](./compatibility) before choosing drawings. Follow [bring-up](./bringup#measurement-procedures) for per-robot measurements.
+
 The [detailed BOM](./bom) records the new purchasing options and quantities in priority order. [Resources and CAD](./resources) collects official controller files, fabrication downloads and eleven original parameter images. The new 1:30 motors, 1200 mAh 3S battery and M3x50 posts differ from the historical design and robot records below; review the BOM compatibility table first.
 
 The reference uses a Waveshare General Driver for Robots (SKU23730, ESP32 + TB6612), two geared encoder motors and external AprilTag localization. The **current compact first-article candidate** is a 95 × 80 mm acrylic robot, pending assembly and measurements; it is not a validated four-robot fleet.

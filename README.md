@@ -11,26 +11,28 @@ ACField provides an inspectable path from localization to multi-robot velocity e
 
 ## Start without robots
 
-Requirements: Python 3.11+ (3.12 recommended), Node.js 20.19+ or 22.12+, Git and [uv](https://docs.astral.sh/uv/). See the [quick start](https://yaoqih.github.io/acfield/guide/quickstart) for a pip/venv alternative.
+Requirements include Python 3.11+ (3.12 recommended), Node.js 20.19+ or 22.12+, Git and [uv](https://docs.astral.sh/uv/). See [Quick start](https://yaoqih.github.io/acfield/en/guide/quickstart) for Windows and verified environments.
 
 ```bash
 git clone https://github.com/yaoqih/acfield.git
 cd acfield
-uv sync --python 3.12 --extra test
+uv sync --frozen --python 3.12 --extra test
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_START_VISION=0 \
   ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-Open **http://127.0.0.1:8000**. Default demo mode does not open the device UDP transport. Select a robot, explicitly arm it and hold a direction button. Global stop locks the fleet; releasing it does not re-arm the robots.
+Open **http://127.0.0.1:8000**. Select a robot and drag the joystick, or focus it and hold the arrow keys. Fresh input automatically performs the control handshake. Release the joystick to stop. After releasing global stop, use fresh input to move again.
 
 With the server still running, execute a bounded example from the repository root:
 
 ```bash
 .venv/bin/python examples/velocity_control.py --duration 2
 ```
+
+Run two robots, save an experiment and plot its trajectory with the [first experiment guide](https://yaoqih.github.io/acfield/en/guide/first-experiment). For integration, use the [state dictionary](https://yaoqih.github.io/acfield/en/reference/state) and [coordinate examples](https://yaoqih.github.io/acfield/en/reference/coordinates). Check [hardware compatibility](https://yaoqih.github.io/acfield/en/hardware/compatibility) before assembly and follow [upgrade instructions](https://yaoqih.github.io/acfield/en/guide/upgrading) when changing versions.
 
 ## What is included
 

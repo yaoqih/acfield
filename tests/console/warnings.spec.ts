@@ -1,14 +1,8 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 for (const path of ['/', '/mobile']) {
   test(`battery sensor warning allows arming and held movement on ${path}`, async ({ page, request }) => {
     if (path === '/mobile') await page.setViewportSize({ width: 390, height: 844 })
-    await request.post('/api/stop')
-    const settings = await (await request.get('/api/config')).json()
-    settings.arena_width = settings.arena_height = 10
-    expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
-    expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
-
     let warning: string | null = 'battery_sensor'
     // Inject the sensor status into the isolated demo server's real state stream.
     await page.routeWebSocket('**/ws', socket => {

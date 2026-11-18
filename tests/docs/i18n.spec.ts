@@ -76,7 +76,7 @@ for (const path of pages('docs/en')) {
     const links = await page.locator('.VPContent a[href], .VPNavBarMenu a[href], .VPSidebar a[href]')
       .evaluateAll(elements => elements.map(element => element.getAttribute('href') || ''))
     const leaks = links.filter(link => link.startsWith('/acfield/')
-      && !link.startsWith('/acfield/en/') && !/\.(png|svg|pdf|glb|stl|zip|dxf|json)$/.test(link))
+      && !link.startsWith('/acfield/en/') && !/\.(png|svg|pdf|glb|stl|zip|dxf|json|jsonl|csv)$/.test(link))
     expect(leaks, path).toEqual([])
     expect(await page.locator('.VPContent').innerText(), path).not.toMatch(/[一-鿿]/)
   })
@@ -92,6 +92,25 @@ test('English search returns English pages', async ({ page }) => {
     expect(href?.startsWith('/acfield/en/')).toBe(true)
   }
 })
+
+for (const width of [1440, 390]) {
+  test(`experiment and reference pages render at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    for (const route of ['guide/first-experiment', 'reference/state', 'reference/coordinates',
+      'hardware/compatibility', 'hardware/bringup', 'guide/upgrading']) {
+      await page.goto(route)
+      await expect(page.locator('.platform-revision')).toContainText('构建版本')
+      await expect(page.locator('.platform-revision a')).toHaveAttribute('href', /github\.com\/yaoqih\/acfield/)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), route).toBe(true)
+      if (route === 'guide/first-experiment') {
+        const plot = page.locator('.vp-doc img')
+        await expect(plot).toBeVisible()
+        expect(await plot.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+        await page.screenshot({ path: test.info().outputPath(`first-experiment-${width}.png`), fullPage: true })
+      }
+    }
+  })
+}
 
 test('compact desktop switches languages from the extra navigation menu', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 })

@@ -1,6 +1,6 @@
 # Device protocol and timing
 
-Devices use the explicit-arming revision of UDP JSON `version=1`. Pair the server with this repository's firmware. Historical v1 packets may lack currently required fields; version number 1 alone does not establish compatibility.
+Devices use the explicit-arming revision of UDP JSON `version=1`. The server performs this handshake automatically for fresh console input or a first nonzero API command. Pair the server with this repository's firmware. Historical v1 packets may lack currently required fields; version number 1 alone does not establish compatibility.
 
 ## Identity and sessions {#identity-and-sessions}
 
@@ -24,7 +24,7 @@ unbound ── Fresh telemetry echo + stop ──► disarmed
                                     disarmed / fault
 ```
 
-Latched faults require correcting the cause and rebooting. Reconnection restores communication, not motion.
+Latched faults require correcting the cause and rebooting. After reconnection, fresh input can start the arm handshake. Previously submitted motion is cleared.
 
 ## Example command {#example-command}
 
@@ -65,7 +65,9 @@ At startup the server maps local UTC to monotonic time, tries NTP every 300 s by
 
 ESP32 over UDP and browsers over WebSocket initiate four-timestamp `time_sync` exchanges every second, preferring low-RTT samples. Devices reject scheduled motion after 15 s without synchronization or estimated uncertainty above 20 ms. The estimate depends on network-path and drift assumptions and is not an accuracy guarantee.
 
-Nonzero `drive` may include `execute_at_ms` in server-mapped Unix milliseconds. A synchronized browser schedules at sample time +100 ms. For clients omitting the field, the server supplies +60 ms for synchronized devices. Explicit nonzero execution times must be 15–150 ms ahead of the server clock. Unsynchronized devices support the immediate compatibility path only when no time is supplied. Demo applies immediately and does not establish scheduling performance.
+Nonzero `drive` may include `execute_at_ms` in server-mapped Unix milliseconds. The console omits this field. The server supplies +60 ms for synchronized devices and sends immediately for unsynchronized devices. Explicit nonzero execution times must be 15–150 ms ahead of the server clock and require device synchronization. Demo applies immediately. Measure scheduling performance on hardware.
+
+Encoder diagnostics use the HTTP/WS command option `immediate: true` to suppress default scheduling. The firmware receives its existing unscheduled command format and checks TTL using its local monotonic clock. WebSocket-only `hold: true` starts server-side renewal until disconnect, stop or expiry. See the [control API](./api) for supported diagnostic firmware and PWM limits.
 
 Devices map execution time to a monotonic deadline in a bounded queue processed by the 10 ms control task. Packets arriving past execution time, waiting over 150 ms or waiting at least their TTL are rejected. Queued packets more than 20 ms late are discarded, and a full queue drops new packets. TTL starts on reception and includes queue wait; duplicates do not renew it. Accepted zero motion clears future motion, and `stop` also disarms. Fault/loss handling bypasses scheduling.
 
@@ -80,7 +82,8 @@ See [TIMING.md](https://github.com/yaoqih/acfield/blob/main/robot_server/TIMING.
 | Server loop and state stream | 40 Hz | 25 ms scheduling target; latest snapshots |
 | Console joystick targets | 40 Hz | Ordered WebSocket; skip missed cycles |
 | Python velocity example | About 10 Hz | Example rate; validate policies against inference/network measurements |
-| Heartbeat timeout | 1 s | Expiry disarms |
+| Heartbeat timeout | 3 s for normal and diagnostic firmware | Expiry disarms |
+| Continuous diagnostic duration | 120 s | Server deadline; PWM changes preserve it |
 | Localization timeout | 200 ms | Expiry invalidates pose |
 | Default action TTL | 300 ms | Configurable 100–500 ms |
 | Bind/arm retries | 150 ms | Retry with the corresponding sequence |

@@ -17,7 +17,7 @@ constexpr unsigned serverPort = 9999, localPort = 9998;
 constexpr float wheelDiameter = 0.034f, trackWidth = 0.122f;
 // Configured counts per OUTPUT shaft turn, single-channel RISING; verify on hardware.
 // Set to zero to prevent activation during calibration; do not use quadrature x4 counts.
-// Same encoder as the previous 1:100 motor: 300 * 20 / 100 = 60 counts/turn.
+// Current per-wheel configuration; verify counts on each assembled robot.
 constexpr float pulsesPerTurn[2] = {88, 88};
 // Logical left/right -> physical driver and encoder channels (A=0, B=1).
 // Current profile maps left/right to A/B; verify the actual chassis wiring.

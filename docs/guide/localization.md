@@ -83,6 +83,19 @@ uv run --python 3.12 python verify_apriltags.py --write-reports
 
 公开初始配置为 `camera=null`、场地未配置，不是某个实验室的标定文件。运行配置默认保存到 `output/vision-settings.json`，会覆盖初始默认值；保存的外参不会在重启后未经核验直接启用。`--source 0` 通常打开第一台相机，更多选项见 `--help`。
 
+## 量化定位效果 {#measure-localization}
+
+标定完成后，在中央、四角附近和四边中点选 **9 个独立测量点**，避开车辆外廓越界的位置。用尺量轮轴中点的真实 X/Y，固定车头方向，每点记录 10 s 的主控状态。
+
+1. 每 50 ms 采样一次，只统计 `visible=true` 的位置，同时记录 `pose_age_ms` 和无效比例。
+2. 每点计算 `sqrt((x-x_ref)²+(y-y_ref)²)`，汇总均值与 p95。航向误差先归一到 `[-π,π]` 再取绝对值，避免跨 ±π 时误算。
+3. 在 0°、90°、180°、270° 复测标签偏移。位置随转向画圆时检查标签到轮轴的偏移。
+4. 遮挡标签、冻结输入，再恢复，记录 `visible` 失效与恢复时刻；结合日志核对停车和重新输入。
+
+低速首车可先用位置 p95 ≤ 10 mm、航向 p95 ≤ 3°、有效观测比例 ≥ 99% 作为**示例目标**。这些数值用于组织验收，实际能力填写自己的测量结果；定位 200 ms 期限是软件门限。记录分辨率、焦点、曝光、照明和场地尺寸，便于下次比较。
+
+测量表见[首车验收](../hardware/bringup#keep-a-minimal-measurement-record)，坐标与偏移算例见[坐标配置](../reference/coordinates)。
+
 ## 接入主控的条件 {#hardware-integration-requirements}
 
 硬件模式要求数据声明 `source_kind=camera`、`world_calibrated=true`、`tag36h11` 与 `demo=false`。适配器不把像素坐标当米，也不把重复帧当新定位。

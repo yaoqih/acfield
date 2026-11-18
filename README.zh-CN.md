@@ -15,19 +15,21 @@ ACField 把外部视觉定位、统一状态与速度接口、Web 控制台、�
 ```bash
 git clone https://github.com/yaoqih/acfield.git
 cd acfield
-uv sync --python 3.12 --extra test
+uv sync --frozen --python 3.12 --extra test
 npm --prefix robot_server/frontend ci
 npm --prefix robot_server/frontend run build
 cd robot_server
-ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_UDP_HOST=127.0.0.1 \
+ROBOT_MODE=demo ROBOT_HOST=127.0.0.1 ROBOT_START_VISION=0 \
   ROBOT_ALLOW_UNLOCALIZED_CONTROL=0 ./run.sh
 ```
 
-打开 http://127.0.0.1:8000。点击小车、解锁并按住方向按钮。全局停止会锁定所有车，释放后需重新解锁。服务保持运行时，从仓库根目录执行：
+打开 http://127.0.0.1:8000。点击小车后拖动摇杆，或聚焦摇杆并按住方向键；新输入会自动完成控制握手，松开后停车。全局停止会锁定所有车，释放后使用新输入即可重新控制。服务保持运行时，从仓库根目录执行：
 
 ```bash
 .venv/bin/python examples/velocity_control.py --duration 2
 ```
+
+接着按[第一次实验](https://yaoqih.github.io/acfield/guide/first-experiment)运行双车、保存记录并画出轨迹。算法接入查[状态字典](https://yaoqih.github.io/acfield/reference/state)和[坐标算例](https://yaoqih.github.io/acfield/reference/coordinates)，装车先看[兼容表](https://yaoqih.github.io/acfield/hardware/compatibility)，更新代码按[升级流程](https://yaoqih.github.io/acfield/guide/upgrading)备份与验证。
 
 ## 内容入口
 

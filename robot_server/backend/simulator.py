@@ -1,6 +1,7 @@
-"""Deterministic demo. Moves only under user commands; no background autonomy."""
+"""Wall-clock interface demo with exact constant-velocity differential-drive arcs."""
 import math
 import time
+from .safety import position, radius
 
 
 class Simulator:
@@ -17,17 +18,16 @@ class Simulator:
             r.battery = max(0, 96-i*7)
 
     def step(self, now):
-        dt = min(.1, now-self.previous)
+        dt = max(0, min(.1, now-self.previous))
         self.previous = now
         for r in self.fleet.robots.values():
             r.seen_at = now
-            r.measured_v, r.measured_omega = r.target_v, r.target_omega
+            x, y = position(r, r.target_v, r.target_omega, dt)
             theta = math.atan2(math.sin(r.theta+r.target_omega*dt), math.cos(r.theta+r.target_omega*dt))
-            x = r.x + r.target_v*math.cos(theta)*dt
-            y = r.y + r.target_v*math.sin(theta)*dt
-            margin = math.hypot(r.config.length, r.config.width)/2
+            margin = radius(r)
             if not (margin <= x <= self.fleet.settings.arena_width-margin and
                     margin <= y <= self.fleet.settings.arena_height-margin):
                 self.fleet.stop(r, "模拟场地边界 · 已锁定")
-                x, y = r.x, r.y
+                x, y, theta = r.x, r.y, r.theta
+            r.measured_v, r.measured_omega = r.target_v, r.target_omega
             self.fleet.pose(r, x, y, theta, now)

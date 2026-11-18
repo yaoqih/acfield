@@ -9,15 +9,15 @@
 | Console | Manual control, arena and trails, device configuration, global stop | Local computer or trusted experiment LAN; no account system |
 | Server | Joint velocity validation, ownership, state streaming, velocity limits | Single process; not hard real time |
 | Python SDK | Independent installation, typed state, joint actions, confirmed arming and conditional release | Synchronous HTTP; 0.1.0 preview; no async/WS client |
-| Vision | AprilTags, world calibration, provenance and freshness checks | External intrinsic calibration; arena-wide accuracy and latency need measurement |
-| Firmware | Default open-loop output, optional wheel-speed regulation, automatic control handshake, TTL, encoder telemetry and undervoltage handling | Motor output is enabled and encoder fault stops are disabled; encoder, direction, loop-gain and limit calibration is required per robot; lift the wheels for the first power-up |
+| Vision | AprilTags, ChArUco intrinsic calibration, world calibration, provenance and freshness checks | Arena-wide accuracy and latency need measurement |
+| Firmware | Default encoder wheel-speed regulation, optional open-loop output, automatic control handshake, TTL, encoder/IMU telemetry and undervoltage handling | Motor output is enabled and encoder fault stops are disabled. Encoder, direction, loop-gain and limit calibration is required per robot. Lift the wheels for the first power-up |
 | Protection | Stops for stale localization, link failure, boundaries and spacing | Conservative models; measured stopping distances still needed |
 | Recording | Configuration, poses, actions, telemetry and stop reasons in JSONL | No complete episode evaluation or replay system |
 | Reference hardware | 95 mm acrylic candidate and V11 printed reference | First-article and physical acceptance pending; compact tag/fastener conflict unresolved |
 
 ## Recheck the software evidence {#recheck-the-software-evidence}
 
-GitHub Actions builds the console and four firmware environments, and runs control, vision and actual-firmware parser contract tests. Green CI means that revision passed its software checks. Counts and outcomes for each revision are recorded in [Actions](https://github.com/yaoqih/acfield/actions).
+GitHub Actions builds the console and four firmware environments. It runs control, vision, documentation consistency and actual-firmware parser contract tests, plus console, vision and documentation browser regressions. Counts and outcomes for each revision are recorded in [Actions](https://github.com/yaoqih/acfield/actions).
 
 Recheck the current local baseline with the commands below. Test counts change with each revision; use the corresponding [Actions](https://github.com/yaoqih/acfield/actions) run as the CI record:
 
@@ -25,7 +25,10 @@ Recheck the current local baseline with the commands below. Test counts change w
 uv run --python 3.12 --extra test pytest -q
 uv run --python 3.12 --extra test pytest sdk/python/tests -q
 npm --prefix robot_server/frontend run build
-npm run docs:build
+npx playwright install chromium
+npm run console:test
+npm run vision:test
+npm run docs:test
 ```
 
 The V11 build and audit scripts generate local reports checking two STL files and 213 nominal assembly conditions, including the cover’s continuous upper tag face and orientation. These use supplier dimensions and estimated mass; they do not test strength, print tolerances, tire friction or motor dynamics.

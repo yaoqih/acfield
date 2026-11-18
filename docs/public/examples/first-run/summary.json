@@ -1,0 +1,26 @@
+{
+  "run_id": "20261118_103032_e736902e",
+  "mode": "demo",
+  "events": {
+    "accepted_controls": 19,
+    "rejected_controls": 0,
+    "command_packets": 40,
+    "telemetry": 0
+  },
+  "robots": {
+    "car-01": {
+      "samples": 81,
+      "observed_duration_s": 2.0029922920512035,
+      "path_length_m": 0.10014950913612683,
+      "gaps_over_200ms": 0,
+      "displacement_m": 0.09948129321974933
+    },
+    "car-02": {
+      "samples": 81,
+      "observed_duration_s": 2.0029922920512035,
+      "path_length_m": 0.10014950913612748,
+      "gaps_over_200ms": 0,
+      "displacement_m": 0.09948129321975013
+    }
+  }
+}

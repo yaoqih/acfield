@@ -1,0 +1,379 @@
+{
+  "mode": "demo",
+  "session": "documentation-example",
+  "estop": false,
+  "allow_unlocalized_control": false,
+  "system_fault": null,
+  "timestamp": 1800000004.0,
+  "clock": {
+    "source": "local",
+    "ntp_at": null,
+    "ntp_error": null,
+    "pending_correction_ms": 0.0
+  },
+  "arena": {
+    "width": 3,
+    "height": 3
+  },
+  "camera": {
+    "connected": false,
+    "reason": "未连接视觉服务",
+    "fps": 0
+  },
+  "robots": [
+    {
+      "config": {
+        "id": "car-01",
+        "name": "小车 1",
+        "tag_id": 10,
+        "color": "#28786b",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      "x": 0.8400000000000001,
+      "y": 0.8400000000000001,
+      "theta": 0,
+      "online": false,
+      "visible": false,
+      "armed": false,
+      "bound": true,
+      "arm_pending": false,
+      "control_owner": null,
+      "device_state": null,
+      "firmware": null,
+      "effective_max_v": 0.5,
+      "effective_max_omega": 1.5,
+      "encoder_diagnostic": null,
+      "diagnostic_running": false,
+      "diagnostic_remaining_ms": null,
+      "battery": 96,
+      "voltage_v": null,
+      "pose_age_ms": 4000,
+      "heartbeat_age_ms": 4000,
+      "measured_v": null,
+      "measured_omega": null,
+      "wheel_left": null,
+      "wheel_right": null,
+      "encoder_left": null,
+      "encoder_right": null,
+      "imu": null,
+      "estimated_v": null,
+      "acceleration": null,
+      "target_v": 0,
+      "target_omega": 0,
+      "clock_synced": false,
+      "clock_uncertainty_ms": null,
+      "applied_seq": null,
+      "sampled_at_ms": null,
+      "motion_echo_rejections": null,
+      "seq": 0,
+      "ack_seq": -1,
+      "command_status": "idle",
+      "reason": "等待设备连接",
+      "fault": null,
+      "warning": null,
+      "stop_reason": null,
+      "last_stop_reason": null,
+      "corners": [
+        [
+          0.9400000000000001,
+          0.92
+        ],
+        [
+          0.9400000000000001,
+          0.7600000000000001
+        ],
+        [
+          0.7400000000000001,
+          0.7600000000000001
+        ],
+        [
+          0.7400000000000001,
+          0.92
+        ]
+      ],
+      "trail": [
+        [
+          0.84,
+          0.84
+        ]
+      ]
+    },
+    {
+      "config": {
+        "id": "car-02",
+        "name": "小车 2",
+        "tag_id": 11,
+        "color": "#427dc2",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      "x": 2.16,
+      "y": 0.8400000000000001,
+      "theta": 1.5707963267948966,
+      "online": false,
+      "visible": false,
+      "armed": false,
+      "bound": true,
+      "arm_pending": false,
+      "control_owner": null,
+      "device_state": null,
+      "firmware": null,
+      "effective_max_v": 0.5,
+      "effective_max_omega": 1.5,
+      "encoder_diagnostic": null,
+      "diagnostic_running": false,
+      "diagnostic_remaining_ms": null,
+      "battery": 89,
+      "voltage_v": null,
+      "pose_age_ms": 4000,
+      "heartbeat_age_ms": 4000,
+      "measured_v": null,
+      "measured_omega": null,
+      "wheel_left": null,
+      "wheel_right": null,
+      "encoder_left": null,
+      "encoder_right": null,
+      "imu": null,
+      "estimated_v": null,
+      "acceleration": null,
+      "target_v": 0,
+      "target_omega": 0,
+      "clock_synced": false,
+      "clock_uncertainty_ms": null,
+      "applied_seq": null,
+      "sampled_at_ms": null,
+      "motion_echo_rejections": null,
+      "seq": 0,
+      "ack_seq": -1,
+      "command_status": "idle",
+      "reason": "等待设备连接",
+      "fault": null,
+      "warning": null,
+      "stop_reason": null,
+      "last_stop_reason": null,
+      "corners": [
+        [
+          2.08,
+          0.9400000000000001
+        ],
+        [
+          2.24,
+          0.9400000000000001
+        ],
+        [
+          2.24,
+          0.7400000000000001
+        ],
+        [
+          2.08,
+          0.7400000000000001
+        ]
+      ],
+      "trail": [
+        [
+          2.16,
+          0.84
+        ]
+      ]
+    },
+    {
+      "config": {
+        "id": "car-03",
+        "name": "小车 3",
+        "tag_id": 12,
+        "color": "#ac7b35",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      "x": 0.8400000000000001,
+      "y": 2.16,
+      "theta": -1.5707963267948966,
+      "online": false,
+      "visible": false,
+      "armed": false,
+      "bound": true,
+      "arm_pending": false,
+      "control_owner": null,
+      "device_state": null,
+      "firmware": null,
+      "effective_max_v": 0.5,
+      "effective_max_omega": 1.5,
+      "encoder_diagnostic": null,
+      "diagnostic_running": false,
+      "diagnostic_remaining_ms": null,
+      "battery": 82,
+      "voltage_v": null,
+      "pose_age_ms": 4000,
+      "heartbeat_age_ms": 4000,
+      "measured_v": null,
+      "measured_omega": null,
+      "wheel_left": null,
+      "wheel_right": null,
+      "encoder_left": null,
+      "encoder_right": null,
+      "imu": null,
+      "estimated_v": null,
+      "acceleration": null,
+      "target_v": 0,
+      "target_omega": 0,
+      "clock_synced": false,
+      "clock_uncertainty_ms": null,
+      "applied_seq": null,
+      "sampled_at_ms": null,
+      "motion_echo_rejections": null,
+      "seq": 0,
+      "ack_seq": -1,
+      "command_status": "idle",
+      "reason": "等待设备连接",
+      "fault": null,
+      "warning": null,
+      "stop_reason": null,
+      "last_stop_reason": null,
+      "corners": [
+        [
+          0.92,
+          2.06
+        ],
+        [
+          0.7600000000000001,
+          2.06
+        ],
+        [
+          0.7600000000000001,
+          2.2600000000000002
+        ],
+        [
+          0.92,
+          2.2600000000000002
+        ]
+      ],
+      "trail": [
+        [
+          0.84,
+          2.16
+        ]
+      ]
+    },
+    {
+      "config": {
+        "id": "car-04",
+        "name": "小车 4",
+        "tag_id": 13,
+        "color": "#ba6070",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      "x": 2.16,
+      "y": 2.16,
+      "theta": 3.141592653589793,
+      "online": false,
+      "visible": false,
+      "armed": false,
+      "bound": true,
+      "arm_pending": false,
+      "control_owner": null,
+      "device_state": null,
+      "firmware": null,
+      "effective_max_v": 0.5,
+      "effective_max_omega": 1.5,
+      "encoder_diagnostic": null,
+      "diagnostic_running": false,
+      "diagnostic_remaining_ms": null,
+      "battery": 75,
+      "voltage_v": null,
+      "pose_age_ms": 4000,
+      "heartbeat_age_ms": 4000,
+      "measured_v": null,
+      "measured_omega": null,
+      "wheel_left": null,
+      "wheel_right": null,
+      "encoder_left": null,
+      "encoder_right": null,
+      "imu": null,
+      "estimated_v": null,
+      "acceleration": null,
+      "target_v": 0,
+      "target_omega": 0,
+      "clock_synced": false,
+      "clock_uncertainty_ms": null,
+      "applied_seq": null,
+      "sampled_at_ms": null,
+      "motion_echo_rejections": null,
+      "seq": 0,
+      "ack_seq": -1,
+      "command_status": "idle",
+      "reason": "等待设备连接",
+      "fault": null,
+      "warning": null,
+      "stop_reason": null,
+      "last_stop_reason": null,
+      "corners": [
+        [
+          2.06,
+          2.08
+        ],
+        [
+          2.06,
+          2.24
+        ],
+        [
+          2.2600000000000002,
+          2.24
+        ],
+        [
+          2.2600000000000002,
+          2.08
+        ]
+      ],
+      "trail": [
+        [
+          2.16,
+          2.16
+        ]
+      ]
+    }
+  ],
+  "events": [
+    {
+      "time": 1800000000.0,
+      "message": "系统启动 · 四车模拟"
+    }
+  ]
+}

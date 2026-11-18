@@ -1,0 +1,81 @@
+{
+  "session": "12d025fe5b2441bf967b9c45f44be87c",
+  "mode": "demo",
+  "settings": {
+    "vision_url": "",
+    "arena_width": 3,
+    "arena_height": 3,
+    "robots": [
+      {
+        "id": "car-01",
+        "name": "小车 1",
+        "tag_id": 10,
+        "color": "#28786b",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      {
+        "id": "car-02",
+        "name": "小车 2",
+        "tag_id": 11,
+        "color": "#427dc2",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      {
+        "id": "car-03",
+        "name": "小车 3",
+        "tag_id": 12,
+        "color": "#ac7b35",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      },
+      {
+        "id": "car-04",
+        "name": "小车 4",
+        "tag_id": 13,
+        "color": "#ba6070",
+        "tag_size": 0.104,
+        "tag_height": 0.0646,
+        "length": 0.2,
+        "width": 0.16,
+        "body_offset_x": 0,
+        "body_offset_y": 0,
+        "tag_offset_x": 0,
+        "tag_offset_y": 0,
+        "heading_offset": 0,
+        "max_v": 0.5,
+        "max_omega": 1.5
+      }
+    ]
+  },
+  "vision_url": "",
+  "protocol": "v1/explicit-arm"
+}

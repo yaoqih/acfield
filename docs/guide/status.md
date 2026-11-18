@@ -9,15 +9,15 @@
 | 控制台 | 手动控制、场地与轨迹、设备配置、全局停止 | 本机与可信实验网络，无账号系统 |
 | 控制服务 | 联合速度接口、控制权互斥、状态推送、动作限幅 | 单进程，非硬实时 |
 | Python SDK | 独立安装、类型化状态、联合动作、解锁确认与条件释放 | 同步 HTTP，0.1.0 开发预览；尚无异步/WS 客户端 |
-| 视觉 | AprilTag 检测、场地标定、来源与时效检查 | 相机内参需外部标定；全场精度与延迟需测量 |
-| 设备固件 | 默认开环、可选轮速闭环、自动控制握手、TTL、编码器遥测与欠压处理 | 当前允许电机输出，编码器故障停车关闭；编码器、方向、闭环参数和限速需逐车标定；首车首次上电应架空车轮 |
+| 视觉 | AprilTag 检测、ChArUco 内参标定、场地外参标定、来源与时效检查 | 全场精度与延迟需测量 |
+| 设备固件 | 默认编码器轮速闭环、可选开环、自动控制握手、TTL、编码器/IMU 遥测与欠压处理 | 当前允许电机输出，编码器故障停车关闭；编码器、方向、闭环参数和限速需逐车标定；首车首次上电应架空车轮 |
 | 保护 | 定位过期、链路故障、边界与车距停车 | 基于保守模型，不能替代实测停止距离 |
 | 记录 | 配置、定位、动作、遥测、停车原因的 JSONL 事件 | 尚无完整论文回合评测与回放系统 |
 | 参考硬件 | 95 mm 亚克力首件候选与 V11 打印参考 | 尚未完成首件装配与实车验收；新车标签/紧固件冲突待解决 |
 
 ## 软件检查如何复核 {#recheck-the-software-evidence}
 
-GitHub Actions 分别构建控制台、四套固件，并运行控制、视觉与真实固件解析器的协议测试。绿色 CI 表示对应提交的软件检查通过。每次运行的数量和结果以 [Actions](https://github.com/yaoqih/acfield/actions) 为准。
+GitHub Actions 分别构建控制台、四套固件，并运行控制、视觉、文档一致性、真实固件解析器协议测试及控制台、视觉、文档浏览器回归。每次运行的数量和结果以 [Actions](https://github.com/yaoqih/acfield/actions) 为准。
 
 当前提交的本地基线可用以下命令复核；测试数量会随提交变化，CI 结果以对应的 [Actions](https://github.com/yaoqih/acfield/actions) 运行记录为准：
 
@@ -25,7 +25,10 @@ GitHub Actions 分别构建控制台、四套固件，并运行控制、视觉�
 uv run --python 3.12 --extra test pytest -q
 uv run --python 3.12 --extra test pytest sdk/python/tests -q
 npm --prefix robot_server/frontend run build
-npm run docs:build
+npx playwright install chromium
+npm run console:test
+npm run vision:test
+npm run docs:test
 ```
 
 运行 V11 构建与审查脚本会生成本地报告，检查两个 STL 和 213 项名义装配条件，包含顶盖标签面朝向与平整性。这些检查使用供应商尺寸及估算质量，不包含材料强度、打印公差、轮胎摩擦或电机动态验证。

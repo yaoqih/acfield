@@ -12,13 +12,13 @@ An HTTP success, a device acknowledgment and measured physical motion are differ
 
 ## Establish a small working control loop {#establish-a-small-working-control-loop}
 
-The reference system uses external vision, one state service and device-side wheel-speed control. Four low-speed differential-drive robots keep localization, communication and geometry understandable and allow maintainers to inspect a complete path.
+The reference system uses external vision, one state service and device-side wheel-speed control. Normal firmware defaults to encoder wheel-speed regulation. Diagnostic builds use open-loop PWM. Each robot needs wheel-diameter, encoder-count and feedback-direction calibration and control tuning. Four low-speed differential-drive robots keep localization, communication and geometry understandable and allow maintainers to inspect a complete path.
 
 Before adding middleware, distributed computation or elaborate simulation, identify the experimental bottleneck. New capabilities should have measurements, an expected improvement and a verification method. Simplicity is a choice for the current problem; evidence should guide architectural change.
 
 ## Separate platform mechanisms from research variables {#separate-platform-mechanisms-from-research-variables}
 
-Explicit arming, command expiry and disconnect stops are platform mechanisms. Visible neighbors, message budgets and pursuit termination are research variables. Mixing them makes results harder to interpret and the platform harder to reuse.
+Control handshakes, command expiry and disconnect stops are platform mechanisms. Visible neighbors, message budgets and pursuit termination are research variables. Mixing them makes results harder to interpret and the platform harder to reuse.
 
 Protection may use global state while a constrained agent must receive only the information permitted by the experiment. Record when protection modifies policy actions before discussing the method's own collaboration or collision avoidance.
 
@@ -30,7 +30,7 @@ Algorithms producing planar vectors or goal points need an explicit differential
 
 ## Treat failures as normal experiment conditions {#treat-failures-as-normal-experiment-conditions}
 
-Tags become occluded, Wi-Fi drops packets, policies time out and devices reboot. The system should converge to understandable states: stop, disarm, record the reason, and wait for explicit arming after recovery. Restoring a link does not restore motion.
+Tags become occluded, Wi-Fi drops packets, policies time out and devices reboot. The system should stop, clear old actions and record the reason. Fresh input after recovery can prepare control automatically.
 
 Protection thresholds depend on measured stopping distances and errors. Conservative initial values support integration; their adequacy still depends on the actual arena and hardware.
 

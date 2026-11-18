@@ -13,9 +13,10 @@ Paper-specific policies, training, task definitions and statistical analysis can
 | Goal | Path | Equipment |
 | --- | --- | --- |
 | Understand the system and debug the API | [Hardware-free quick start](./quickstart) | Computer |
+| Run and plot results | [First experiment](./first-experiment) | Computer |
 | Connect a controller | [Controller integration](./control) | Begin in demo mode |
 | Test vision and calibration | [Localization](./localization) | Synthetic demo or camera |
-| Build reference robots | [Hardware](../hardware/overview) → [Bring-up](../hardware/bringup) | Controller, motors, mechanical parts |
+| Build reference robots | [Hardware compatibility](../hardware/compatibility) → [Bring-up](../hardware/bringup) | Controller, motors, mechanical parts |
 | Design a research experiment | [Research validity](../design/research) → [Recording](./recording) | Determined by the task |
 
 ## Current components {#current-components}

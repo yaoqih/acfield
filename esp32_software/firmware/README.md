@@ -15,8 +15,8 @@
 ## 配置与构建
 
 1. `cp include/secrets.example.h include/secrets.h`，填写实际Wi-Fi和主控电脑IPv4。凭据文件不会进入版本控制。
-2. `include/config.h`采用V10/V11名义轮径34mm、轮距122mm，电机为A12、12V、1:20；额定500rpm对应约0.89m/s，固件线速度及轮速上限均为0.89m/s，角速度上限为3.00rad/s。主控新建车辆默认限速0.50m/s、1.50rad/s，实际还受已保存的车辆配置限制。
-3. 校准前先设`motorsEnabled=false`（当前配置为`true`），烧录后查看控制台“左/右编码计数”，手动分别转轮若干整圈，取计数差绝对值/圈数。左右轮`pulsesPerTurn`当前均为60，由旧1:100配置的300按`300×20/100`换算，假设编码器相同，不代表已完成实测。本固件只在编码器一相RISING时计数；填写左右各自实测值，**不能用旧例程462或商家四倍频计数代替**。无编码器电机不适用。
+2. `include/config.h`采用V10/V11名义轮径34mm、轮距122mm，电机为A12、12V、1:20；额定500rpm对应约0.89m/s，固件线速度及轮速上限均为0.89m/s，角速度上限为6.00rad/s。主控新建车辆默认限速0.50m/s、1.50rad/s，实际还受已保存的车辆配置限制。
+3. 校准前先设`motorsEnabled=false`（当前配置为`true`），烧录后查看控制台“左/右编码计数”，手动分别转轮若干整圈，取计数差绝对值/圈数。左右轮`pulsesPerTurn`当前均为88，逐车核对并填写实测值。本固件只在编码器一相RISING时计数；**不能用旧例程462或商家四倍频计数代替**。无编码器电机不适用。
 4. 确认电机线序（资料中PIN5的VCC/GND有冲突），编码器用3.3V。当前配置 `wheelChannels={0,1}` 将逻辑左/右轮对应到 A/B，同时映射电机和编码器；如果实际接线为 B 左、A 右，应配置为 `{1,0}`。架空、低速验证`motorSign`和`encoderSign`，两轮前进反馈为正，左转角速度为正。之后才启用电机、整定前馈/PI及最大轮速。默认PI数值不是已完成的电机标定。
 5. 用万用表校验INA219回传电压，验证欠压阈值及板卡版本。默认3S总压连续低于10.5V达1s锁存停车；总压不替代逐节保护。欠压或编码器故障排除后重启车端，再直接操作。电压传感器读取失败或读数超出7–16V时仅报告`warning=battery_sensor`，不停车、不锁定、不影响运动；下一次有效读数自动清除警告，异常期间电压为`null`，欠压计时清零，恢复后重新计时。
 
@@ -33,7 +33,7 @@ pio device monitor
 
 CAR-01 编码器断线排查可使用专用构建 `pio run -e encoder-diagnostic -t upload`（仓库根目录执行时加 `-d esp32_software/firmware`）。`0.2.5-encoder-diagnostic` 关闭编码器无响应和方向保护，使用完整 0–255 的开环 PWM；用于架空排查，PWM 不代表实际 m/s。配套 `/encoder` 页面直接调节 PWM，运行中点击「应用输出」生效，0 只停转且保持解锁。主控每 25 ms 续发，失焦或切后台继续运行，单次最多 2 分钟；退出页面或控制连接断开时停止。诊断指令到达即执行，无需校时，运动遥测回显窗口为 1500 ms，绑定/解锁仍为 200 ms。页面显示的 `motion_echo_rejections` 为回显检查拒收的开机累计次数。
 
-旧 `0.2.3-encoder-diagnostic` 内部仍限幅 35/255，须重新烧录才能开放完整 PWM 与新回显窗口。两版均通过 `v=PWM/350` 映射；更改映射须同步更新固件版本与主控识别。诊断构建对所有控制入口生效。结束后使用 `pio run -e general-driver -t upload` 恢复普通固件。详情见[编码器线材排查](../../docs/guide/troubleshooting.md#编码器线材排查)。
+旧 `0.2.3-encoder-diagnostic` 内部仍限幅 35/255，须重新烧录才能开放完整 PWM 与新回显窗口。各版均通过 `v=PWM/350` 映射；更改映射须同步更新固件版本与主控识别。诊断构建对所有控制入口生效。结束后使用 `pio run -e general-driver -t upload` 恢复普通固件。详情见[编码器线材排查](../../docs/guide/troubleshooting.md#encoder-diagnostics)。
 
 从仓库根目录烧录普通固件（当前配置为编码器闭环）：
 
@@ -62,7 +62,7 @@ pio device monitor -d esp32_software/firmware -e general-driver
 
 0.2.6 将 `include/config.h` 中的 `encoderGuardsEnabled` 设为 `false`，完全关闭 `encoder_direction` 和左右轮 `encoder_no_response` 故障停车。该版本仍使用编码器反馈做 PI 调节，关闭故障停车并不能隔离错误反馈对输出的影响。
 
-0.2.8 默认切换为开环，编码器无脉冲、反向和突跳均不改变 PWM。摇杆保持 40 Hz，运动任务与测速保持 100 Hz。反馈和轮径/计数校准、PI 整定完成后，可将 `motorClosedLoop=true` 恢复闭环；编码器故障停车还需独立设置 `encoderGuardsEnabled=true`，重新编译烧录。
+历史 0.2.8 构建曾切换为开环，以隔离编码器反馈对 PWM 的影响。当前 0.2.9 普通构建已恢复 `motorClosedLoop=true`；摇杆保持 40 Hz，运动任务与测速保持 100 Hz。编码器故障停车由独立的 `encoderGuardsEnabled` 设置控制，当前为 `false`。
 
 目标轮速协调限幅、欠压停车和电压传感器异常警告继续生效。完整代码、触发条件和恢复方式见[故障与警告表](../../docs/guide/troubleshooting.md#fault-codes)。
 
@@ -96,4 +96,4 @@ clang++ -std=c++11 -Wall -Wextra -Werror -I include test/protocol_test.cpp -o /t
 
 车端每秒与 server 四时间戳同步，以单调时钟映射统一 UTC。支持 `execute_at_ms` 定时运动指令，停车不等待缓冲；周期遥测为25ms。需同步更新 server 与前端，完整时序、NTP离线回退及验证说明见 [TIMING.md](../../robot_server/TIMING.md)。10ms控制周期需要重新做低速实车验证。
 
-0.2.8 将逻辑左右轮同时映射到 B/A 电机和编码器通道，修复当前车体左右转向相反；前后方向符号保持当前配置。正角速度仍为左转（右轮目标较快）。配套主控心跳与重连阈值统一为 3 s，修复约 1.058 s 遥测空档触发重绑定；车端命令 TTL 和 40 Hz 摇杆发送频率不变。
+历史 0.2.8 调试构建曾将逻辑左右轮同时映射到 B/A 电机和编码器通道。当前 0.2.9 的 `wheelChannels={0,1}` 使用 A/B 映射，前进方向由 `motorSign` 和 `encoderSign` 决定。正角速度为左转（右轮目标较快）。配套主控心跳与重连阈值均为 3 s，车端命令 TTL 和 40 Hz 摇杆发送频率保持不变。

@@ -38,7 +38,7 @@ X-Control-ID: my-controller
 }
 ```
 
-`v` is m/s and `omega` is rad/s, counterclockwise positive. Arm with the same control ID and wait for `armed=true`. Rejected validation returns 409 without partially dispatching new motion from the batch.
+`v` is m/s and `omega` is rad/s, counterclockwise positive. A first nonzero action automatically starts the arm handshake for an available robot. The SDK explicitly arms with the same control ID and waits for `armed=true` before submitting actions. Rejected validation returns 409 without partially dispatching new motion from the batch.
 
 ## Replace the controller {#replace-the-controller}
 

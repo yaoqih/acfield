@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+### Documentation and experiment workflow
+
+- Added bilingual state dictionaries with generated fresh/stale snapshots,
+  coordinate diagrams, offset calculations and complete configuration examples.
+- Added an executable two-robot tutorial, experiment manifests, a JSONL analyzer,
+  trajectory CSV/plots and a small dataset captured from the actual demo server.
+- Documented event fields, time bases, command/ACK correlation and recording gaps.
+- Added hardware compatibility tables, quantitative calibration procedures and
+  explicitly illustrative acceptance records.
+- Simplified quick start, moved joystick details into manual control, and moved
+  historical telemetry investigations into a case study.
+- Added backup, commit pinning, upgrade and rollback instructions, and displayed
+  the build revision on documentation pages.
+- Generate published defaults from real configuration and execute core tutorial
+  snippets in CI with bilingual and JSON/model checks.
+
+### Runtime corrections
+
+- Keep duplicate or delayed vision frames from refreshing camera availability.
+- Integrate exact demo arcs and enforce the configured body boundary margin.
+- Refresh browser-test builds and isolate console settings between tests.
+
+These changes are tracked for the next release. Use a complete commit to identify
+the development version used for an experiment.
+
 - Replaced transparent CAD previews with depth-buffered assembly/exploded views,
   corrected the assembled tag-cover orientation, and added bilingual 3 × 3 m
   arena/camera/network drawings with reproducible figure sources.

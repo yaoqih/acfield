@@ -45,3 +45,19 @@ The site is **https://yaoqih.github.io/acfield/**, with English at **https://yao
 Guides explain tasks; design pages explain rationale, costs and reconsideration conditions; reference pages describe exact interfaces; the status page distinguishes implementation, software checks and physical evidence.
 
 Builds check Markdown links. Homepage/layout changes also need desktop/mobile checks for readability, assets and navigation. Add new pages to the sidebar and do not describe planned capabilities as delivered.
+
+## Executable examples and reference checks {#executable-examples}
+
+Run these checks in the shared Python environment with a host C++ compiler available.
+
+```bash
+uv run --frozen --extra test python -m pytest -q tests/test_documentation.py
+uv run --frozen python tools/documentation_defaults.py --check
+uv run --frozen python tools/documentation_samples.py --check
+```
+
+Tests start an isolated demo, execute tutorial commands, analyze logs, and verify stopping and ownership release. Blocks marked `docs-test` are compared across languages. JSON is parsed and checked against the relevant models. Defaults come from firmware/server configuration and state examples use the real serializer.
+
+Remove `--check` to regenerate changed reference files and commit them together. To update the public experiment figure, run `uv run --frozen python tools/documentation_demo.py --output output/docs-demo`, inspect events, manifest, results and plot, then replace the published sample. Label demo provenance and include conditions for physical measurements.
+
+Article footers show build commit and modification status. Review [upgrade combinations](../guide/upgrading) and the [changelog](https://github.com/yaoqih/acfield/blob/main/CHANGELOG.md) when updating docs so readers can identify applicable versions.

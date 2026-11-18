@@ -13,9 +13,10 @@ ACField 是 AClab（算法与协作实验室）维护的开放式多机器人实
 | 目标 | 路径 | 需要的设备 |
 | --- | --- | --- |
 | 理解系统、调试 API | [无硬件快速开始](./quickstart) | 电脑 |
+| 从运行到结果图 | [第一次实验](./first-experiment) | 电脑 |
 | 接入控制脚本 | [算法接入](./control) | 先使用演示模式 |
 | 测试视觉与标定 | [视觉定位](./localization) | 演示模式或相机 |
-| 制作参考车辆 | [参考硬件](../hardware/overview) → [首车验收](../hardware/bringup) | 控制板、电机、机械件等 |
+| 制作参考车辆 | [硬件兼容](../hardware/compatibility) → [首车验收](../hardware/bringup) | 控制板、电机、机械件等 |
 | 设计论文实验 | [研究边界](../design/research) → [记录与复现](./recording) | 按实验目标确定 |
 
 ## 当前组成 {#current-components}

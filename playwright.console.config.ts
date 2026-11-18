@@ -8,16 +8,16 @@ export default defineConfig({
   workers: 1,
   use: { baseURL: 'http://127.0.0.1:18125', ...devices['Desktop Chrome'] },
   webServer: {
-    // Build the current UI when running directly from VS Code's Testing panel.
-    command: (process.env.ACFIELD_TEST_BUILD === '1' ? 'npm --prefix robot_server/frontend run build && ' : '')
+    command: 'npm --prefix robot_server/frontend run build && '
       + 'uv run --python 3.12 --extra test --directory robot_server python -m backend.app',
+    timeout: 120000,
     url: 'http://127.0.0.1:18125/api/health',
     reuseExistingServer: false,
     env: {
       ROBOT_MODE: 'demo', ROBOT_HOST: '127.0.0.1', ROBOT_PORT: '18125',
       ROBOT_DB: join(tmpdir(), `acfield-console-test-${randomUUID()}.sqlite3`),
       ROBOT_DEFAULT_VISION_URL: '', ROBOT_VISION_URL: '',
-      ROBOT_NTP_SERVER: '',
+      ROBOT_NTP_SERVER: '', ROBOT_ALLOW_UNLOCALIZED_CONTROL: '0',
     },
   },
 })

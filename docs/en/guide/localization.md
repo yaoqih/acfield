@@ -81,6 +81,19 @@ Sampling accepts fresh physical-camera frames only. Video, demo, frames older th
 
 Public initial settings have `camera=null` and an unconfigured world. The runtime profile defaults to `output/vision-settings.json` and overrides initial defaults. Saved extrinsics are not trusted automatically after restart. `--source 0` normally opens the first camera; see `--help` for more options.
 
+## Measure localization quality {#measure-localization}
+
+Choose **9 independently measured points** at the center, near the corners and at edge midpoints, keeping the full body inside the arena. Measure axle-midpoint X/Y with a ruler, fix heading, and collect server state for 10 s per point.
+
+1. Sample every 50 ms. Use positions with `visible=true`, retaining `pose_age_ms` and the invalid fraction.
+2. Compute `sqrt((x-x_ref)²+(y-y_ref)²)` at each point and report mean and p95. Wrap heading error into `[-π,π]` before taking its absolute value.
+3. Repeat at 0°, 90°, 180° and 270° to verify tag offset. Circular position drift suggests an incorrect axle-to-tag offset.
+4. Occlude the tag, freeze input, and restore it. Record visibility expiry/recovery and check stop events and fresh-input recovery.
+
+For low-speed bring-up, position p95 ≤ 10 mm, heading p95 ≤ 3°, and valid observations ≥ 99% can serve as **example targets**. Record actual measurements against your chosen targets. The 200 ms pose expiry is a software threshold. Preserve resolution, focus, exposure, lighting and arena dimensions for comparison.
+
+See the [measurement record](../hardware/bringup#keep-a-minimal-measurement-record) and [coordinate examples](../reference/coordinates).
+
 ## Hardware integration requirements {#hardware-integration-requirements}
 
 Hardware data must declare `source_kind=camera`, `world_calibrated=true`, `tag36h11` and `demo=false`. The adapter never treats pixels as metres or repeated frames as fresh poses.

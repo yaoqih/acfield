@@ -5,3 +5,5 @@
 /* Keep purchasing tables readable; narrow screens scroll within each table. */
 .hardware-bom .vp-doc th,.hardware-bom .vp-doc td{min-width:120px;vertical-align:top}.hardware-bom .vp-doc th:first-child,.hardware-bom .vp-doc td:first-child{min-width:76px;white-space:nowrap}.hardware-bom .vp-doc th:nth-child(2),.hardware-bom .vp-doc td:nth-child(2){min-width:200px}.hardware-bom .vp-doc th:last-child,.hardware-bom .vp-doc td:last-child{min-width:280px}
 @media(min-width:960px){.VPHomeHero .image-src{max-width:400px;max-height:320px;top:calc(50% + 16px)}}
+.platform-revision{margin-top:32px;padding-top:16px;border-top:1px solid var(--vp-c-divider);font-size:12px;color:var(--vp-c-text-2);overflow-wrap:anywhere}
+.platform-revision a{color:var(--vp-c-brand-1)}

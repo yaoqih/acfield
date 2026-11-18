@@ -2,28 +2,47 @@
 
 Inspect `/api/health`, events in `/api/state` and device serial output before changing settings. A stop reason is usually more informative than an unresponsive button.
 
-| Symptom | First checks |
-| --- | --- |
-| Console opens but robot does not move | Global stop, stop binding, matching control ID |
-| Hardware cannot arm | Identity/binding, heartbeat, localization, firmware, latched faults |
-| Stops immediately after arming | Pose jumps, spacing/boundary envelope, heartbeat/action expiry |
-| Camera online but localization invalid | Actual frame age, occlusion, calibration, provenance and quality |
-| Stops after a few hundred milliseconds | Renewal before TTL; blocked policy/server |
-| Another page cannot control a robot | Exclusive ownership; disarm from the original controller or wait for expiry |
-| Incomplete logs | Health dropped/error fields, disk and directory permissions |
-| Firmware builds but motors do not run | motorsEnabled, counts per turn, faults, directions and wiring |
+```bash
+curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:8000/api/state
+```
+
+| Symptom | Inspect | Next step |
+| --- | --- | --- |
+| Page unavailable | Startup terminal, HTTP 8000, listener address | Confirm startup completed, then check ports and frontend below |
+| Online but stationary | `estop`, `fault`, `bound`, `control_owner`, `reason` | Resolve the reported cause and retry with fresh input |
+| Stops within milliseconds | `last_stop_reason`, `stop_reason`, `pose_age_ms` | For `command_timeout`, check renewal. For stale poses, check camera frame age |
+| Intermittent offline | `heartbeat_age_ms`, `udp_rejected`, `udp_rejections` | Check versions/fields when rejection counts rise, then inspect Wi-Fi and power |
+| Oscillating speed | Target/measured wheel speeds, counts, PWM, loaded voltage | Check count jumps and wiring before [PI tuning](../hardware/bringup#pi-tuning) |
+| Missing records | `recording_dropped`, `recording_error`, `run_id` | Check disk and actual log directory, finish shutdown before analysis |
+
+## Encoder diagnostics {#encoder-diagnostics}
+
+Current normal firmware is `0.2.9` with `encoderDiagnostic=false` and `motorClosedLoop=true`. Rebuild and flash the `general-driver` environment. Serial startup should show `Motor control: closed_loop`. A `diagnostic_open_loop` message indicates that the diagnostic build is still installed. `encoderGuardsEnabled` independently controls encoder fault stops.
+
+Lift the wheels and open `/encoder`. Select an online robot, enter a target speed for normal firmware or PWM for diagnostic firmware, and click the forward or reverse command. Apply changed output while running, then stop when finished. The page limit follows the effective vehicle limit. Raw count traces show changes relative to each segment's first sample and restart after telemetry gaps. They do not apply `encoderSign`.
+
+Current `0.2.5-encoder-diagnostic` uses open-loop PWM from 0 to 255 with `v=PWM/350` and a 1500 ms motion telemetry-echo window. Binding and arming retain a 200 ms window. Flash from the repository root with `pio run -d esp32_software/firmware -e encoder-diagnostic -t upload`. The server renews diagnostic commands every 25 ms with a 500 ms TTL while the control socket remains open, including when browser background timers slow down. A run lasts at most 120 s. Applying PWM 0 stops the wheels while retaining arming. Leaving the page, switching robots or disconnecting releases control. Normal firmware uses browser renewal and server-side scheduling when the device clock is ready, with immediate sending otherwise.
+
+After diagnosis, flash normal firmware with `pio run -d esp32_software/firmware -e general-driver -t upload` and verify `Motor control: closed_loop`. Normal speed estimation uses pulses and actual elapsed time across the latest five cycles, approximately 50 ms. Control updates every 10 ms and joystick commands remain at 40 Hz. Raw cumulative counts are unchanged.
+
+The [telemetry gap case study](./diagnostic-case) preserves historical evidence and fixes. For current gaps, compare UDP rejection counts and `motion_echo_rejections` before inspecting Wi-Fi. For oscillation, compare target, feedback and PWM. Stable PWM with jerky motion points toward low-duty starting, loaded voltage, driver or mechanical resistance.
+
+## Speed configuration and measurement {#speed-configuration}
+
+Normal firmware target limits are `0.89 m/s` and `6.00 rad/s`. New server configurations default to `0.50 m/s` and `1.50 rad/s`, capped in hardware mode by device limits. Current normal control uses `feedForward=250`, `kp=60` and `ki=0` for wheel-speed regulation. Setting `motorClosedLoop=false` and rebuilding isolates encoder feedback. In that mode, target wheel speed is multiplied by the feed-forward coefficient and both outputs scale together if either exceeds 255. Diagnostic builds retain their independent `PWM/350` transport mapping.
+
+Speed estimation uses pulses per second multiplied by wheel circumference and divided by counts per turn. Current configuration uses a `0.034 m` wheel diameter and `88` counts per output-shaft turn on each side. Rotate each wheel ten full turns and divide the absolute raw count change by ten to check `pulsesPerTurn`. Verify positive feedback for forward motion and compare regulation against measured distance/time or calibrated vision. `encoderGuardsEnabled=false` currently disables direction and no-response stops. Enable those separately when needed and rebuild after changing configuration.
+
+## Steering direction and automatic control {#steering-and-control}
+
+Current `wheelChannels={0,1}` maps logical left/right to physical A/B for both motor output and encoder feedback. Positive yaw turns left, with a faster right-wheel target. Verify `wheelChannels`, `motorSign` and `encoderSign` against each robot's wiring. Historical 0.2.8 test builds used B/A mapping.
+
+Console, mobile and encoder pages perform the arm handshake automatically on fresh input. Stop, release, disconnect and expiry discard pending input. Reconnect requires fresh input. Both normal and diagnostic telemetry expire after 3 s, and joystick output remains 40 Hz.
 
 ## Fault and warning codes {#fault-codes}
 
-This table describes current normal firmware **0.2.8**, which defaults to open-loop drive. Distinguish the fields in `/api/state` first:
-
-Normal firmware estimates speed from pulses and elapsed time across the latest five control cycles (about 50 ms). Motor output and speed estimates still update every 10 ms, joystick commands remain at 40 Hz (25 ms), and raw cumulative counts are unchanged. Flash from the repository root with `pio run -d esp32_software/firmware -e general-driver -t upload`; serial startup should show `Motor control: open_loop`.
-
-Version 0.2.8 sets `motorClosedLoop=false`: encoder feedback is only displayed and recorded, with no effect on PWM. Each wheel's target is multiplied by `feedForward=350`; straight targets of 0.10, 0.20 and 0.50 produce approximately 35, 70 and 175 PWM. If either output exceeds 255, both are scaled together to preserve steering ratio. Protocol/UI targets retain m/s units, but actual open-loop speed varies with battery, load and motor differences. The normal target limit remains 0.89 m/s; new server robot configurations default to 0.50 m/s.
-
-Earlier 0.2.6 logs recorded estimated feedback around 5.98 m/s against a forward target around 0.17 m/s. PI can then clamp positive output to zero and accelerate again as feedback drops, plausibly explaining repeated jerks. Disabling encoder fault stops alone did not bypass PI. Open-loop drive isolates this feedback path; if PWM stays steady but motion still jerks, inspect low-duty starting behavior, power, drivers and mechanical resistance.
-
-`encoderGuardsEnabled=false` continues to disable direction and no-response fault stops. After feedback, geometry/count calibration and PI tuning, set `motorClosedLoop=true` to restore closed-loop regulation. Restoring these two fault guards also requires `encoderGuardsEnabled=true`; rebuild and flash after changing either flag. Flashing restarts the device and clears old latched faults.
+The tables below describe normal firmware **0.2.9**, which defaults to encoder wheel-speed regulation. First distinguish the fields in `/api/state`.
 
 | Field | Meaning |
 | --- | --- |
@@ -31,6 +50,8 @@ Earlier 0.2.6 logs recorded estimated feedback around 5.98 m/s against a forward
 | Robot `fault` | Latched device fault; stops and disarms immediately, accepting only stop commands. Fix the cause, restart the device, bind again and use fresh input |
 | Robot `stop_reason` | Current device state or latest stop reason; changing to `server_stop` does not mean `fault` has cleared |
 | Robot `reason` | Server control state, waiting condition or protection reason, usually shown in Chinese |
+| Robot `last_stop_reason` | Latest server stop reason, retained after stop binding completes |
+| Robot `motion_echo_rejections` | Device boot-lifetime count of motion commands rejected for expired or unknown telemetry echoes. Older firmware reports `null` |
 | Top-level `system_fault` | Control/vision background task failure, containing the task name and exception type; stops all robots. Fix the cause and restart the server |
 
 | Code | Level | Trigger with default configuration | Checks and recovery |
@@ -92,5 +113,3 @@ The upstream cleanup order in pupil-apriltags 1.0.4.post11 can crash Linux when 
 ## Report a useful issue {#report-a-useful-issue}
 
 Include platform revision, mode, OS, firmware/hardware versions, minimal steps, relevant events and stop reasons. Separate measurements from guesses. Remove credentials/private data and use the [Bug Report template](https://github.com/yaoqih/acfield/issues/new/choose).
-
-Normal firmware 0.2.8 maps logical left/right to physical B/A channels for this chassis, for both motor output and encoder feedback. Positive yaw still turns left, with a faster right-wheel target. The console, mobile and encoder pages start control with fresh input and automatically perform the device arm handshake. Stop, release, disconnect and expiry discard pending input; reconnect never replays old motion. Both normal and diagnostic telemetry expire after 3 s. Joystick output remains 40 Hz.

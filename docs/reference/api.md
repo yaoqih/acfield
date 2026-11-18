@@ -79,6 +79,8 @@ HTTP 非零动作必须带 `X-Control-ID`；首次非零动作自动取得空闲
 
 ## 状态数据 {#state-data}
 
+完整字段、有效条件与新鲜/过期样例见[状态字典](./state)，配置与单位见[坐标说明](./coordinates)。
+
 身份在 `robots[].config.id`，位置为 `x/y/theta`。同时检查在线、定位、解锁、故障、命令确认、轮速、电压和停车原因；未知值 `null` 不等于零。每车还有 `clock_synced`、`clock_uncertainty_ms`、`sampled_at_ms`、`applied_seq`。快照 `timestamp` 单位秒，WebSocket `server_time_ms` 和遥测采样时间单位毫秒。
 
 HTTP 与 WebSocket 提供最新快照，没有逐条历史送达保证。页面“服务器推送”仅表示距本页面上次收到快照的单调时间，不是遥测龄或端到端延迟。实验使用日志并补充观测/动作关联。

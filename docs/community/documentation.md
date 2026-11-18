@@ -45,3 +45,19 @@ npm run docs:test
 操作指南说明用户如何完成任务；设计文档说明选型理由、代价与改变条件；参考页描述准确接口与参数；能力状态页区分实现、软件验证和实物证据。
 
 本地构建会检查 Markdown 链接。改动首页或布局后还应检查桌面与移动端，确认可读性、图片和导航。新增页面时加入侧栏；不要把计划功能写成已交付能力。
+
+## 可执行示例与参数校验 {#executable-examples}
+
+在共享 Python 环境运行以下检查，需要主机 C++ 编译器。
+
+```bash
+uv run --frozen --extra test python -m pytest -q tests/test_documentation.py
+uv run --frozen python tools/documentation_defaults.py --check
+uv run --frozen python tools/documentation_samples.py --check
+```
+
+测试会真正启动隔离 demo，执行教程命令、分析日志，核对停车与控制权释放。标有 `docs-test` 的代码块按中英文比对，JSON 示例经过解析和对应模型验证。默认表由固件和主控配置生成，状态样例由实际快照实现生成。
+
+修改参数后去掉 `--check` 重建并提交生成文件。需要更新公开实验图时，运行 `uv run --frozen python tools/documentation_demo.py --output output/docs-demo`，检查原始事件、清单、结果和图片，再替换公开样例。图与数据需注明 demo 来源，实测表需注明测量条件。
+
+每篇正文页尾显示构建 commit 与工作区修改标记。更新文档时同步检查[升级组合](../guide/upgrading)与[变更记录](https://github.com/yaoqih/acfield/blob/main/CHANGELOG.md)，方便读者判断文档是否适用于本机版本。

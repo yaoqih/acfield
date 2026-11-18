@@ -1,4 +1,15 @@
 import { defineConfig, type DefaultTheme } from 'vitepress'
+import { execFileSync } from 'node:child_process'
+
+let commit = ''
+let revision = 'unversioned'
+try {
+  commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()
+  revision = commit.slice(0, 8) + (dirty ? ' · modified' : '')
+} catch {
+  // Source archives can be built without a Git checkout.
+}
 
 // Shared route pairs keep the two navigation trees aligned.
 type Item = [path: string, zh: string, en: string]
@@ -6,6 +17,7 @@ const sections: [zh: string, en: string, items: Item[]][] = [
   ['认识 ACField', 'Discover ACField', [
     ['/guide/overview', '平台概览', 'Overview'],
     ['/guide/quickstart', '快速开始', 'Quick start'],
+    ['/guide/first-experiment', '第一次实验', 'First experiment'],
     ['/guide/status', '能力与验证状态', 'Capabilities and evidence']
   ]],
   ['设计与思考', 'Design and rationale', [
@@ -16,17 +28,24 @@ const sections: [zh: string, en: string, items: Item[]][] = [
   ]],
   ['使用与开发', 'Usage and development', [
     ['/guide/configuration', '运行与配置', 'Configuration'],
+    ['/guide/manual-control', '手动控制', 'Manual control'],
     ['/guide/python-sdk', 'Python SDK', 'Python SDK'],
     ['/guide/control', '接入控制算法', 'Controller integration'],
     ['/guide/localization', '视觉定位与标定', 'Localization and calibration'],
     ['/guide/recording', '记录与复现', 'Recording and reproducibility'],
-    ['/guide/troubleshooting', '故障排查', 'Troubleshooting']
+    ['/guide/troubleshooting', '故障排查', 'Troubleshooting'],
+    ['/guide/diagnostic-case', '遥测空档排查案例', 'Telemetry gap case study'],
+    ['/guide/upgrading', '版本与升级', 'Versions and upgrades']
   ]],
   ['接口参考', 'API reference', [
     ['/reference/api', 'HTTP 与 WebSocket', 'HTTP and WebSocket'],
+    ['/reference/state', '状态数据字典', 'State dictionary'],
+    ['/reference/coordinates', '坐标与几何配置', 'Coordinates and geometry'],
+    ['/reference/defaults', '当前默认参数', 'Current defaults'],
     ['/reference/protocol', '设备协议与时序', 'Device protocol and timing']
   ]],
   ['参考硬件', 'Reference hardware', [
+    ['/hardware/compatibility', '硬件版本与兼容', 'Hardware compatibility'],
     ['/hardware/bom', '详细 BOM 与采购规格', 'Detailed BOM and purchasing'],
     ['/hardware/purchasing', '购买链接与下单选项', 'Purchase links and order options'],
     ['/hardware/resources', '硬件资料、CAD 与参数图片', 'Resources, CAD and parameter images'],
@@ -72,6 +91,10 @@ export default defineConfig({
   ],
   sitemap: { hostname: 'https://yaoqih.github.io/acfield/' },
   markdown: { lineNumbers: true },
+  transformPageData(pageData) {
+    pageData.frontmatter.platformRevision = revision
+    pageData.frontmatter.platformCommit = commit
+  },
   locales: {
     root: {
       label: '简体中文', lang: 'zh-CN', link: '/',

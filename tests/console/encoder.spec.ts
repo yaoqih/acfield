@@ -1,12 +1,4 @@
-import { expect, test } from '@playwright/test'
-
-test.beforeEach(async ({ request }) => {
-  await request.post('/api/stop')
-  const settings = await (await request.get('/api/config')).json()
-  settings.arena_width = settings.arena_height = 10
-  expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
-  expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
-})
+import { expect, test } from './fixtures'
 
 test('plots encoder samples and breaks the trace when telemetry disappears', async ({ page }) => {
   let counter = 0
@@ -238,21 +230,27 @@ test('adjusts diagnostic PWM during motion without requiring either clock', asyn
   await expect.poll(async () => (await robot()).target_v).toBeCloseTo(-20/350)
 })
 
-test('rejects a speed above the page limit and applies valid changes while running', async ({ page, request }) => {
-  await page.goto('/encoder')
+for (const limit of [.1, .5]) {
+  test(`rejects speed above ${limit} m/s and applies valid changes while running`, async ({ page, request }) => {
+    const settings = await (await request.get('/api/config')).json()
+    settings.robots[0].max_v = limit
+    expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
+    expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
+    await page.goto('/encoder')
 
-  const forward = page.getByRole('button', { name: '开始前进' })
-  await expect(forward).toBeEnabled()
-  const speed = page.getByLabel('目标速度（m/s）')
-  await speed.fill('1')
-  await forward.click()
-  await expect(page.getByRole('alert')).toContainText('不超过 0.100 m/s')
-  const robot = async () => (await (await request.get('/api/state')).json()).robots[0]
-  expect((await robot()).target_v).toBe(0)
-  await speed.fill('0.025')
-  await forward.click()
-  await expect.poll(async () => (await robot()).target_v).toBe(.025)
-  await speed.fill('0.075')
-  await page.getByRole('button', { name: '应用输出' }).click()
-  await expect.poll(async () => (await robot()).target_v).toBe(.075)
-})
+    const forward = page.getByRole('button', { name: '开始前进' })
+    await expect(forward).toBeEnabled()
+    const speed = page.getByLabel('目标速度（m/s）')
+    await speed.fill('1')
+    await forward.click()
+    await expect(page.getByRole('alert')).toContainText(`不超过 ${limit.toFixed(3)} m/s`)
+    const robot = async () => (await (await request.get('/api/state')).json()).robots[0]
+    expect((await robot()).target_v).toBe(0)
+    await speed.fill('0.025')
+    await forward.click()
+    await expect.poll(async () => (await robot()).target_v).toBe(.025)
+    await speed.fill('0.075')
+    await page.getByRole('button', { name: '应用输出' }).click()
+    await expect.poll(async () => (await robot()).target_v).toBe(.075)
+  })
+}

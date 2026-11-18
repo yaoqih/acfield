@@ -107,7 +107,8 @@
       "command": "uv",
       "args": [
         "run", "--frozen", "--python", "3.12", "--extra", "test",
-        "python", "-m", "pytest", "-q", "tests/test_apriltag_live.py"
+        "python", "-m", "pytest", "-q", "tests/test_apriltag_live.py",
+        "tests/test_vision_configuration.py"
       ],
       "group": "test",
       "problemMatcher": []
@@ -158,6 +159,17 @@
       "problemMatcher": ["$gcc"]
     },
     {
+      "label": "CI: Documentation Examples",
+      "type": "process",
+      "command": "uv",
+      "args": [
+        "run", "--frozen", "--python", "3.12", "--extra", "test",
+        "python", "-m", "pytest", "-q", "tests/test_documentation.py"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "CI: Docs Build",
       "type": "process",
       "command": "npm",
@@ -169,7 +181,6 @@
       "type": "process",
       "command": "npm",
       "args": ["run", "docs:test"],
-      "dependsOn": "CI: Docs Build",
       "group": "test",
       "problemMatcher": []
     },
@@ -183,7 +194,10 @@
         "CI: Vision Tests",
         "CI: Verify Labels",
         "CI: Console Build",
+        "ACField: Console Browser Tests",
+        "ACField: Vision Browser Tests",
         "CI: Firmware Builds (4 Cars)",
+        "CI: Documentation Examples",
         "CI: Docs Tests"
       ],
       "group": {"kind": "test", "isDefault": true},
@@ -220,7 +234,6 @@
       "type": "process",
       "command": "npm",
       "args": ["run", "console:test"],
-      "dependsOn": "CI: Console Build",
       "group": "test",
       "problemMatcher": []
     },

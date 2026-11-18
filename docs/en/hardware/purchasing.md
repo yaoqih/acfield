@@ -4,6 +4,8 @@ pageClass: hardware-bom
 
 # Purchase links and order options
 
+Review [hardware compatibility](./compatibility) before ordering, especially motor ratio, standoff height, battery space and tag mounting holes.
+
 Items are ordered by importance: **controller, drive and power; chassis fabrication; vision and camera support; connectors and tools**. Use this page to open product listings, select variants and prepare order notes. See the [detailed BOM](./bom) for one-robot and four-robot quantities, compatibility and missing parts, and [resources and CAD](./resources) for drawings and parameter images. IDs match the BOM.
 
 The URLs and selections come from the supplied purchasing list. Current listings, stock and prices have not been independently checked. **Pending means no purchase quantity was supplied. Counts such as 100, 50, 10 and 12 describe pack contents; the number of packs or batches is separate.**

@@ -1,8 +1,8 @@
 # Firmware and bring-up
 
-Measure one complete control path before replicating robots. Firmware currently allows motor output (`motorsEnabled=true`) and defaults to open-loop drive (`motorClosedLoop=false`), with encoders only displayed and recorded. Encoder counts per turn, direction, PI gains and useful limits are still uncalibrated; the first power-up must be with the wheels lifted, not on the floor.
+Measure one complete control path before replicating robots. Normal firmware 0.2.9 allows motor output (`motorsEnabled=true`) and defaults to encoder wheel-speed regulation (`motorClosedLoop=true`) with initial `feedForward=250`, `kp=60` and `ki=0`. Both wheels currently use `88` encoder counts per turn. Verify counts, direction, PI gains and useful limits on each robot. Begin powered tests with the wheels lifted.
 
-All four robots have changed from A12, 12 V, 1:100 motors to the same family at 1:20. With 34 mm wheels, the nominal 500 rpm rated point is about 0.89 m/s. Firmware limits are 0.89 m/s for linear and wheel speed and 3.00 rad/s for yaw; server defaults are 0.50 m/s and 1.50 rad/s. Acceleration limiting has been removed. Counts per output turn are scaled from 300 to 60, assuming the same encoder; measure each wheel to confirm.
+All four robots have changed from A12, 12 V, 1:100 motors to the same family at 1:20. With 34 mm wheels, the nominal 500 rpm rated point is about 0.89 m/s. Firmware limits are 0.89 m/s for linear and wheel speed and 6.00 rad/s for yaw. Server defaults are 0.50 m/s and 1.50 rad/s. Acceleration limiting has been removed. Current `wheelChannels={0,1}` maps logical left/right to physical A/B for both motors and encoders. Verify this mapping against each robot's wiring.
 
 ## Configure and build {#configure-and-build}
 
@@ -42,6 +42,41 @@ Reference pins, voltage thresholds and diagnostics are in the [firmware README](
 
 The initial 3S undervoltage setting latches a stop below 10.5 V for one second. Pack voltage does not replace per-cell monitoring. Include a physical power switch and power protection. Verify full-charge supply behavior, temperatures and battery retention on the first robot.
 
+## Measure the parameters {#measurement-procedures}
+
+Identify hardware with the [compatibility table](./compatibility). Repeat each measurement at least 3 times and retain raw readings, mean and maximum variation. These are **example acceptance targets** for low-speed bring-up. Set targets for your task before testing.
+
+| Measurement | Procedure and calculation | Example target |
+| --- | --- | --- |
+| Output counts | Disable motion output, mark the tire, rotate 10 full turns and record each raw count change. `counts=abs(change)/10` | Within 1% over 3 repeats, positive forward feedback after `encoderSign` |
+| Effective diameter | Push the loaded robot for 10 turns, measure distance L. `D=L/(10π)` | Within 1% over 3 repeats |
+| Effective track | Pivot slowly through an independently measured turn θ, record wheel travel. `B=(s_right-s_left)/θ`, θ in radians | Within 5°/turn after updating and retesting |
+| Straight speed | Run at 0.03, 0.05 and 0.10 m/s for 5 s with room to stop. Compare vision and encoder means over the middle 3 s | Target error and cross-sensor difference within 10%, without repeated starting/stopping |
+| Tag offset | Measure forward/left offsets, hold axle midpoint fixed, rotate to 0°/90°/180°/270° | Corrected drift at most 10 mm |
+| Stop time and distance | From steady 0.05 and 0.10 m/s, request stop and record video/logs until stationary | Record maxima over 3 repeats, inside the preallocated stopping distance |
+
+Use single-channel rising-edge counts. Track estimation depends on calibrated wheel travel and is sensitive to slip. Repeat on the experiment floor. Verify the actual envelope and available arena before speed tests.
+
+### Tune PI {#pi-tuning}
+
+Verify counts, diameter, directions and wiring first. Keep `ki=0`. Record target/measured wheel speeds and PWM during low-speed steps. Adjust feed-forward toward the requested mean, then increase `kp` in small increments while comparing steady-state error and oscillation. Investigate counts and power when feedback jumps.
+
+Change one parameter at a time. Repeat straight, turning and stop tests before choosing server limits. See [current defaults](../reference/defaults).
+
 ## Keep a minimal measurement record {#keep-a-minimal-measurement-record}
 
 For each robot, preserve component revisions, wheel diameter/track, counts per turn, directions, PI gains/limits, localization offsets and stopping conditions/results. Record the evidence behind each threshold adjustment. Hardware revisions and parameters should be traceable to runtime logs.
+
+These **illustrative filled values** explain the format. Replace them with measurements and attach raw logs.
+
+| Item | Filled example | Your measurement |
+| --- | --- | --- |
+| Identity and versions | car-01, V11, 1:20, platform and firmware commits attached | Pending |
+| Conditions | Flat PVC floor, battery 12.1 V, 3 repeats | Pending |
+| Counts over 10 turns | Left 880/880/880, right 880/880/880 → 88/88 | Pending |
+| Effective diameter / track | 0.0340 / 0.122 m, raw distances and angles attached | Pending |
+| Tag and offset | Black frame 0.104 m, height 0.0646 m, measure forward offset | Pending |
+| Straight target 0.05 m/s | Vision 0.048 m/s, encoder 0.050 m/s | Pending |
+| Maximum low-speed stop | From 0.05 m/s, 0.18 s / 0.006 m | Pending |
+| Arena localization | 9 points, 10 s each, position p95 8 mm, heading p95 2° | Pending |
+| Decision and evidence | Passed chosen low-speed targets, logs and calibration attached | Pending |

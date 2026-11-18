@@ -1,8 +1,10 @@
 # Configuration
 
+See [coordinates](../reference/coordinates) for complete JSON and offset examples, [defaults](../reference/defaults) for current values, and [upgrades](./upgrading) for configuration backups and migration.
+
 Startup defaults depend on the entry point. `./run.sh` / `.\run.bat` select LAN hardware mode and allow manual control without localization. Direct `python -m backend.app` selects a local demo. For hardware-free use, follow the explicit overrides in [quick start](./quickstart).
 
-The console can switch between demo and hardware for the current process. Switching stops robots, activates global stop and replaces the session. Release global stop and arm again before motion. A restart uses `ROBOT_MODE`. The phone remote is at `http://SERVER_LAN_IP:8000/mobile`.
+The console can switch between demo and hardware for the current process. Switching stops robots, activates global stop and replaces the session. Release global stop and use fresh input to perform the control handshake automatically. A restart uses `ROBOT_MODE`. The phone remote is at `http://SERVER_LAN_IP:8000/mobile`.
 
 ## Server environment variables {#server-environment-variables}
 
@@ -25,7 +27,7 @@ Defaults below distinguish direct backend startup from the launch scripts. Exist
 | `ROBOT_DB` | `robot_server/data/config.sqlite3` | Persistent configuration |
 | `ROBOT_LOG_DIR` | `runs/` beside the database | Control-server logs |
 
-Unlocalized control still requires binding, fresh telemetry, no fault, explicit arming, ownership and finite command lifetimes. Position-based protection is disabled; operation in this mode does not validate localization. Set `ROBOT_ALLOW_UNLOCALIZED_CONTROL=0` for experiments that require it. Inspect `allow_unlocalized_control` in `/api/state` for the active value.
+Unlocalized control still requires binding, fresh telemetry, no fault, a control handshake, ownership and finite command lifetimes. Fresh console input triggers the handshake automatically. The SDK's `control()` waits for arming confirmation. Set `ROBOT_ALLOW_UNLOCALIZED_CONTROL=0` for experiments that require localization. Inspect `allow_unlocalized_control` in `/api/state` for the active value.
 
 ## Startup addresses and LAN access {#startup-addresses-and-lan-access}
 
@@ -66,7 +68,7 @@ Use the console or `GET/PUT /api/config` for arena size, identities, tag IDs, bo
 
 Hardware saves synchronize robot tag IDs, black-border sizes and mounting heights to vision. Set heading correction in the control server. The compact acrylic candidate uses nominal 72 mm black borders and 80 mm finished labels; V11 uses 104/130 mm. Measure height from the floor to the tag centre. Saved settings do not migrate with hardware changes. Let only one control server manage a shared vision profile.
 
-New robot configurations for A12 1:20 motors default to `0.50 m/s` and `1.50 rad/s`. Hardware mode uses the lower of configuration and device reports; current firmware allows `0.89 m/s` and `3.00 rad/s`. Without a device limit report, hardware mode falls back to `0.10 m/s` and `0.30 rad/s`. Demo mode uses the configured limits. Existing databases retain saved values; update the affected robots in Experiment settings after replacing motors. The approximately 200 × 160 mm body envelope is a conservative initial value. Measure the full outline including wheels, tag board and mounting offsets.
+New robot configurations for A12 1:20 motors default to `0.50 m/s` and `1.50 rad/s`. Hardware mode uses the lower of configuration and device reports; current firmware allows `0.89 m/s` and `6.00 rad/s`. Without a device limit report, hardware mode falls back to `0.10 m/s` and `0.30 rad/s`. Demo mode uses the configured limits. Existing databases retain saved values; update the affected robots in Experiment settings after replacing motors. The approximately 200 × 160 mm body envelope is a conservative initial value. Measure the full outline including wheels, tag board and mounting offsets.
 
 ## Ownership and networking {#ownership-and-networking}
 

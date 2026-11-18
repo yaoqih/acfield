@@ -4,6 +4,8 @@ pageClass: hardware-bom
 
 # Detailed BOM and purchasing specifications
 
+Check [hardware compatibility](./compatibility) for the existing 1:20 motors and the adaptation required for purchased 1:30 parts.
+
 Updated 2026-11-15. Items are ordered by importance: **controller, drive and power; chassis fabrication; vision and camera support; connectors and workshop tools**. Product options and URLs come from the supplied purchasing list; current prices, stock and purchase status have not been independently checked.
 
 **Quantity basis:** one-robot and four-robot requirements are estimates for a differential-drive configuration. Explicit quantities, pack contents and suggested purchases are distinguished below. Shared equipment is not multiplied by robot count. No current total cost is calculated: only the CNY 20 camera cable surcharge was supplied.

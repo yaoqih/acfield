@@ -38,7 +38,7 @@ X-Control-ID: my-controller
 }
 ```
 
-`v` 单位 m/s，`omega` 单位 rad/s，逆时针为正。解锁时使用相同的控制 ID，并等待各车 `armed=true`。校验失败返回 409，本批新的运动动作不会部分下发。
+`v` 单位 m/s，`omega` 单位 rad/s，逆时针为正。首次非零动作会自动为可用车辆发起 arm 握手。SDK 则使用相同的控制 ID 主动准备控制，并等待各车 `armed=true` 后提交动作。校验失败返回 409，本批新的运动动作不会部分下发。
 
 ## 替换控制器 {#replace-the-controller}
 

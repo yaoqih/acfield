@@ -27,19 +27,30 @@ def ingest(fleet, data, began, last_frame):
     frame = (timestamp, frame_id)
     age, fps = data.get("frame_age_ms"), data.get("fps", 0)
     source = data.get("source_kind")
+    now = time.monotonic()
+    source_age = age / 1000 + now - began if number(age) and age >= 0 else float("inf")
     valid = (data.get("status") == "running" and data.get("demo") is False
              and source == "camera" and data.get("world_calibrated") is True
              and data.get("family") == "tag36h11"
              and type(frame_id) is int and frame_id >= 0
              and isinstance(timestamp, str) and bool(timestamp)
-             and number(age) and 0 <= age < 200)
+             and 0 <= source_age < .2)
     fresh = valid and frame != last_frame
     available = (data.get('status') == 'running' and data.get('demo') is False and source == 'camera'
-                 and number(age) and 0 <= age < 1000)
-    fleet.camera = {"connected": fresh, "available": available,
+                 and 0 <= source_age < 1)
+    reason = data.get('error') or "等待新鲜、已标定的实时相机数据"
+    if valid:
+        reason = "视觉已连接"
+    elif available:
+        if data.get("world_calibrated") is not True:
+            reason = "相机已连接，请完成场地标定"
+        elif data.get("family") != "tag36h11":
+            reason = "相机已连接，请使用 tag36h11 标签族"
+        else:
+            reason = "相机已连接，等待新鲜的定位数据"
+    fleet.camera = {"connected": valid, "available": available,
                     "fps": fps if number(fps) and fps >= 0 else 0,
-                    "reason": "视觉已连接" if fresh else "相机已连接，请完成场地标定" if available
-                    else data.get('error', "等待新鲜、已标定的实时相机数据")}
+                    "reason": reason}
     if not valid:
         # A source switch or invalid calibration invalidates old poses immediately.
         for r in fleet.robots.values():
@@ -53,7 +64,6 @@ def ingest(fleet, data, began, last_frame):
     ids = Counter(t.get("id") for t in tags if isinstance(t, dict) and type(t.get("id")) is int)
     by_id = {t["id"]: t for t in tags if isinstance(t, dict) and type(t.get("id")) is int
              and ids[t["id"]] == 1}
-    now = time.monotonic()
     for r in fleet.robots.values():
         tag = by_id.get(r.config.tag_id)
         if not tag or tag.get("status") != "visible":

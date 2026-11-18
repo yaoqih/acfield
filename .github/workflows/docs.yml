@@ -20,7 +20,6 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run docs:build
       - run: npx playwright install --with-deps chromium
       - name: Language routing and navigation regression checks
         run: npm run docs:test

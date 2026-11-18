@@ -9,8 +9,5 @@
     "robot_server/tests",
     "sdk/python/tests"
   ],
-  "python.testing.autoTestDiscoverOnSaveEnabled": true,
-  "playwright.env": {
-    "ACFIELD_TEST_BUILD": "1"
-  }
+  "python.testing.autoTestDiscoverOnSaveEnabled": true
 }

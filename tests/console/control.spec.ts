@@ -1,16 +1,4 @@
-import { expect, test } from '@playwright/test'
-
-test.beforeEach(async ({ request }) => {
-  // Leave room for the faster defaults and reset poses between control scenarios.
-  const settings = await (await request.get('/api/config')).json()
-  settings.arena_width = settings.arena_height = 10
-  expect((await request.put('/api/config', { data: settings })).ok()).toBeTruthy()
-  expect((await request.post('/api/reset-stop')).ok()).toBeTruthy()
-  await expect.poll(async () => {
-    const state = await (await request.get('/api/state')).json()
-    return state.robots.every((robot: {online: boolean}) => robot.online)
-  }).toBeTruthy()
-})
+import { expect, test } from './fixtures'
 
 test('joystick sends proportional movement and stops on release', async ({ page }) => {
   const commands: {v: number; omega: number}[] = []

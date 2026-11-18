@@ -94,10 +94,47 @@ def test_bad_tag_does_not_hide_valid_tag_or_poison_duplicates():
     at = r.pose_at
     assert ingest(f, data, time.monotonic(), frame) == frame
     assert r.pose_at == at
+    assert f.camera["connected"] and f.camera["reason"] == "视觉已连接"
     data["frame_id"] = 2
     data["tags"].append(data["tags"][0].copy())
     ingest(f, data, time.monotonic(), frame)
     assert r.pose_at == at  # a duplicate identity is not a new observation
+
+
+def test_camera_status_tracks_frame_age_without_renewing_repeated_poses(monkeypatch):
+    f, r = demo()
+    r.pose_at = 0
+    now = time.monotonic()
+    monkeypatch.setattr("backend.vision.time.monotonic", lambda: now)
+    frame = ingest(f, camera_frame(frame_age_ms=10), now, None)
+    pose_at = r.pose_at
+    now += .05
+    ingest(f, camera_frame(frame_age_ms=60), now, frame)
+    assert f.camera["connected"] and r.pose_at == pose_at
+    now += .2
+    ingest(f, camera_frame(frame_age_ms=260), now, frame)
+    assert not f.camera["connected"] and f.camera["available"]
+    assert "新鲜" in f.camera["reason"] and r.pose_at == 0
+
+
+@pytest.mark.parametrize("changes, reason", [
+    ({"world_calibrated": False}, "标定"),
+    ({"family": "tag16h5"}, "tag36h11"),
+    ({"frame_age_ms": 250}, "新鲜"),
+])
+def test_camera_status_explains_unusable_frames(changes, reason):
+    f, _ = demo()
+    ingest(f, camera_frame(**changes), time.monotonic(), None)
+    assert f.camera["available"] and not f.camera["connected"]
+    assert reason in f.camera["reason"]
+
+
+def test_camera_status_includes_request_latency(monkeypatch):
+    f, r = demo()
+    now = time.monotonic()
+    monkeypatch.setattr("backend.vision.time.monotonic", lambda: now)
+    ingest(f, camera_frame(frame_age_ms=50), now-.16, None)
+    assert not f.camera["connected"] and r.pose_at == 0
 
 
 def test_vision_watcher_survives_malformed_response(monkeypatch):
