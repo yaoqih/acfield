@@ -7,7 +7,7 @@ Questions and issues are welcome in Chinese or English. For substantial features
 - Python: from the repository root, run `uv sync --python 3.12 --extra test`. This installs the control server, SDK, vision service, CAD/print tools and test dependencies into the root `.venv`; the root `uv.lock` is the single Python lockfile.
 - Platform tests: run `uv run --python 3.12 --extra test pytest -q` from the repository root. Run SDK tests with `cd sdk/python && uv run --python 3.12 pytest -q`; both commands use the same root `.venv`. Firmware contract tests also need a host C++ compiler and PlatformIO's ArduinoJson.
 - Console: `npm --prefix robot_server/frontend ci` then `npm --prefix robot_server/frontend run build`.
-- Vision-only setup uses `requirements-apriltag.txt` and `requirements-print.txt`. From the root, run `python -m pytest -q tests/test_apriltag_live.py tests/test_vision_configuration.py`.
+- The localization test setup uses `python -m pip install -r requirements-apriltag.txt -r requirements-print.txt './robot_server[test]'`. Configuration tests exercise the real control API and require its dependencies. From the root, run `python -m pytest -q tests/test_apriltag_live.py tests/test_vision_configuration.py`.
 - Firmware: install PlatformIO and build the four environments.
 - Docs: `npm ci && npm run docs:build`; preview with `npm run docs:dev`.
 - Browser regressions use the root npm dependencies and Chromium (`npx playwright install chromium`). Run `npm run console:test`, `npm run vision:test` and `npm run docs:test` sequentially. Console tests also need the frontend npm dependencies. Console and documentation tests build fresh assets before starting their servers. `DOCS_TEST_URL` selects an already-running documentation site instead.

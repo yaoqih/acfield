@@ -126,7 +126,6 @@ def test_invalid_profiles_never_replace_working_capture(engine, change):
 
 
 def test_real_http_bridge_synchronizes_robot_dimensions(engine, tmp_path):
-    pytest.importorskip('fastapi')
     from fastapi.testclient import TestClient
     from werkzeug.serving import make_server
     from robot_server.backend.app import create_app as control_app

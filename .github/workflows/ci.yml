@@ -61,7 +61,8 @@ jobs:
           cache-dependency-path: |
             requirements-apriltag.txt
             requirements-print.txt
-      - run: python -m pip install -r requirements-apriltag.txt -r requirements-print.txt pytest
+            robot_server/pyproject.toml
+      - run: python -m pip install -r requirements-apriltag.txt -r requirements-print.txt './robot_server[test]'
       - run: python -m pytest -q tests/test_apriltag_live.py tests/test_vision_configuration.py
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Regenerate the physical label artwork
