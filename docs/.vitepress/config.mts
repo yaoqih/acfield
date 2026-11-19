@@ -18,6 +18,7 @@ const sections: [zh: string, en: string, items: Item[]][] = [
     ['/guide/overview', '平台概览', 'Overview'],
     ['/guide/quickstart', '快速开始', 'Quick start'],
     ['/guide/first-experiment', '第一次实验', 'First experiment'],
+    ['/guide/experiment-stages', '实验任务与阶段验收', 'Experiment stages and acceptance'],
     ['/guide/status', '能力与验证状态', 'Capabilities and evidence']
   ]],
   ['设计与思考', 'Design and rationale', [

@@ -1,5 +1,7 @@
 # Research validity
 
+See [experiment stages and acceptance](../guide/experiment-stages) for the task sequence, stage boundaries and handoff template from device acceptance to intelligent collaboration.
+
 ACField is a physical testbed for studying multi-agent control, swarm intelligence and emergent behavior with differential-drive robots. Multi-robot actions provide a research integration point; comparable policy studies also need a defined task, local information boundary and evidence chain. Platform reliability supports this research.
 
 ## Research questions to explore {#research-directions-to-explore}

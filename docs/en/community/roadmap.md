@@ -1,5 +1,7 @@
 # Roadmap
 
+See [experiment stages and acceptance](../guide/experiment-stages) for concrete tasks and transition criteria from one robot through planning and intelligent collaboration.
+
 The roadmap is organized by acceptance conditions, without dates for unverified capabilities. First make the shared platform understandable and runnable, then add research-environment responsibilities.
 
 ## Now · Development preview {#now-development-preview}
